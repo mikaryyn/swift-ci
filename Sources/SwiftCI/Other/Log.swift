@@ -9,6 +9,7 @@ struct Symbols {
 
 public func log(_ line: String) {
     print(line)
+    fflush(stdout)
 }
 
 public func logCompletion(_ line: String) {
