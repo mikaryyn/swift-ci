@@ -5,7 +5,7 @@ public extension Xcode {
         // Find the location of the produced documentation.
         let buildSettings = try await getBuildSettings()
         let outputURL = URL(filePath: try buildSettings.builtProductsDir)
-        logCompletion("Documentation output path: \(outputURL)")
+        log.completion("Documentation output path: \(outputURL)")
 
         var arguments = ["docbuild"]
         if let hostingBasePath {

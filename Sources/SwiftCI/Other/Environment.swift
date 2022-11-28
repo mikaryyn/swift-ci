@@ -3,9 +3,9 @@ import Foundation
 public typealias EnvAccessor = () throws -> String
 
 @propertyWrapper public struct Env<T> {
-    public init(wrappedValue: T, _ key: String) where T == Optional<String> {
-        self.wrappedValue = Environment.optional(key)
-    }
+    //public init(wrappedValue: T, _ key: String) where T == Optional<String> {
+    //    self.wrappedValue = Environment.optional(key)
+    //}
 
     public init(wrappedValue: T, _ key: String) where T == String {
         self.wrappedValue = Environment.optional(key, fallback: wrappedValue)
@@ -19,6 +19,15 @@ public typealias EnvAccessor = () throws -> String
 
     public let wrappedValue: T
 }
+
+@propertyWrapper public struct EnvOpt<T> {
+    public init(_ key: String) where T == String? {
+        self.wrappedValue = Environment.optional(key)
+    }
+
+    public let wrappedValue: T
+}
+
 
 public struct Environment {
     public static func required(_ key: String) throws -> String {
@@ -42,6 +51,7 @@ public struct Environment {
     }
 
     public static func writeToLog() {
+        @Use var log: Log
         let envs = ProcessInfo.processInfo.environment.sorted { $0.key < $1.key }
         for (key, value) in envs {
             log("\(key): \(value)")

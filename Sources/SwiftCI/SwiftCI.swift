@@ -2,12 +2,14 @@ import Foundation
 import System
 
 public func SwiftCI(script: () async throws -> ()) async {
+    @Use var log: Log
     do {
-        exitIfRebuildIsNeeded()
+        registerDependencies()
+
         try await script()
         await processCommand()
     } catch {
-        logError("Error occurred: \(error)")
+        log.error("Error occurred: \(error)")
         exit(ErrorCode.scriptError.rawValue)
     }
 }
@@ -22,6 +24,14 @@ enum ErrorCode: Int32 {
     case unexpectedError
 }
 
+/// Register dependencies.
+internal func registerDependencies() {
+    register(Log.self, LogImpl())
+    register(Shell.self, ShellImpl())
+    register(Keychain.self, KeychainImpl())
+//    register(Environment.self, EnvironmentImpl())
+}
+
 internal func processCommand() async {
     let arguments = Array(CommandLine.arguments.dropFirst())
     for command in commands {
@@ -33,6 +43,7 @@ internal func processCommand() async {
 }
 
 internal func run(command: Command) async {
+    @Use var log: Log
     do {
         try FullLog.open(name: command.name)
         defer { FullLog.close() }
@@ -41,43 +52,12 @@ internal func run(command: Command) async {
             exit(ErrorCode.scriptError.rawValue)
         }
     } catch let error as BuildError {
-        logError(error.message)
+        log.error(error.message)
         exit(ErrorCode.buildError.rawValue)
     } catch {
-        logError("Unexpected error occurred: \(error)")
+        log.error("Unexpected error occurred: \(error)")
         exit(ErrorCode.unexpectedError.rawValue)
     }
 }
 
 internal var commands = [Command]()
-
-private func exitIfRebuildIsNeeded() {
-    func getModificationDate(_ path: FilePath) -> Date? {
-        let attrs = (try? FileManager.default.attributesOfItem(atPath: path.string)) ?? [:]
-        return attrs[.modificationDate] as? Date
-    }
-
-    let executablePath = FilePath(Bundle.main.executablePath ?? "").removingLastComponent()
-    if !executablePath.ends(with: ".build/release") {
-        return // Unknown path; cannot continue.
-    }
-    guard let executableDate = getModificationDate(executablePath) else {
-        return // Unknown modification date; cannot continue.
-    }
-
-    let sourcesPath = executablePath
-        .removingLastComponent()
-        .removingLastComponent()
-
-    let sourcesContents = FileManager.default.enumerator(atPath: sourcesPath.string)?.allObjects.map { FilePath($0 as! String) } ?? []
-
-    let timeIntervalToMostRecentSource = sourcesContents
-        .filter { $0.extension == "swift" }
-        .compactMap { getModificationDate(sourcesPath.appending($0.string)) }
-        .max()
-        .map { executableDate.distance(to: $0) } ?? .zero
-    if timeIntervalToMostRecentSource > 0 {
-        print("SwiftCI executable is outdated and needs to be rebuilt.")
-        exit(222)
-    }
-}

@@ -29,24 +29,26 @@ public class Command {
 }
 
 public func step(_ name: String, _ when: StepWhen = .onSuccess, _ contents: () async throws -> Void) async {
+    @Use var log: Log
+
     let stepStartDate = Date.now
     let hasFailed = Command.current?.hasFailed ?? true
     if (when == .onSuccess && hasFailed) || (when == .onFailure && !hasFailed) {
-        try! logSkippedStep(name: name)
+        try! log.skippedStep(name: name)
         return
     }
     do {
-        try logEnteringStep(name: name)
+        try log.enteringStep(name: name)
         try await contents()
-        try logFinishedStep(name: name, duration: stepStartDate.distance(to: Date.now))
+        try log.finishedStep(name: name, duration: stepStartDate.distance(to: Date.now))
     } catch let error as BuildError {
         Command.current?._hasFailed = true
-        logError(error.message)
-        try? logFailedStep(name: name)
+        log.error(error.message)
+        try? log.failedStep(name: name)
     } catch {
         Command.current?._hasFailed = true
-        logError("Unexpected error occurred: \(error)")
-        try? logFailedStep(name: name)
+        log.error("Unexpected error occurred: \(error)")
+        try? log.failedStep(name: name)
     }
 }
 

@@ -1,7 +1,7 @@
-import XCTest
 @testable import SwiftCI
+import Testing
 
-final class SwiftCITests: XCTestCase {
-    func testExample() throws {
+final class SwiftCITests {
+    @Test func testExample() throws {
     }
 }

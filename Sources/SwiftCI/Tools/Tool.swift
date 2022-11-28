@@ -1,5 +1,39 @@
 import Foundation
 
+public struct ShellCommand {
+    public init(command: String, arguments: [String] = [], filters: [Filter] = [], allowFailure: Bool = false) {
+        self.command = command
+        self.arguments = arguments
+        self.filters = filters
+        self.allowFailure = allowFailure
+    }
+    let command: String
+    let arguments: [String]
+    let filters: [Filter]
+    let allowFailure: Bool
+}
+
+public protocol Shell {
+    func exec(_ command: ShellCommand) async throws
+
+    func execAndGetOutput(_ command: ShellCommand) async throws -> String
+}
+
+public struct ShellImpl: Shell {
+    public func exec(_ command: ShellCommand) async throws {
+        try await Tool(
+            command: command.command,
+            arguments: command.arguments,
+            filters: command.filters,
+            allowFailure: command.allowFailure
+        ).run()
+    }
+
+    public func execAndGetOutput(_ command: ShellCommand) async throws -> String {
+        return "TODO"
+    }
+}
+
 public struct Tool {
     public init(command: String, arguments: [String]? = nil, filters: [Filter] = [], allowFailure: Bool = false) {
         self.command = command
@@ -53,10 +87,12 @@ public struct Tool {
     }
 
     private func processLines(file: FileHandle, outputLines: inout [String]?) async throws {
+        @Use var log: Log
+
         for try await line in file.bytes.lines {
             try FullLog.write(line)
             outputLines?.append(line)
-            try applyFilters(line: line).map(log)
+            try applyFilters(line: line).map(log.callAsFunction)
         }
     }
 

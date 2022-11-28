@@ -2,6 +2,8 @@ import Foundation
 import System
 
 public struct Xcode {
+    @Use internal var log: Log
+
     public init(
         project: String? = nil,
         scheme: String? = nil,
@@ -73,7 +75,7 @@ public struct Xcode {
     }
 
     public func getBuildSettings() async throws -> BuildSettings {
-        logCompletion("Getting Xcode build settings…")
+        log.completion("Getting Xcode build settings…")
         let tool = Tool(
             command: Self.xcodebuildPath,
             arguments: try makeArguments(["-showBuildSettings", "-json"]),
@@ -168,7 +170,7 @@ public struct Xcode {
 
         let archiveInfoPlist = try Plist.read(file: targetPath.appending("Info.plist").string)
         let archiveInfo = try ArchiveInfo(plist: archiveInfoPlist)
-        logCompletion("Archive information:")
+        log.completion("Archive information:")
         log("    Bundle identifier: \(archiveInfo.bundleIdentifier)")
         log("    Signing identity : \(archiveInfo.signingIdentity)")
         log("    Team identifier  : \(archiveInfo.teamIdentifier)")
@@ -198,7 +200,7 @@ public struct Xcode {
         }
         let copyFrom = sourcePath.appending(sourceIpaFileName).string
         let copyTo = targetPath.appending("\(ipaFileName).ipa").string
-        logCompletion("Copying IPA File")
+        log.completion("Copying IPA File")
         log("    From: \(copyFrom)")
         log("    To:   \(copyTo)")
         try FileManager.default.copyItem(atPath: copyFrom, toPath: copyTo)
@@ -226,7 +228,7 @@ public struct Xcode {
             ]
         )
 
-        logLines(title: "Contents of generated '\(file)' file:", lines: lines)
+        log.lines(title: "Contents of generated '\(file)' file:", lines: lines)
     }
 
     private let project: String?

@@ -1,4 +1,4 @@
-// swift-tools-version: 5.7
+// swift-tools-version: 6.2
 
 import PackageDescription
 
@@ -8,8 +8,17 @@ let package = Package(
     products: [
         .library(name: "SwiftCI", targets: ["SwiftCI"]),
     ],
+    dependencies: [],
     targets: [
-        .target(name: "SwiftCI", dependencies: []),
-        .testTarget(name: "SwiftCITests", dependencies: ["SwiftCI"]),
+        .target(
+            name: "SwiftCI",
+            dependencies: [],
+            swiftSettings: [.defaultIsolation(MainActor.self)]
+        ),
+        .testTarget(
+            name: "SwiftCITests",
+            dependencies: ["SwiftCI"],
+            swiftSettings: [.defaultIsolation(MainActor.self)]
+        )
      ]
 )

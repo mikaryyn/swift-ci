@@ -1,6 +1,8 @@
 import Foundation
 
 public struct Slack {
+    @Use private var log: Log
+
     public init(webhookURL: String) {
         self.webhookURL = webhookURL
     }
@@ -28,20 +30,20 @@ public struct Slack {
 
     private func sendMessage(_ message: [String: Any]) async {
 		guard let url = URL(string: webhookURL) else {
-			logWarning("Invalid Slack webhook URL")
+			log.warning("Invalid Slack webhook URL")
 			return
 		}
         var req = URLRequest(url: url)
         req.addValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpMethod = "POST"
        	req.httpBody = try! JSONSerialization.data(withJSONObject: message, options: .prettyPrinted)
-       	logLines(title: "Slack webhook request", lines: String(data: req.httpBody!, encoding: .utf8)!)
+       	log.lines(title: "Slack webhook request", lines: String(data: req.httpBody!, encoding: .utf8)!)
 
        	guard let (data, _) = try? await URLSession.shared.data(for: req) else {
-            logWarning("Failed to call Slack webhook.")
+            log.warning("Failed to call Slack webhook.")
             return
         }
-       	logCompletion("Slack webhook response: \(String(data: data, encoding: .utf8) ?? "unknown")")
+       	log.completion("Slack webhook response: \(String(data: data, encoding: .utf8) ?? "unknown")")
     }
 
     public struct Field {

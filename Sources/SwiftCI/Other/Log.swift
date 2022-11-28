@@ -1,77 +1,95 @@
 import Foundation
 
-let startDate = Date.now
+public protocol Log {
+    func callAsFunction(_ line: String)
+    func completion(_ line: String)
+    func success(_ line: String)
+    func warning(_ line: String)
+    func error(_ line: String)
+    func enteringStep(name: String) throws
+    func skippedStep(name: String) throws
+    func finishedStep(name: String, duration: TimeInterval) throws
+    func failedStep(name: String) throws
+    func lines(title: String, lines: String)
+    func lines(title: String, lines: [String])
+}
+
+public extension Log {
+    func completion(_ line: String) {
+        self("\(Symbols.completion) \(line)")
+    }
+
+    func success(_ line: String) {
+        self("\(Symbols.success) \(line)")
+    }
+
+    func warning(_ line: String) {
+        self("\("<Warning>".yellow().bold()) \(line)")
+    }
+
+    func error(_ line: String) {
+        self("\("<Error>".red().bold()) \(line)")
+    }
+
+    func enteringStep(name: String) throws {
+        self("")
+        self("Entering step [\(name.cyan())]")
+        try FullLog.writeHeader("Entering step [\(name)]")
+    }
+
+    func skippedStep(name: String) throws {
+        self("")
+        self("Step [\(name.yellow())] was skipped")
+        try FullLog.writeHeader("Step [\(name)] was skipped")
+    }
+
+    func finishedStep(name: String, duration: TimeInterval) throws {
+        let formattedDuration = String(format: "%.1f", duration)
+        self("Finished step [\(name.cyan())] in \(formattedDuration) seconds")
+        try FullLog.write("Finished step [\(name)] in \(formattedDuration) seconds\n")
+    }
+
+    func failedStep(name: String) throws {
+        self("Step [\(name.red().bold())] failed")
+        try FullLog.write("Step [\(name)] failed\n")
+    }
+
+    func lines(title: String, lines: String) {
+        self.lines(title: title, lines: lines.split(whereSeparator: \.isNewline).map(String.init))
+    }
+
+    func lines(title: String, lines: [String]) {
+        completion(title)
+        self("")
+        for line in lines {
+            self(line)
+        }
+        self("")
+    }
+}
+
+internal struct LogImpl: Log {
+    public func callAsFunction(_ line: String) {
+        print(line)
+        fflush(stdout)
+    }
+
+    private func getTimeStamp() -> String {
+        let seconds = Int(ceil(startDate.distance(to: Date.now)))
+        let minutes = seconds / 60
+        if minutes > 0 {
+            return "\(minutes)m \(seconds - minutes * 60)m".darkGray()
+        } else {
+            return "\(seconds)s".darkGray()
+        }
+    }
+
+    private let startDate = Date.now
+}
 
 struct Symbols {
     static let success = "✔︎".green()
     static let completion = "▸".yellow()
-}
-
-public func log(_ line: String) {
-    print(line)
-    fflush(stdout)
-}
-
-public func logCompletion(_ line: String) {
-    log("\(Symbols.completion) \(line)")
-}
-
-public func logSuccess(_ line: String) {
-    log("\(Symbols.success) \(line)")
-}
-
-public func logWarning(_ line: String) {
-    log("\("<Warning>".yellow().bold()) \(line)")
-}
-
-func logError(_ line: String) {
-    log("\("<Error>".red().bold()) \(line)")
-}
-
-func logEnteringStep(name: String) throws {
-    log("")
-    log("Entering step [\(name.cyan())]")
-    try FullLog.writeHeader("Entering step [\(name)]")
-}
-
-func logSkippedStep(name: String) throws {
-    log("")
-    log("Step [\(name.yellow())] was skipped")
-    try FullLog.writeHeader("Step [\(name)] was skipped")
-}
-
-func logFinishedStep(name: String, duration: TimeInterval) throws {
-    let formattedDuration = String(format: "%.1f", duration)
-    log("Finished step [\(name.cyan())] in \(formattedDuration) seconds")
-    try FullLog.write("Finished step [\(name)] in \(formattedDuration) seconds\n")
-}
-
-func logFailedStep(name: String) throws {
-    log("Step [\(name.red().bold())] failed")
-    try FullLog.write("Step [\(name)] failed\n")
-}
-
-public func logLines(title: String, lines: String) {
-    logLines(title: title, lines: lines.split(whereSeparator: \.isNewline).map(String.init))
-}
-
-public func logLines(title: String, lines: [String]) {
-    logCompletion(title)
-    log("")
-    for line in lines {
-        log(line)
-    }
-    log("")
-}
-
-private func getTimeStamp() -> String {
-    let seconds = Int(ceil(startDate.distance(to: Date.now)))
-    let minutes = seconds / 60
-    if minutes > 0 {
-        return "\(minutes)m \(seconds - minutes * 60)m".darkGray()
-    } else {
-        return "\(seconds)s".darkGray()
-    }
 }
 
 public extension String {
@@ -82,49 +100,4 @@ public extension String {
     var success: String {
         "\(Symbols.success) \(self)"
     }
-}
-
-public struct FullLog {
-    static var file: FileHandle?
-
-    static func open(name: String) throws {
-        let path = try TemporaryDirectory().childPath(name: "\(name).log")
-        log("Saving full log to \(path.string)")
-        close()
-
-        if FileManager.default.createFile(atPath: path.string, contents: nil, attributes: nil) {
-            file = FileHandle(forWritingAtPath: path.string)
-        }
-        if file == nil {
-            throw BuildError(message: "Failed to write build log to '\(path)'")
-        }
-    }
-
-    static func close() {
-        do {
-            try file?.close()
-        } catch {
-            logError("Failed to close build log")
-        }
-        file = nil
-    }
-
-    static func write(_ line: String) throws {
-        do {
-            try line.data(using: .utf8).map {
-                try file?.write(contentsOf: $0)
-                file?.write(linebreak)
-            }
-        } catch {
-            throw BuildError(message: "Failed to write into build log")
-        }
-    }
-
-    static func writeHeader(_ line: String) throws {
-        let length = line.count
-        let divider = String(repeating: "=", count: length)
-        try write("\(divider)\n\(line)\n\(divider)")
-    }
-
-    static let linebreak = "\n".data(using: .utf8)!
 }
