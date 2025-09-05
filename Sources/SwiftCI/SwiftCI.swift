@@ -8,9 +8,9 @@ public func SwiftCI(script: () async throws -> ()) async {
         registerDependencies()
         try await script()
         await processCommand()
-    } catch e as BuildError { // fix this ai!
+    } catch let error as BuildError {
         log.error(error.message)
-        exit(error.code)
+        exit(error.code.rawValue)
     } catch {
         log.error("Error occurred: \(error)")
         exit(ErrorCode.unexpectedError.rawValue)
