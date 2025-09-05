@@ -1,6 +1,6 @@
 public struct Git {
     public static func getCommitHash() async throws -> String {
-        let tool = Tool(shellCommand: "git rev-parse --short HEAD")
+        let tool = Tool(shellCommand: "git rev-parse --short HEAD", filters: [filter(#/.*/#)])
         let result = try await tool.runAndGetOutput()
         return result
     }

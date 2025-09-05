@@ -1,8 +1,10 @@
 import Foundation
+import System
 
 public struct FullLog {
     @Use private static var log: Log
 
+    static var path: FilePath?
     static var file: FileHandle?
 
     static func open(name: String) throws {
@@ -16,14 +18,17 @@ public struct FullLog {
         if file == nil {
             throw BuildError(message: "Failed to write build log to '\(path)'")
         }
+        FullLog.path = path
     }
 
     static func close() {
         do {
             try file?.close()
+            FullLog.path.map { log("Saved full log to file://\($0.string)") }
         } catch {
             log.error("Failed to close build log")
         }
+        path = nil
         file = nil
     }
 
