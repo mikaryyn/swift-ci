@@ -5,12 +5,14 @@ public struct Xcode {
     @Use internal var log: Log
 
     public init(
+        workspace: String? = nil,
         project: String? = nil,
         scheme: String? = nil,
         configuration: String? = nil,
         destination: String? = "generic/platform=iOS",
         config: Configuration = .standard
     ) {
+        self.workspace = workspace
         self.project = project
         self.scheme = scheme
         self.configuration = configuration
@@ -96,16 +98,19 @@ public struct Xcode {
 
     internal func makeArguments(_ baseArguments: [String], useScheme: Bool = true) throws -> [String] {
         var result = baseArguments
-        if let project = project {
+        if let workspace {
+            result.append(contentsOf: ["-workspace", workspace])
+        }
+        if let project {
             result.append(contentsOf: ["-project", project])
         }
-        if useScheme, let scheme = scheme {
+        if useScheme, let scheme {
             result.append(contentsOf: ["-scheme", scheme])
         }
-        if let destination = destination {
+        if let destination {
             result.append(contentsOf: ["-destination", destination])
         }
-        if let configuration = configuration {
+        if let configuration {
             result.append(contentsOf: ["-configuration", configuration])
         }
         if !config.xcconfig.isEmpty {
@@ -231,6 +236,7 @@ public struct Xcode {
         log.lines(title: "Contents of generated '\(file)' file:", lines: lines)
     }
 
+    private let workspace: String?
     private let project: String?
     private let scheme: String?
     private let configuration: String?

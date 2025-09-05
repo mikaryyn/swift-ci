@@ -1,12 +1,12 @@
 import Foundation
 
 public class Command {
-    public init(_ name: String, perform: @escaping (Command) async -> Void) {
+    public init(_ name: String, perform: @MainActor @escaping (Command) async -> Void) {
         self.name = name
         self.perform = perform
     }
 
-    public init(_ name: String, perform: @escaping () async -> Void) {
+    public init(_ name: String, perform: @MainActor @escaping () async -> Void) {
         self.name = name
         self.perform = { _ in await perform() }
     }
@@ -28,7 +28,7 @@ public class Command {
     private let perform: (Command) async -> Void
 }
 
-public func step(_ name: String, _ when: StepWhen = .onSuccess, _ contents: () async throws -> Void) async {
+@MainActor public func step(_ name: String, _ when: StepWhen = .onSuccess, _ contents: @MainActor () async throws -> Void) async {
     @Use var log: Log
 
     let stepStartDate = Date.now

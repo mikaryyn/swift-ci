@@ -13,12 +13,12 @@ let package = Package(
         .target(
             name: "SwiftCI",
             dependencies: [],
-            swiftSettings: [.defaultIsolation(MainActor.self)]
+            swiftSettings: [.defaultIsolation(MainActor.self)],
         ),
         .testTarget(
             name: "SwiftCITests",
             dependencies: ["SwiftCI"],
-            swiftSettings: [.defaultIsolation(MainActor.self)]
+            swiftSettings: [.defaultIsolation(MainActor.self)],
         )
      ]
 )

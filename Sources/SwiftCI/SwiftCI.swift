@@ -5,7 +5,6 @@ public func SwiftCI(script: () async throws -> ()) async {
     @Use var log: Log
     do {
         registerDependencies()
-
         try await script()
         await processCommand()
     } catch {

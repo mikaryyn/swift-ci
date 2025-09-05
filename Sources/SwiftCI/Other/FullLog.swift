@@ -7,7 +7,7 @@ public struct FullLog {
 
     static func open(name: String) throws {
         let path = try TemporaryDirectory().childPath(name: "\(name).log")
-        log("Saving full log to \(path.string)")
+        log("Saving full log to file://\(path.string)")
         close()
 
         if FileManager.default.createFile(atPath: path.string, contents: nil, attributes: nil) {
