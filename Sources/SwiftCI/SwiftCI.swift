@@ -3,24 +3,22 @@ import System
 
 public func SwiftCI(script: () async throws -> ()) async {
     @Use var log: Log
+    
     do {
         registerDependencies()
         try await script()
         await processCommand()
+    } catch e as BuildError { // fix this ai!
+        log.error(error.message)
+        exit(error.code)
     } catch {
         log.error("Error occurred: \(error)")
-        exit(ErrorCode.scriptError.rawValue)
+        exit(ErrorCode.unexpectedError.rawValue)
     }
 }
 
 public func command(_ command: Command) {
     commands.append(command)
-}
-
-enum ErrorCode: Int32 {
-    case buildError
-    case scriptError
-    case unexpectedError
 }
 
 /// Register dependencies.
@@ -32,12 +30,27 @@ internal func registerDependencies() {
 }
 
 internal func processCommand() async {
+    @Use var log: Log
+
     let arguments = Array(CommandLine.arguments.dropFirst())
-    for command in commands {
-        if command.name == arguments.first {
-            await run(command: command)
-            break
+
+    guard !arguments.isEmpty else {
+        log.error("No commands specified.")
+        
+        exit(ErrorCode.unexpectedError.rawValue)
+    }
+    
+    let commandDict = Dictionary(uniqueKeysWithValues: commands.map { ($0.name, $0) })
+    for name in arguments {
+        if !commandDict.keys.contains(name) {
+            log.error("Unsupported command '\(name)'.")
+            exit(ErrorCode.unexpectedError.rawValue)
         }
+    }
+
+    for name in arguments {
+        guard let command = commandDict[name] else { continue }
+        await run(command: command)
     }
 }
 
