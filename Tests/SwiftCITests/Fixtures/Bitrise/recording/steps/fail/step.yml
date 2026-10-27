@@ -1,0 +1,9 @@
+title: fail step
+summary: Local fail step for the fixture.
+website: https://example.com
+source_code_url: https://example.com
+support_url: https://example.com
+type_tags:
+  - utility
+is_always_run: false
+inputs: []

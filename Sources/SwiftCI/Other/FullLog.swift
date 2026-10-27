@@ -1,52 +1,90 @@
 import Foundation
-import System
 
 public struct FullLog {
     @Use private static var log: Log
 
-    static var path: FilePath?
+    static var path: URL?
     static var file: FileHandle?
 
-    static func open(name: String) throws {
-        let path = try TemporaryDirectory().childPath(name: "\(name).log")
-        log("Saving full log to file://\(path.string)")
-        close()
+    /// Creates the `logs` directory in the artifacts directory. Replaced in tests to simulate a failure.
+    static var makeDirectory: (URL) throws -> Void = { try FileManager.default.createDirectory(at: $0, withIntermediateDirectories: true) }
 
-        if FileManager.default.createFile(atPath: path.string, contents: nil, attributes: nil) {
-            file = FileHandle(forWritingAtPath: path.string)
+    /// Closes the log file. Replaced in tests to simulate a failure, because Foundation does not fail on a double close.
+    static var closeHandle: (FileHandle) throws -> Void = { try $0.close() }
+
+    static func open(name: String) throws {
+        let path = try logPath(name: name)
+        log("Saving full log to file://\(path.filePath)")
+        try close()
+
+        if FileManager.default.createFile(atPath: path.filePath, contents: nil, attributes: nil) {
+            file = FileHandle(forWritingAtPath: path.filePath)
         }
         if file == nil {
-            throw BuildError(message: "Failed to write build log to '\(path)'")
+            throw BuildError(
+                message: "Failed to create build log file '\(path.filePath)'. Check that the directory is writable and that the command name is a valid file name.",
+                code: .internal
+            )
         }
         FullLog.path = path
     }
 
-    static func close() {
-        do {
-            try file?.close()
-            FullLog.path.map { log("Saved full log to file://\($0.string)") }
-        } catch {
-            log.error("Failed to close build log")
-        }
+    /// Closes the log file and clears the path and the file, also if closing fails.
+    /// Logs the saved location on success. A failure to close is thrown, so the run can fail.
+    static func close() throws {
+        let closedPath = path
+        let handle = file
         path = nil
         file = nil
+
+        do {
+            if let handle {
+                try closeHandle(handle)
+            }
+        } catch {
+            let location = closedPath.map { " '\($0.filePath)'" } ?? ""
+            throw BuildError(
+                message: "Failed to close the build log\(location). Check that the disk is not full. Details: \(error)",
+                code: .internal
+            )
+        }
+        closedPath.map { log("Saved full log to file://\($0.filePath)") }
     }
 
     static func write(_ line: String) throws {
+        guard let file else { return }
         do {
-            try line.data(using: .utf8).map {
-                try file?.write(contentsOf: $0)
-                file?.write(linebreak)
-            }
+            try file.write(contentsOf: Data(SecretRegistry.redact(line).utf8))
+            try file.write(contentsOf: linebreak)
         } catch {
-            throw BuildError(message: "Failed to write into build log")
+            throw BuildError(
+                message: "Failed to write into the build log. Check that the disk is not full. Details: \(error)",
+                code: .internal
+            )
         }
     }
 
-    static func writeHeader(_ line: String) throws {
-        let length = line.count
-        let divider = String(repeating: "=", count: length)
-        try write("\(divider)\n\(line)\n\(divider)")
+    /// Writes a header for a step. Top-level steps use "=" dividers, nested steps use "-" dividers.
+    /// Both are indented by two spaces per depth level.
+    static func writeHeader(_ line: String, depth: Int = 0) throws {
+        let indent = stepIndent(depth)
+        let divider = String(repeating: depth == 0 ? "=" : "-", count: line.count)
+        try write("\(indent)\(divider)\n\(indent)\(line)\n\(indent)\(divider)")
+    }
+
+    /// The path of the log file for `name`: `logs/<name>.log` in the artifacts directory. The `logs` directory is created.
+    /// An existing log of the same name is overwritten when the file is created.
+    private static func logPath(name: String) throws -> URL {
+        let logs = Artifacts.directory.appending(path: "logs")
+        do {
+            try makeDirectory(logs)
+        } catch {
+            throw BuildError(
+                message: "Failed to create the build log directory '\(logs.filePath)'. Check that the artifacts directory is writable. Details: \(error)",
+                code: .internal
+            )
+        }
+        return logs.appending(path: "\(name).log")
     }
 
     static let linebreak = "\n".data(using: .utf8)!

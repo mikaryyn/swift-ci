@@ -1,0 +1,9 @@
+title: skipped step
+summary: Local skipped step for the fixture.
+website: https://example.com
+source_code_url: https://example.com
+support_url: https://example.com
+type_tags:
+  - utility
+is_always_run: false
+inputs: []

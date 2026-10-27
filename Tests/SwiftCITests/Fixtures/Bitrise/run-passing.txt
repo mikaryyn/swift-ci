@@ -1,0 +1,51 @@
+
+Invocation started at [36;1m17:43:42[0m
+Bitrise CLI version: [36;1m3.2.1[0m
+
+[34;1mRun modes:
+[0mCI mode: [36;1mtrue[0m
+PR mode: [36;1mfalse[0m
+Debug mode: [36;1mfalse[0m
+Secret filtering mode: [36;1mtrue[0m
+Secret Envs filtering mode: [36;1mtrue[0m
+Using Step library in offline mode: [36;1mfalse[0m
+No output timeout mode: [36;1mfalse[0m
+
+Running workflow: [36;1mpassing[0m
+
+Bitrise collects anonymous usage stats to improve the product, detect and respond to Step error conditions.
+If you want to opt out, define the env var [36;1mBITRISE_ANALYTICS_DISABLED=true[0m
+
+
+[34;1mSwitching to workflow: passing
+[0m+------------------------------------------------------------------------------+
+| (0) Passing step                                                             |
++------------------------------------------------------------------------------+
+| id: ./steps/pass                                                             |
+| version:                                                                     |
+| collection: path                                                             |
+| toolkit: bash                                                                |
+| time: 2026-10-28T17:43:43+02:00                                              |
++------------------------------------------------------------------------------+
+|                                                                              |
+passing step output
+a warning: sample
+|                                                                              |
++---+---------------------------------------------------------------+----------+
+| [32;1m✓[0m | [32;1mPassing step                                                 [0m | 0.04 sec |
++---+---------------------------------------------------------------+----------+
+
+
++------------------------------------------------------------------------------+
+|                           bitrise summary: passing                           |
++---+---------------------------------------------------------------+----------+
+|   | title                                                         | time (s) |
++---+---------------------------------------------------------------+----------+
+| [32;1m✓[0m | [32;1mPassing step[0m                                                  | 0.04 sec |
++---+---------------------------------------------------------------+----------+
+| Total runtime: 0.04 sec                                                      |
++------------------------------------------------------------------------------+
+
+
+[32;1mBitrise build successful[0m
+
