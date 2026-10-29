@@ -1,7 +1,7 @@
 import Foundation
 
 /// The CI environment of the running build: which CI system runs it, and the branch, commit, tag, merge request,
-/// build number, build URL and job name that it builds. See README.md, "CI environment".
+/// build number, build URL and job name that it builds.
 public enum CI {
     /// The CI environment of the running run, detected once when `SwiftCI { }` starts. A query: it does not open a step.
     ///

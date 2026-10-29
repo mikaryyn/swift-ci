@@ -3,13 +3,13 @@ import Foundation
 extension CI {
     /// Passes `value` to later steps of the CI job as the environment variable `name`, through the mechanism of the runner
     /// the command runs in: `envman` for the Bitrise CLI, `$GITHUB_ENV` on GitHub Actions, and otherwise the file
-    /// `outputs.env` in the artifacts directory. See the CI environment plan, Output export.
+    /// `outputs.env` in the artifacts directory.
     ///
     /// The name must match `[A-Za-z_][A-Za-z0-9_]*`. The value must be one line and must not contain a registered secret.
     /// Otherwise the call throws a usage error (exit code 2) before anything is written. Exporting does not change the
     /// environment of the running process, so use a Swift variable for that.
     ///
-    /// It is not a step (D6). It logs one line in the current step, `Exported NAME`, and not the value. Values are not
+    /// It is not a step. It logs one line in the current step, `Exported NAME`, and not the value. Values are not
     /// secret, but they can be long, and the file or the step output keeps them.
     ///
     /// - Parameters:

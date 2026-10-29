@@ -17,7 +17,7 @@ public struct BuildError: Error {
     let code: ErrorCode
 }
 
-/// The exit code of a SwiftCI run. See the exit codes table in the script syntax plan.
+/// The exit code of a SwiftCI run.
 public enum ErrorCode: Int32 {
     /// A step, command body or handler failed (exit code 1).
     case failure = 1

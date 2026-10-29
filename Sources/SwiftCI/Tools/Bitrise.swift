@@ -1,7 +1,7 @@
 import Foundation
 
 /// Temporary: runs Bitrise CLI workflows, for outside-in migration. It is removed before 1.0, once the migration no
-/// longer needs it (see [Incremental adoption](docs/plans/incremental-adoption.md#decisions)).
+/// longer needs it.
 ///
 /// Values that the workflow exports with `envman` are lost when the workflow exits. Pass inputs with `environment`, and
 /// use names that the workflow's `app: envs:` do not define, because those can take precedence over the process

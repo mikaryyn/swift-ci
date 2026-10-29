@@ -91,6 +91,8 @@ These issues affect any project that consumes SwiftCI from CI.
 
 ### Phase 0: SwiftCI foundations
 
+Status: **completed** with release 0.1.0.
+
 This is SwiftCI work that must happen before a project depends on more of
 it. It covers roadmap items 1 and 2 in [README.md](../../README.md#roadmap),
 plus parts of item 3.
@@ -123,11 +125,14 @@ plus parts of item 3.
   [CI environment](../../README.md#ci-environment),
   [Output export](../../README.md#output-export) and
   [Incremental adoption](incremental-adoption.md).
-- Release 0.1.0.
+- Release 0.1.0. Done.
 
 **Exit criteria.** The reference project's existing SwiftCI command runs on a
 pinned tag, and its tests pass on macOS. Linux verification of the core is
-deferred (see [Linux verification](linux-verification.md)).
+deferred (see [Linux verification](linux-verification.md)). The reference
+project builds against 0.1.0, but it still uses a local checkout of SwiftCI
+instead of the pinned tag, so that Phase 1 features can be added without a
+release for each change.
 
 ### Phase 1: replace Bitrise
 

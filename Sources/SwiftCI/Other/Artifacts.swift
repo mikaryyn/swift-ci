@@ -5,7 +5,6 @@ import Foundation
 ///
 /// The directory is chosen once when `SwiftCI { }` starts. `SWIFTCI_ARTIFACTS_DIR` wins, then the `artifactsDirectory:`
 /// argument of `SwiftCI { }`, then `artifacts` in the working directory at start. SwiftCI never deletes anything in it.
-/// See README.md, "Artifacts".
 public enum Artifacts {
     /// The artifacts directory of the running run, as an absolute file URL. A query: it does not open a step.
     ///

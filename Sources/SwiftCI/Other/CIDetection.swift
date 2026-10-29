@@ -1,7 +1,7 @@
 import Foundation
 
 /// Detects the CI environment of a run, once, when the run starts. Script adapters are asked first, then the built-in
-/// adapters in the order of the CI environment plan (D3). The first adapter that answers wins. The local adapter always
+/// adapters in the order of `builtIn`. The first adapter that answers wins. The local adapter always
 /// answers.
 enum CIDetection {
     /// The built-in adapters, in order.
@@ -22,8 +22,8 @@ enum CIDetection {
     }
 
     /// The exporter of a run with `variables` as the environment: the first adapter whose exporter answers, or the dotenv
-    /// file when none does. It is chosen separately from the environment (D2). The Bitrise CLI is asked before the other
-    /// built-in adapters, because it is the innermost runner when another CI system runs it (D3). Empty values count as
+    /// file when none does. It is chosen separately from the environment. The Bitrise CLI is asked before the other
+    /// built-in adapters, because it is the innermost runner when another CI system runs it. Empty values count as
     /// unset.
     static func exporter(variables: [String: String], adapters: [any CIAdapter]) -> any CIExporter {
         let set = variables.filter { !$0.value.isEmpty }

@@ -1,8 +1,7 @@
 import Foundation
 import SwiftCI
 
-/// The URL and the environment for a git command that may need credentials (decision E11 of the process and secrets
-/// plan). The URL never contains credentials. The environment carries the HTTP header as a secret.
+/// The URL and the environment for a git command that may need credentials. The URL never contains credentials. The environment carries the HTTP header as a secret.
 struct GitCredentials {
     /// The URL without any user information. Safe to pass as an argument.
     let url: String

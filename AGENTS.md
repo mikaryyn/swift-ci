@@ -106,7 +106,7 @@ Sources/SwiftCIXcode/         Module (macOS): xcodebuild wrappers, app icon over
 Sources/SwiftCISigning/       Module (macOS): keychains, match-compatible signing install, fastlane fallback
   Keychain.swift              Keychain unlock: a plain type with static methods
   SecurityInteractive.swift   Builds the one-line input of `security -i`
-  GitCredentials.swift        Git credentials for the native match install (E11)
+  GitCredentials.swift        Git credentials for the native match install
   Fastlane.swift              fastlane match invocation + native match install (v1/v2 decryption)
 Sources/SwiftCISlack/         Module: Slack incoming webhooks
   Slack.swift
@@ -215,8 +215,12 @@ marks its suite `.serialized` itself, because it may not import `SwiftCITestSupp
 - Report expected failures as `BuildError`. Write each message so it tells the
   user what to do, for example which environment variable is missing.
 - Start the doc comment of temporary API (such as the Bitrise wrapper for
-  migration) with `Temporary:`. Say when the API will be removed, and link to
-  the plan that tracks it. Do not build permanent features on temporary API.
+  migration) with `Temporary:`. Say when the API will be removed. Do not build
+  permanent features on temporary API.
+- Do not refer to plans, plan milestones or decisions (such as `M4` or
+  `decision E11`), tasks, or Markdown files (README.md, `docs/`) in code,
+  comments or tests. Plans change and get deleted, and the code outlives them.
+  State the fact or the reason in the comment itself.
 - Add doc comments to all public API. Examples in doc comments and README must
   follow the generic-only rule.
 - Public integration calls that do work open a step with

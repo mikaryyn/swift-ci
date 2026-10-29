@@ -5,7 +5,7 @@ import Foundation
 import Testing
 
 extension GlobalStateTests {
-    /// The Git credential helper of the native match install (E11). Called directly, with the inherited environment
+    /// The Git credential helper of the native match install. Called directly, with the inherited environment
     /// passed in, so no clone runs and no real environment is read.
     @Suite(.serialized) struct GitCredentialsTests {
         static let host = "https://git.example.com/org/match.git"
