@@ -173,7 +173,8 @@ Workflows are ported in this order:
      form (see [Command line](../../README.md#command-line)).
    - The API key reaches the tool as a file path taken from a secret, never
      as an argument value.
-3. **Merge request tests.**
+3. **Merge request tests.** The generic pieces are planned in
+   [Xcode tests](xcode-tests.md). The gates stay project scripts for now.
    - SwiftLint and compiler warning gates ported from the existing scripts
      into reusable steps (see [Extension ideas](../../README.md#extension-ideas)).
    - `Xcode.test` with an explicit result bundle path.

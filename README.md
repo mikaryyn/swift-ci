@@ -661,7 +661,7 @@ implemented.
 | App Store Connect | Upload builds (Build Upload API; `iTMSTransporter` interim) | Planned |
 | App Store Connect | Upload via fastlane `pilot` / `deliver` (fallback) | Planned |
 | macOS | Notarization via `notarytool`, stapling | Planned |
-| Notifications | Slack incoming webhooks; the webhook URL is a `Secret` | Prototype |
+| Notifications | Slack incoming webhooks, as Block Kit (`Slack.send`) or legacy attachment (`Slack.sendAttachment`) messages, with optional sender name and icon; the webhook URL is a `Secret` | Prototype |
 | Merge requests | GitLab merge request comment from the run report (`SwiftCIGitLab`) | Planned |
 | Git | Commit hash, tag | Prototype |
 | Misc | App icon text overlay (e.g. build number or environment badge) | Prototype |
@@ -996,7 +996,7 @@ Typical Bitrise steps and fastlane actions, and their SwiftCI counterparts:
 | `set-xcode-build-number` / `increment_build_number` | `Xcode.setBuildNumber`; read the current value with `Xcode.getVersion` |
 | `fastlane match` (readonly) | `Signing.installMatchAssets(using: .native)` |
 | `deploy-to-itunesconnect-deliver` / `pilot` | `AppStoreConnect.upload` **(planned)**, or the fastlane fallback |
-| `slack` | `Slack.send`, a step itself |
+| `slack` | `Slack.sendAttachment` for the same attachment format with a colored bar, or `Slack.send` for Block Kit; both are steps themselves |
 | `trainer` | JUnit report written by `Xcode.test` **(planned)** |
 | `before_run` / `after_run` workflows | Reusable `async throws` functions, and `cleanup { }` / `onFailure { }` handlers |
 | `is_always_run` | `cleanup { … }` |
