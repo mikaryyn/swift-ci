@@ -69,9 +69,9 @@ need a duplicate backlog item:
 - Public source doc comments document the individual APIs, their parameters,
   errors and step behavior.
 
-The completed artifacts-directory, CI-environment, processes-and-secrets and
-module-split implementation plans were removed after their remaining
-end-user documentation work was recorded below. Deferred Linux work moved to
+The completed artifacts-directory, CI-environment, processes-and-secrets,
+module-split and script-syntax implementation plans were removed after their
+remaining end-user documentation work was recorded below. Deferred Linux work moved to
 [Linux verification](linux-verification.md).
 
 ## Deliverables
@@ -114,8 +114,34 @@ Write a conceptual guide that covers:
 - `cleanup` and `onFailure` registration, ordering and failure behavior.
 - Catching a step error with ordinary Swift and how that affects the command.
 - Exit codes and which failure wins when a body and handlers both fail.
-- Command-line inputs, `--help` and `--verbose` when milestone M6 of
-  [Script syntax](script-syntax.md#m6-descriptions-and-inputs) is completed.
+- Command-line options and `input(…)`: the `--name=value` form (no
+  `--name value` form and no bare flags), lookup order (option, upper-case
+  environment variable with `-` as `_`, default), empty values, supported
+  types (`LosslessStringConvertible` and raw-value enums), usage errors for
+  missing and invalid values, global options shared by all commands, the
+  warning for options that no input read, and why secrets are never inputs.
+- The reserved flags `--list`, `--help` and `--verbose`, and how `--verbose`
+  shows unfiltered tool output while redaction still applies.
+- The rules that are only summarized in the README today:
+  - Each error message is logged once, where it is finally handled. Steps
+    rethrow the original error, so typed `catch` clauses keep working.
+  - `step` and handler registration outside a running command, and handler
+    registration inside a handler, are programming errors that stop the run.
+    `input` outside a run is one too.
+  - Handlers run only if their registration was reached; register
+    `onFailure` at the top of the command. Handlers registered inside a step
+    run at the end of the command.
+  - Cleanup handlers run first, then failure handlers, each in reverse order.
+    A failed cleanup handler triggers the failure handlers; a failed allowed
+    handler does not. Every handler runs even if an earlier one failed.
+  - The body's error decides the exit code, otherwise the first failed
+    handler that is not allowed. Errors of the full log are internal errors
+    (exit code 3) and are never dropped, even inside an allowed step or
+    handler.
+  - Integration calls inside a step, or outside a running command, open no
+    step. Integration calls have no `failure:` parameter; wrap them in
+    `step(…, failure: .allowed)`.
+  - Reusable groups of steps are plain `async throws` functions.
 
 ### D3: Tools, process output and filters
 
@@ -242,8 +268,6 @@ Keep the README migration table concise and add operational guides for:
 
 ## Documentation required with future work
 
-- Milestone M6 of the script-syntax plan updates D2 and the README command-line
-  section in the same change.
 - Completion of [Linux verification](linux-verification.md) updates platform
   requirements, conditional-import examples and known issues in the same
   change.

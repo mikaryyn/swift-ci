@@ -9,7 +9,8 @@ public struct Slack {
     }
 
     /// Sends a message to the webhook. A failed request is logged as a warning and does not throw. An invalid webhook
-    /// secret throws a usage error before any request is made.
+    /// secret throws a usage error before any request is made. The actions block is left out when there are no buttons,
+    /// because Slack rejects an empty one.
     ///
     /// Opens a step named "Send Slack message" when called at the top level of a command. `step` renames it.
     public func send(
@@ -20,20 +21,27 @@ public struct Slack {
         step name: String? = nil
     ) async throws {
         try await step(default: "Send Slack message", name: name) {
-            var blocks = [
-                sectionBlock(
-                    text: text,
-                    fields: fields
-                ),
-                actionsBlock(buttons.map(\.json))
-            ]
-            if !header.isEmpty {
-                blocks.insert(headerBlock(text: header), at: 0)
-            }
-            try await sendMessage([
-                "blocks": blocks
-            ])
+            try await sendMessage(message(header: header, text: text, fields: fields, buttons: buttons))
         }
+    }
+
+    /// The message body for the given content. The actions block is added only when there is at least one button.
+    func message(header: String, text: String, fields: [Field], buttons: [Button]) -> [String: Any] {
+        var blocks = [
+            sectionBlock(
+                text: text,
+                fields: fields
+            )
+        ]
+        if !buttons.isEmpty {
+            blocks.append(actionsBlock(buttons.map(\.json)))
+        }
+        if !header.isEmpty {
+            blocks.insert(headerBlock(text: header), at: 0)
+        }
+        return [
+            "blocks": blocks
+        ]
     }
 
     /// The body of the webhook request. It holds the real values, because it is what Slack receives.

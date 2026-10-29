@@ -77,6 +77,28 @@ extension GlobalStateTests {
             #expect(error?.message.contains("SWIFTCI_TEST_MISSING_WEBHOOK") == true)
         }
 
+        /// Without buttons the message has no actions block, because Slack rejects an actions block with no elements.
+        @Test func messageWithoutButtonsHasNoActionsBlock() {
+            let message = Slack(webhookURL: Secret("SWIFTCI_TEST_UNUSED_WEBHOOK"))
+                .message(header: "", text: "hello", fields: [], buttons: [])
+            let blocks = message["blocks"] as? [[String: Any]] ?? []
+
+            #expect(blocks.compactMap { $0["type"] as? String } == ["section"])
+        }
+
+        /// With one button the message has an actions block that holds that button.
+        @Test func messageWithOneButtonHasAnActionsBlock() {
+            let button = Slack.Button(text: "Open", url: "https://hooks.example.com/open")
+            let message = Slack(webhookURL: Secret("SWIFTCI_TEST_UNUSED_WEBHOOK"))
+                .message(header: "", text: "hello", fields: [], buttons: [button])
+            let blocks = message["blocks"] as? [[String: Any]] ?? []
+
+            #expect(blocks.compactMap { $0["type"] as? String } == ["section", "actions"])
+            let elements = blocks.last?["elements"] as? [[String: Any]] ?? []
+            #expect(elements.count == 1)
+            #expect(elements.first?["url"] as? String == "https://hooks.example.com/open")
+        }
+
         /// A value without characters that JSON escapes is masked as before.
         @Test func plainValueIsMaskedInTheLoggedRequest() {
             let restore = secretsSetUp()

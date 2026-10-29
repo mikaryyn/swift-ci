@@ -91,6 +91,8 @@ Sources/SwiftCI/              Core
     Environment.swift         @Env / @EnvOpt and Environment helpers; the environment source that tests replace
     BuildError.swift          Error type and exit codes
     Artifacts.swift           Artifacts directory: resolution, creation, `Artifacts.directory`, `Artifacts.url(_:)`
+    Arguments.swift           Command-line parsing (`RunArguments`: command names, `--name=value` options, reserved flags) and the run's options state (`RunOptions`)
+    Input.swift               `input(_:default:)` and `input(_:)` for `LosslessStringConvertible` and raw-value types
     CI.swift                  CI environment types (`CI`, `CIEnvironment`, `MergeRequest`, `CISystem`), `CIAdapter`, `CIExporter`
     CIDetection.swift         Detection of the CI environment and the built-in adapters, in order; the full log's CI line
     CIExport.swift            `CI.export`, its name, line-break and secret checks, and the envman, GitHub Actions and dotenv exporters
@@ -234,6 +236,10 @@ marks its suite `.serialized` itself, because it may not import `SwiftCITestSupp
 Do not reopen these without the maintainer:
 
 - Library-first: projects write CI scripts as SwiftPM executable packages.
+- Script syntax: ordinary async Swift. Failed steps throw, allowed failures
+  are explicit (`failure: .allowed`), handlers are registered inline, and
+  commands are registered explicitly. No macros, no result builders, no
+  parallel steps. Options are written only as `--name=value`.
 - Explicit fallbacks only.
 - Linux-compatible core; Apple modules macOS-only.
 - First-party modules live in this repository as separate products.

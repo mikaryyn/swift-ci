@@ -30,10 +30,12 @@ extension Xcode {
         public static let empty = BuildSettings(action: "", buildSettings: [:])
 
         private enum CodingKeys: CodingKey {
-            case action, buildSettings
+            case action, target, buildSettings
         }
 
         private var action: String
+        /// The target of the entry. `nil` when `xcodebuild` reports no target for it.
+        internal var target: String?
         private var buildSettings: [String: String]
     }
 }

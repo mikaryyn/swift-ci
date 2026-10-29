@@ -124,6 +124,90 @@ public func step<T>(_ name: String, failure: FailureMode, _ body: () async throw
     }
 }
 
+/// Logs that the step `name` was skipped, with `reason`, for example `not running on CI`. Nothing runs.
+///
+/// Use it where a step only runs under a condition, so the log shows that the step exists and why it did not run.
+/// ``step(_:when:skipReason:_:)`` combines the condition and the step. Call `skipStep` directly when the work is not a
+/// plain step, for example a call of an integration that opens its own step:
+///
+/// ```swift
+/// if CI.environment.isCI {
+///     try await Keychain.unlock(name: "login", password: password)
+/// } else {
+///     skipStep("Unlock keychain login", reason: "not running on CI")
+/// }
+/// ```
+///
+/// The line is written at the current nesting depth, as a step would be. Log writes do not throw. If writing the full
+/// log fails, the error fails the command with exit code 3, as with ``step(_:failure:_:)``.
+///
+/// Only call it inside a command body, as with `step(_:_:)`. Calling it elsewhere stops the process with a
+/// `preconditionFailure`. This check is not unit tested.
+///
+/// - Parameters:
+///   - name: The name of the step, shown in the log.
+///   - reason: Why the step did not run, shown after the name.
+public func skipStep(_ name: String, reason: String) {
+    @Use var log: Log
+
+    let (context, depth, _) = stepStart(name)
+    context.writeStatus { try log.skippedStep(name: name, reason: reason, depth: depth) }
+}
+
+/// Runs `body` as the step `name` if `condition` is true, as ``step(_:_:)`` does. Otherwise it logs the step as skipped,
+/// with `skipReason`, and returns `nil` without running `body`.
+///
+/// ```swift
+/// try await step("Unlock keychains", when: CI.environment.isCI, skipReason: "not running on CI") {
+///     try await Keychain.unlock(name: "login", password: password)
+/// }
+/// ```
+///
+/// - Parameters:
+///   - name: The name shown in the log.
+///   - condition: Whether the step runs.
+///   - skipReason: Why the step did not run, logged when `condition` is false.
+///   - body: The work of the step. It is not stored, so it does not escape.
+/// - Returns: The value returned by `body`, or `nil` if the step was skipped.
+@discardableResult
+public func step<T>(
+    _ name: String,
+    when condition: Bool,
+    skipReason: String,
+    _ body: () async throws -> T
+) async throws -> T? {
+    guard condition else {
+        skipStep(name, reason: skipReason)
+        return nil
+    }
+    return try await step(name, body)
+}
+
+/// Runs `body` as the step `name` that may fail if `condition` is true, as ``step(_:failure:_:)`` does. Otherwise it
+/// logs the step as skipped, with `skipReason`, and returns `nil` without running `body`.
+///
+/// - Parameters:
+///   - name: The name shown in the log.
+///   - condition: Whether the step runs.
+///   - skipReason: Why the step did not run, logged when `condition` is false.
+///   - failure: Must be `.allowed`. See ``FailureMode``.
+///   - body: The work of the step. It is not stored, so it does not escape.
+/// - Returns: The value returned by `body`, or `nil` if the step was skipped or failed.
+@discardableResult
+public func step<T>(
+    _ name: String,
+    when condition: Bool,
+    skipReason: String,
+    failure: FailureMode,
+    _ body: () async throws -> T
+) async -> T? {
+    guard condition else {
+        skipStep(name, reason: skipReason)
+        return nil
+    }
+    return await step(name, failure: failure, body)
+}
+
 /// Runs the work of an integration call as a step, named `name` or else `defaultName`, and returns its value.
 ///
 /// This is for integration and extension authors. Scripts use `step(_:_:)` instead.

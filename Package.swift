@@ -63,6 +63,7 @@ let package = Package(
         .testTarget(
             name: "SwiftCISigningTests",
             dependencies: ["SwiftCISigning", "SwiftCITesting", "SwiftCITestSupport"],
+            resources: [.copy("Fixtures")],
             swiftSettings: moduleSettings,
         ),
         .testTarget(

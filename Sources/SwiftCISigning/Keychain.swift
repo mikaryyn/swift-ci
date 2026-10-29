@@ -3,23 +3,29 @@ import SwiftCI
 /// Unlocks keychains with the `security` command-line tool. A plain type with static methods: tests replace the
 /// ``ProcessRunner`` to check the invocation.
 public enum Keychain {
-    /// Unlocks the keychain `name.keychain` with `password`. The password is sent to `security` on standard input,
-    /// never as an argument.
+    /// Unlocks the keychain `name.keychain` with `password`. A `name` that already ends in `.keychain` or
+    /// `.keychain-db` is used as it is, so `login.keychain-db` unlocks that file. The password is sent to `security` on
+    /// standard input, never as an argument.
     ///
     /// This call opens a step named "Unlock keychain MyKeychain" when called at the top level of a command. `step`
     /// renames it. The password is never part of the step name.
     ///
     /// - Parameters:
-    ///   - name: The keychain name, without the `.keychain` extension.
+    ///   - name: The keychain name, without the `.keychain` extension, or the file name with its extension.
     ///   - password: The keychain password.
     ///   - step: The step name, or `nil` for the default name.
     public static func unlock(name: String, password: Secret, step stepName: String? = nil) async throws {
         @Use var log: Log
 
         try await step(default: "Unlock keychain \(name)", name: stepName) {
-            try await unlockKeychain(path: "\(name).keychain", password: password)
+            try await unlockKeychain(path: keychainPath(name: name), password: password)
             log.success("Unlocked keychain '\(name)'.")
         }
+    }
+
+    /// The path that `security` gets for `name`: `name.keychain`, or `name` itself if it already has an extension.
+    static func keychainPath(name: String) -> String {
+        name.hasSuffix(".keychain") || name.hasSuffix(".keychain-db") ? name : "\(name).keychain"
     }
 
     /// Runs `security unlock-keychain` for the keychain at `path`. The password goes to `security -i` on standard

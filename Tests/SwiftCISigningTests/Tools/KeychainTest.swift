@@ -36,6 +36,22 @@ extension GlobalStateTests {
             #expect(splitSecurityLine(try securityLine(of: runner.tools[0])) == ["unlock-keychain", "-p", password, "name.keychain"])
         }
 
+        /// A name that already has a keychain extension is passed to `security` unchanged.
+        @Test(arguments: [
+            ("login", "login.keychain"),
+            ("login.keychain", "login.keychain"),
+            ("login.keychain-db", "login.keychain-db"),
+        ])
+        func nameWithExtensionIsUsedAsItIs(name: String, path: String) async throws {
+            let restore = secretsSetUp()
+            defer { restore() }
+            let (_, runner) = registerToolMocks()
+
+            try await Keychain.unlock(name: name, password: Secret(value: "pw-VALUE-3"))
+
+            #expect(splitSecurityLine(try securityLine(of: runner.tools[0])) == ["unlock-keychain", "-p", "pw-VALUE-3", path])
+        }
+
         /// A line feed in the password is refused before any process is started.
         @Test func passwordWithLineFeedIsAUsageErrorAndTheRunnerIsNotCalled() async {
             let restore = secretsSetUp()

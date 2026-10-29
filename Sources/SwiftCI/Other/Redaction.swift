@@ -131,6 +131,10 @@ struct RedactingLog: Log {
         try inner.allowedFailedStep(name: SecretRegistry.redact(name), depth: depth)
     }
 
+    func skippedStep(name: String, reason: String, depth: Int) throws {
+        try inner.skippedStep(name: SecretRegistry.redact(name), reason: SecretRegistry.redact(reason), depth: depth)
+    }
+
     func lines(title: String, lines: String) {
         inner.lines(title: SecretRegistry.redact(title), lines: SecretRegistry.redact(lines))
     }

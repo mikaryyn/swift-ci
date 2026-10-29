@@ -98,11 +98,10 @@ it. It covers roadmap items 1 and 2 in [README.md](../../README.md#roadmap),
 plus parts of item 3.
 
 - Correct exit codes. A failed step fails the run.
-- New script syntax, milestones M0 to M5 of
-  [Script syntax](script-syntax.md): a testable runner, throwing steps, allowed failures,
-  inline cleanup and failure handlers, integration calls as steps (before
-  the module split) and removal of `Workflow`. These are breaking
-  changes, so they land before 0.1.0.
+- New script syntax: a testable runner, throwing steps, allowed failures,
+  inline cleanup and failure handlers, integration calls as steps and
+  removal of `Workflow`. These were breaking changes, so they landed before
+  0.1.0. See [Concepts](../../README.md#concepts).
 - Process API, secret registration and redaction, and the fastlane fallback
   invocation fix. These are implemented; the user-facing overview is in
   [Output, filtering and secrets](../../README.md#output-filtering-and-secrets),
@@ -143,20 +142,21 @@ run before and after the core work are replaced natively. The core work is
 replaced last. Danger and `fastlane match` still run, called explicitly from
 SwiftCI.
 
-Command descriptions and inputs (milestone M6 of
-[Script syntax](script-syntax.md)) land when the first ported workflow needs
-an input.
+Command descriptions, options and inputs (`input(…)`), `--help` and
+`--verbose` are implemented. See [Command line](../../README.md#command-line).
 
 Workflows are ported in this order:
 
 1. **Internal ad-hoc deploy.** This workflow exercises most of the existing
    prototype code (plist, icon overlay, archive and export, Git, Slack). It
-   does not involve Danger and carries low risk. Its new generic pieces are:
-   - version and build number setting (Info.plist or build settings)
-   - reading marketing version and build number
-   - artifact naming helpers
+   does not involve Danger and carries low risk. Its new generic pieces are
+   planned in [Ad-hoc distribution](ad-hoc-distribution.md):
+   - build number setting (Info.plist) and version reading
    - OTA distribution: `manifest.plist` and install page for an exported IPA
-   - `match` via fastlane (`using: .fastlane`)
+   - `match` via fastlane with Bundler and several app identifiers
+
+   Artifact names are composed in the project's script from existing
+   queries; there is no naming helper.
 2. **App Store deploy.**
    - Archive, then upload with `xcodebuild -exportArchive` using method
      `app-store-connect`, the `upload` destination and App Store Connect API
@@ -170,7 +170,7 @@ Workflows are ported in this order:
    - The deployment table (deployment name to build configurations) moves
      from Groovy into the project's CI package, for example
      `./ci appstore --deployment=<name>`. Options use the `--name=value`
-     form (see [Script syntax](script-syntax.md#rules)).
+     form (see [Command line](../../README.md#command-line)).
    - The API key reaches the tool as a file path taken from a secret, never
      as an argument value.
 3. **Merge request tests.**

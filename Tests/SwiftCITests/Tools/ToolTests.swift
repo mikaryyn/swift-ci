@@ -34,6 +34,20 @@ extension GlobalStateTests {
             #expect(log.loggedLines == ["keep", "warn"])
         }
 
+        /// The block filter decides the lines first, and `filters` apply to the lines it shows.
+        @Test func blockFilterRunsBeforeTheFilters() async throws {
+            let (log, runner) = registerToolMocks()
+            runner.responses = [.init(lines: [stdoutLine("+--+"), stdoutLine("| Keep |"), stdoutLine("+--+"), stdoutLine("hide-me")])]
+
+            try await Tool(
+                command: "/usr/bin/fake-tool",
+                filters: [filter("hide-me")],
+                blockFilter: tableFilter(keeping: { $0 == "Keep" }, otherLines: { $0 })
+            ).run()
+
+            #expect(log.loggedLines == ["+--+", "| Keep |", "+--+"])
+        }
+
         @Test func runThrowsNamingTheToolAndShowsTheLastTenStderrLines() async {
             let (_, runner) = registerToolMocks()
             let stderr = (1...12).map { "e\($0)" }.joined(separator: "\n")

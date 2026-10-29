@@ -18,6 +18,9 @@ public protocol Log {
     /// Logs that a step failed but was allowed to fail, so the command continues. `depth` is the nesting level
     /// (see ``enteringStep(name:depth:)``). The error message is logged separately, as a warning.
     func allowedFailedStep(name: String, depth: Int) throws
+    /// Logs that a step was skipped, and why. `depth` is the nesting level (see ``enteringStep(name:depth:)``). In the
+    /// full log the line is a step header, with dividers as for ``enteringStep(name:depth:)``.
+    func skippedStep(name: String, reason: String, depth: Int) throws
     func lines(title: String, lines: String)
     func lines(title: String, lines: [String])
 }
@@ -64,6 +67,15 @@ public extension Log {
         let indent = stepIndent(depth)
         self("\(indent)Step [\(name.yellow().bold())] failed (allowed)")
         try FullLog.write("\(indent)Step [\(name)] failed (allowed)\n")
+    }
+
+    func skippedStep(name: String, reason: String, depth: Int) throws {
+        if depth == 0 {
+            self("")
+        }
+        let indent = stepIndent(depth)
+        self("\(indent)Skipped step [\(name.darkGray())]: \(reason)")
+        try FullLog.writeHeader("Skipped step [\(name)]: \(reason)", depth: depth)
     }
 
     func lines(title: String, lines: String) {

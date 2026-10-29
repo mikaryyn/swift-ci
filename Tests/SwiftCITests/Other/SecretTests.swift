@@ -33,6 +33,9 @@ final class RecordingLog: Log {
     func finishedStep(name: String, duration: TimeInterval, depth: Int) throws { calls.append("finishedStep:\(name)") }
     func failedStep(name: String, depth: Int) throws { calls.append("failedStep:\(name)") }
     func allowedFailedStep(name: String, depth: Int) throws { calls.append("allowedFailedStep:\(name)") }
+    func skippedStep(name: String, reason: String, depth: Int) throws {
+        calls.append("skippedStep:\(name)|\(reason)")
+    }
     func lines(title: String, lines: String) { calls.append("linesText:\(title)|\(lines)") }
     func lines(title: String, lines: [String]) { calls.append("linesArray:\(title)|\(lines.joined(separator: ","))") }
 }
@@ -296,6 +299,7 @@ extension GlobalStateTests {
             try log.finishedStep(name: "step \(Self.value)", duration: 1.5, depth: 1)
             try log.failedStep(name: "step \(Self.value)", depth: 1)
             try log.allowedFailedStep(name: "step \(Self.value)", depth: 1)
+            try log.skippedStep(name: "step \(Self.value)", reason: "reason \(Self.value)", depth: 1)
             log.lines(title: "title \(Self.value)", lines: "text \(Self.value)")
             log.lines(title: "title \(Self.value)", lines: ["one \(Self.value)", "two"])
 
@@ -310,6 +314,7 @@ extension GlobalStateTests {
                 "finishedStep:step \(mask)",
                 "failedStep:step \(mask)",
                 "allowedFailedStep:step \(mask)",
+                "skippedStep:step \(mask)|reason \(mask)",
                 "linesText:title \(mask)|text \(mask)",
                 "linesArray:title \(mask)|one \(mask),two",
             ])

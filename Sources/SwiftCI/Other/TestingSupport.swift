@@ -13,14 +13,15 @@ import Foundation
 }
 
 /// The global state of SwiftCI that a test changes: the dependency registrations, the secret registry, the environment
-/// that `Environment` and `Secret` read, the CI environment and its exporter, the commands, the running command, the full
-/// log and the artifacts directory.
+/// that `Environment` and `Secret` read, the CI environment and its exporter, the commands, the options of the running
+/// run, the running command, the full log and the artifacts directory.
 /// Created by ``isolateGlobalState(environment:artifactsDirectory:)`` and given back to ``restoreGlobalState(_:)``.
 @_spi(Testing) public struct GlobalStateSnapshot {
     fileprivate let registrations: [ObjectIdentifier: Any]
     fileprivate let secrets: SecretRegistry.State
     fileprivate let environment: () -> [String: String]
     fileprivate let commands: [Command]
+    fileprivate let runOptions: RunOptions?
     fileprivate let runContext: RunContext?
     fileprivate let fullLogPath: URL?
     fileprivate let fullLogFile: FileHandle?
@@ -47,6 +48,7 @@ import Foundation
         secrets: SecretRegistry.snapshot(),
         environment: EnvironmentSource.variables,
         commands: commands,
+        runOptions: RunOptions.current,
         runContext: RunContext.current,
         fullLogPath: FullLog.path,
         fullLogFile: FullLog.file,
@@ -64,13 +66,14 @@ import Foundation
 }
 
 /// Puts back the global state saved by ``isolateGlobalState(environment:artifactsDirectory:)``: the registrations, the
-/// secret registry, the environment source, the CI environment and its exporter, the commands, the running command, the
-/// full log and the artifacts directory.
+/// secret registry, the environment source, the CI environment and its exporter, the commands, the options of the running
+/// run, the running command, the full log and the artifacts directory.
 @_spi(Testing) public func restoreGlobalState(_ snapshot: GlobalStateSnapshot) {
     registrations = snapshot.registrations
     SecretRegistry.restore(snapshot.secrets)
     EnvironmentSource.variables = snapshot.environment
     commands = snapshot.commands
+    RunOptions.current = snapshot.runOptions
     RunContext.current = snapshot.runContext
     FullLog.path = snapshot.fullLogPath
     FullLog.file = snapshot.fullLogFile

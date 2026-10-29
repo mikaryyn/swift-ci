@@ -17,11 +17,19 @@ public func SwiftCI(
     registerDependencies()
     let exitCode = await runSwiftCI(
         arguments: Array(CommandLine.arguments.dropFirst()),
+        programName: programName(executablePath: CommandLine.arguments.first),
         ciAdapters: ciAdapters,
         artifactsDirectory: artifactsDirectory,
         script: script
     )
     exit(exitCode)
+}
+
+/// The name of the script in the usage: `./` and the executable's file name, for example `./ci`. The executable has
+/// the name of the script's product, which is also the usual name of its wrapper script.
+internal func programName(executablePath: String?) -> String {
+    guard let executablePath, !executablePath.isEmpty else { return "./ci" }
+    return "./" + URL(filePath: executablePath).lastPathComponent
 }
 
 /// Registers a command, so that it can be run from the command line.
@@ -50,6 +58,7 @@ internal func registerDependencies() {
 }
 
 /// Runs the script and the commands named in `arguments` (without the executable name) and returns the exit code.
+/// `programName` is the name shown in the usage.
 /// Does not register dependencies and does not exit the process. Used by `SwiftCITesting`; not for scripts.
 ///
 /// The artifacts directory is chosen here, once, as in ``SwiftCI(ciAdapters:artifactsDirectory:script:)``. The CI
@@ -57,6 +66,7 @@ internal func registerDependencies() {
 /// restored when the run returns, so ``Artifacts/directory`` and ``CI/environment`` are set only inside the run.
 @_spi(Testing) public func runSwiftCI(
     arguments: [String],
+    programName: String = "./ci",
     ciAdapters: [any CIAdapter] = [],
     artifactsDirectory: URL? = nil,
     script: () async throws -> ()
@@ -76,11 +86,18 @@ internal func registerDependencies() {
         CIState.exporter = previousExporter
     }
 
+    let previousOptions = RunOptions.current
+    defer { RunOptions.current = previousOptions }
+
     commands = []
     RunContext.current = nil
     do {
+        // Parsing comes first, so a malformed option stops the run before the script runs. Inputs read the parsed
+        // options from inside the script and from the commands.
+        let parsed = try RunArguments(parsing: arguments)
+        RunOptions.current = RunOptions(parsed)
         try await script()
-        return try await processCommands(arguments: arguments)
+        return try await processCommands(arguments: parsed, programName: programName)
     } catch let error as BuildError {
         log.error(error.message)
         return error.code.rawValue
@@ -92,17 +109,27 @@ internal func registerDependencies() {
 
 /// Runs the named commands in order. Stops at the first failed command and returns its exit code, or 0.
 ///
-/// `--list` prints the registered commands and returns 0 without running any command. A missing or unknown command
-/// name logs the error followed by the list and returns the usage exit code.
-internal func processCommands(arguments: [String]) async throws(BuildError) -> Int32 {
+/// `--help` prints the usage and the command list, and `--list` prints the command list. Both return 0 without running
+/// any command, and `--help` wins if both are given. A missing or unknown command name logs the error followed by the
+/// list and returns the usage exit code. When commands ran, the options that no `input` call read are logged as a
+/// warning, whether the run succeeded or failed. The warning does not change the exit code.
+internal func processCommands(arguments: RunArguments, programName: String) async throws(BuildError) -> Int32 {
     @Use var log: Log
 
-    if arguments.contains("--list") {
+    if arguments.flags.contains("help") {
+        logUsage(programName: programName)
+        log("")
         logCommandList()
         return 0
     }
 
-    guard !arguments.isEmpty else {
+    if arguments.flags.contains("list") {
+        logCommandList()
+        return 0
+    }
+
+    let names = arguments.commandNames
+    guard !names.isEmpty else {
         log.error("No commands specified.")
         log("")
         logCommandList()
@@ -110,7 +137,7 @@ internal func processCommands(arguments: [String]) async throws(BuildError) -> I
     }
 
     let commandDict = Dictionary(uniqueKeysWithValues: commands.map { ($0.name, $0) })
-    for name in arguments {
+    for name in names {
         if !commandDict.keys.contains(name) {
             log.error("Unsupported command '\(name)'.")
             log("")
@@ -119,13 +146,46 @@ internal func processCommands(arguments: [String]) async throws(BuildError) -> I
         }
     }
 
-    for name in arguments {
+    for name in names {
         guard let command = commandDict[name] else { continue }
         if let exitCode = await run(command: command) {
+            logUnreadOptions()
             return exitCode
         }
     }
+    logUnreadOptions()
     return 0
+}
+
+/// Logs the usage of the script named `programName`: the command forms, the option form and the reserved flags.
+private func logUsage(programName: String) {
+    @Use var log: Log
+
+    let forms = [
+        ("<command> [<command> ...] [--name=value ...]", "Run commands in order; stop at the first failed command."),
+        ("--list", "List available commands."),
+        ("--verbose <command> ...", "Show unfiltered tool output on the console."),
+        ("--help", "Show this usage and the command list."),
+    ]
+    let width = forms.map { programName.count + 1 + $0.0.count }.max() ?? 0
+    log("Usage:")
+    for (form, description) in forms {
+        let usage = "\(programName) \(form)".padding(toLength: width, withPad: " ", startingAt: 0)
+        log("  \(usage)  \(description)")
+    }
+    log("")
+    log("Options are written --name=value, with a value after '='. Each input reads --name=value, then the environment")
+    log("variable with the upper-case name (build-number reads BUILD_NUMBER), then its default. Flags --list, --help and")
+    log("--verbose never take a value. Each option may be given once.")
+}
+
+/// Logs a warning that lists the options no `input` call read in this run. Logs nothing if every option was read.
+private func logUnreadOptions() {
+    @Use var log: Log
+
+    guard let unread = RunOptions.current?.unreadNames, !unread.isEmpty else { return }
+    let flags = unread.map { "--\($0)" }.joined(separator: ", ")
+    log.warning("No input read these options: \(flags). Check their spelling, or remove them.")
 }
 
 /// Logs the registered commands in registration order, each with its description if it has one.

@@ -236,6 +236,38 @@ extension GlobalStateTests {
             #expect(try String(contentsOf: artifacts.appending(path: "MyApp.dSYM.zip"), encoding: .utf8) == "new zip")
         }
 
+        /// The export passes only the archive, the export path and the options plist. xcodebuild rejects a workspace
+        /// without a scheme there.
+        @Test func archiveAndExportRunsTheExportWithoutProjectArguments() async throws {
+            let runner = ProcessRunnerMock()
+            runner.handler = Self.archiveAndExportHandler(exportedIpaName: "MyApp.ipa")
+            let artifacts = temporaryArtifactsDirectory()
+            defer { try? FileManager.default.removeItem(at: artifacts.deletingLastPathComponent()) }
+            let xcode = Xcode(
+                workspace: URL(filePath: "/work/MyApp.xcworkspace"),
+                scheme: "MyApp",
+                configuration: "Release",
+                config: .init(xcconfig: ["A": "B"])
+            )
+
+            let result = await SwiftCITest.run(["release"], artifactsDirectory: artifacts) {
+                register(ProcessRunner.self, runner)
+                command(Command("release") {
+                    _ = try await xcode.archiveAndExport(ipaFileName: "MyApp")
+                })
+            }
+
+            #expect(result.exitCode == 0)
+            let export = try #require(runner.tools.first { $0.arguments.contains("-exportArchive") })
+            #expect(export.arguments.count == 7)
+            #expect(export.arguments.first == "-exportArchive")
+            #expect(export.arguments[1] == "-archivePath")
+            #expect(export.arguments[2].hasSuffix("/MyApp.xcarchive"))
+            #expect(export.arguments[3] == "-exportPath")
+            #expect(export.arguments[5] == "-exportOptionsPlist")
+            #expect(export.arguments[6].hasSuffix("/export_options.plist"))
+        }
+
         /// `includeDSYMZip: false` writes the IPA only, and runs no `ditto`.
         @Test func archiveAndExportWithoutDSYMZipRunsNoDitto() async throws {
             let runner = ProcessRunnerMock()

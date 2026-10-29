@@ -120,8 +120,11 @@ public struct Xcode {
 
     /// Reads the build settings of the scheme, or of the project if no scheme is set.
     ///
+    /// The scheme has one entry per target. Without `target`, the first entry is used. With `target`, the entry of that
+    /// target is used, and a target that the entries do not list is a ``BuildError`` that lists the available targets.
+    ///
     /// A query: does not open a step.
-    public func getBuildSettings() async throws -> BuildSettings {
+    public func getBuildSettings(target: String? = nil) async throws -> BuildSettings {
         log.completion("Getting Xcode build settings…")
         let tool = Tool(
             command: Self.xcodebuildPath,
@@ -130,7 +133,16 @@ public struct Xcode {
         )
         let output = try await tool.output()
         let data = output.data(using: .utf8) ?? Data()
-        return try JSONDecoder().decode([BuildSettings].self, from: data).first ?? .empty
+        let entries = try JSONDecoder().decode([BuildSettings].self, from: data)
+        guard let target else {
+            return entries.first ?? .empty
+        }
+        if let entry = entries.first(where: { $0.target == target }) {
+            return entry
+        }
+        let available = entries.compactMap(\.target)
+        let list = available.isEmpty ? "none" : available.joined(separator: ", ")
+        throw BuildError(message: "Failed to find target '\(target)' in the build settings. Available targets: \(list).")
     }
 
     public struct Configuration {
@@ -141,7 +153,7 @@ public struct Xcode {
         var xcconfig: [String: String]
     }
 
-    internal func makeArguments(_ baseArguments: [String], useScheme: Bool = true) throws -> [String] {
+    internal func makeArguments(_ baseArguments: [String]) throws -> [String] {
         var result = baseArguments
         if let workspace {
             result.append(contentsOf: ["-workspace", workspace.filePath])
@@ -149,7 +161,7 @@ public struct Xcode {
         if let project {
             result.append(contentsOf: ["-project", project.filePath])
         }
-        if useScheme, let scheme {
+        if let scheme {
             result.append(contentsOf: ["-scheme", scheme])
         }
         if let destination {
@@ -227,13 +239,15 @@ public struct Xcode {
         return archiveInfo
     }
 
+    /// Exports the archive. xcodebuild takes no workspace, project, scheme, destination or configuration here: it fails
+    /// with a workspace but no scheme, and the archive already holds what the export needs.
     private func exportArchive(from archiveURL: URL, to exportURL: URL, exportOptionsURL: URL) async throws {
-        let exportArguments = try makeArguments([
+        let exportArguments = [
             "-exportArchive",
             "-archivePath", archiveURL.filePath,
             "-exportPath", exportURL.filePath,
             "-exportOptionsPlist", exportOptionsURL.filePath
-        ], useScheme: false)
+        ]
         let exportTool = Tool(
             command: Self.xcodebuildPath,
             arguments: exportArguments,

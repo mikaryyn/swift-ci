@@ -174,6 +174,10 @@ and [Is this a good idea?](#is-this-a-good-idea).
   secrets or host logs. Jenkins, GitLab CI, GitHub Actions, Bitrise or Xcode
   Cloud keep doing that. SwiftCI is what they invoke.
 - **Not a YAML workflow engine.** Workflows are Swift code, not configuration.
+  Scripts are ordinary async Swift: no result builders and no macros (which
+  would need swift-syntax), and commands are registered explicitly with
+  `command(…)`. Reusable groups of steps are plain `async throws` functions.
+- **Not parallel.** Steps and commands run one after another.
 - **Not a build system.** It drives `xcodebuild` and `swift build`. It does not
   replace them, and it does not generate projects (see Tuist, XcodeGen).
 - **Not a large step library.** SwiftCI itself will not ship integrations for
@@ -275,8 +279,8 @@ exec swift run --package-path CI -c release ci "$@"
 
 | Concept | Description |
 |---|---|
-| **Command** | A named entry point invoked from the command line, e.g. `./ci test`. Several commands can be given and run in order. Inside the body, `cleanup { }` and `onFailure { }` register handlers that run when the command ends. |
-| **Step** | A named, timed unit of work inside a command, written `try await step("Name") { … }`. Steps run sequentially and return the value of their body. A step that throws is logged as failed. An error that escapes the command body fails the command, but a script can catch a step's error with `do`/`catch` and continue. A step started inside another step is shown in the outer step's group. A step that may fail is written `await step("Name", failure: .allowed) { … }`. It returns `nil` if it failed, logs the error as a warning, and the command continues. |
+| **Command** | A named entry point invoked from the command line, e.g. `./ci test`. Several commands can be given and run in order. Inside the body, `cleanup { }` and `onFailure { }` register handlers that run when the command ends. A command reads inputs with `try input("track", default: "beta")`, from `--track=production` on the command line, then from the environment variable `TRACK`, then from the default. |
+| **Step** | A named, timed unit of work inside a command, written `try await step("Name") { … }`. Steps run sequentially and return the value of their body. A step that throws is logged as failed. An error that escapes the command body fails the command, but a script can catch a step's error with `do`/`catch` and continue. A step started inside another step is shown in the outer step's group. A step that may fail is written `await step("Name", failure: .allowed) { … }`. It returns `nil` if it failed, logs the error as a warning, and the command continues. A step that runs only under a condition is written `try await step("Name", when: condition, skipReason: "not on CI") { … }`; when the condition is false, the log shows the step as skipped, with the reason. |
 | **Tool** | A child process (`xcodebuild`, `git`, a shell script). `run()` streams stdout and stderr to the console and the full log, and throws on a non-zero exit. `output()` returns stdout, and `result()` returns stdout, stderr and the exit code. A tool can set environment variables, a working directory, input, a timeout and filters. A program name is looked up in `PATH`. `Tool(shellCommand:)` runs `/bin/sh -c` for shell scripts. |
 | **Integration** | Typed Swift API for a tool or service: `Xcode`, `Keychain`, `Signing`, `AppStoreConnect`, `Slack`, `Git`, … A call that does work, such as `xcode.archiveAndExport(…)`, is a step itself, with a default name. `step: "Name"` renames it. A query, such as `Git.getCommitHash()`, is not a step. A call made inside a step is part of that step. |
 | **Extension** | A Swift library that adds integrations, ready-made steps, filters or report writers on top of the core. |
@@ -285,12 +289,11 @@ exec swift run --package-path CI -c release ci "$@"
 
 ### Example
 
-*Illustrative. Parts of this API are planned and not final. Throwing steps,
-allowed failures and inline `cleanup` / `onFailure` handlers are implemented.
-Integration calls as steps are implemented for `Xcode`, `Keychain`, `Slack`,
-`Fastlane` and `Icon`. The other calls are planned; see
-[Script syntax](docs/plans/script-syntax.md). This example and the sections
-below are updated as that plan is implemented.*
+*Illustrative. Commands, throwing steps, allowed failures, inline `cleanup` /
+`onFailure` handlers and inputs are implemented. Integration calls as steps are
+implemented for `Xcode`, `Keychain`, `Slack`, `Fastlane` and `Icon`. The other
+integration calls (`xcode.test`, `Simulator`, `Signing`, `AppStoreConnect`) are
+planned; see the [roadmap](#roadmap) and the [capabilities](#capabilities).*
 
 ```swift
 import SwiftCI
@@ -301,14 +304,15 @@ import SwiftCISlack
 
 let xcode = Xcode(workspace: URL(filePath: "MyApp.xcworkspace"), scheme: "MyApp")
 
-let test = Command("test") {
+let test = Command("test", description: "Run the unit tests") {
+    let device: String = try input("device", default: "iPhone 17")
     cleanup { try await Simulator.shutdownAll() }
 
     try await xcode.resolvePackages()
-    try await xcode.test(destination: .iOSSimulator(name: "iPhone 17"))
+    try await xcode.test(destination: .iOSSimulator(name: device))
 }
 
-let release = Command("release") {
+let release = Command("release", description: "Build and upload to TestFlight") {
     let matchPassword = Secret("MATCH_PASSWORD")
     let slackWebhook = Secret("SLACK_WEBHOOK_URL")
 
@@ -336,14 +340,50 @@ await SwiftCI {
 ### Command line
 
 ```text
-./ci <command> [<command> ...]   Run commands in order; stop at the first failed command.
-./ci --list                      List available commands.
-./ci --verbose <command>         Show unfiltered tool output on the console. (planned)
-./ci --help                      (planned)
+./ci <command> [<command> ...] [--name=value ...]   Run commands in order; stop at the first failed command.
+./ci --list                                          List available commands.
+./ci --verbose <command>                             Show unfiltered tool output on the console.
+./ci --help                                          Show the usage and the command list.
 ```
 
 `--list` prints each command with the `description:` given to `Command`. A
-missing or unknown command name prints the same list after the error.
+missing or unknown command name prints the same list after the error. `--help`
+prints the usage and the same list, and runs no command. If `--help` and
+`--list` are both given, `--help` wins.
+
+`--verbose` shows every line of tool output on the console, without the
+filters of the integrations. Secrets stay masked, and the full log is the same
+as without it.
+
+**Options and inputs.** An option is always written `--name=value`, with the
+value after `=`. Bool values are written too, as `--skip-tests=true`. An empty
+value (`--device=`) is a valid value, and the value may contain `=`. There is no
+`--name value` form and no bare `--name`. Both are usage errors, and the message
+shows the `--name=value` form. Options are global: every command of the run sees
+them.
+
+A script reads an option with `input`, which uses the same name as the option:
+
+```swift
+let device: String = try input("device", default: "iPhone 17")
+let track: Track = try input("track")   // a raw-value enum
+```
+
+`input` takes any `LosslessStringConvertible` type (`String`, `Int`, `Bool`, …)
+or a raw-value type. It reads `--device=…`, then the environment variable with
+the upper-case name (`build-number` reads `BUILD_NUMBER`; an empty variable
+counts as not set), then the default. A missing input without a default, or a
+value that does not convert, is a usage error (exit code 2) that names the
+option and the environment variable. Secrets are never inputs; declare them
+with `Secret`.
+
+`--list`, `--help` and `--verbose` are reserved flags. They never take a value,
+and `input` refuses those names. Each option may be given only once. A malformed
+argument stops the run with exit code 2 before any command runs.
+
+When commands ran, SwiftCI logs a warning at the end of the run, whether it
+succeeded or failed, that lists each option no `input` call read, such as a
+mistyped `--trak=beta`. The warning does not change the exit code.
 
 SwiftCI parses its arguments itself. No argument-parsing dependency is required
 for this small set of options.
@@ -502,9 +542,8 @@ rules: generic, minimal dependencies, default filters, secret safety.
   AppStoreConnect-Swift-SDK for metadata, TestFlight testers and groups, users
   and review submission. It suits projects that need more than the minimal
   first-party client.
-- **Ad-hoc and enterprise over-the-air install.** Generate the `manifest.plist`
-  and install page for an exported IPA, and publish them to a web server or
-  object storage.
+- **Publishing over-the-air install files.** Upload the IPA, `manifest.plist`
+  and install page to a web server or object storage.
 - **Other distribution services.** Firebase App Distribution and similar
   services, through their HTTP APIs.
 - **Screenshots.** Run UI tests that capture App Store screenshots and collect
@@ -587,14 +626,14 @@ implemented.
 | Area | Capability | Status |
 |---|---|---|
 | Core | Commands, throwing and allowed-failure steps with nesting, integration calls as steps, `cleanup` / `onFailure` handlers | Prototype |
-| Core | Process execution with streamed output and filters | Prototype |
+| Core | Process execution with streamed output and filters; `--verbose` shows the output unfiltered | Prototype |
 | Core | Console log with colours, per-command full log file (`logs/<command>.log` in the artifacts directory) | Prototype |
 | Core | Artifacts directory: `SWIFTCI_ARTIFACTS_DIR`, `SwiftCI(artifactsDirectory:)`, `Artifacts.directory` and `Artifacts.url(_:)` | Prototype |
 | Core | Environment variables (`@Env`, `@EnvOpt`) | Prototype |
 | Core | Secret declaration (`Secret("NAME")`), redaction in all writers, secrets in `Tool` environment and input | Prototype |
 | Core | Exit codes (failed steps exit 1, usage errors 2, internal errors 3) | Prototype |
-| Core | `--list`, and the command list after a missing or unknown command | Prototype |
-| Core | `--verbose`, `--help` | Planned |
+| Core | `--list`, `--help`, and the command list after a missing or unknown command | Prototype |
+| Core | Options `--name=value` and inputs (`input(…)`) from the command line, then the environment, then the default; a warning for options that no input read | Prototype |
 | Core | Builds and runs on Linux | Planned |
 | Core | Public, versioned extension API | Planned |
 | Core | Split into core and first-party modules (`SwiftCI`, `SwiftCIXcode`, `SwiftCISigning`, `SwiftCISlack`; macOS verified, Linux not yet) | Prototype |
@@ -610,7 +649,8 @@ implemented.
 | Xcode | Default `xcodebuild` console filter: errors, warnings and the result line | Prototype |
 | Xcode | `xcodebuild` output formatter with progress (xcbeautify-style) | Planned |
 | Xcode | Xcode selection and preflight checks (version, SDKs, simulators) | Planned |
-| Xcode | Version and build number setting | Planned |
+| Xcode | Version and build number setting | Prototype |
+| Xcode | Over-the-air install files (`manifest.plist` and install page) | Prototype |
 | Simulators | Boot, shut down, erase via `simctl` | Planned |
 | SwiftPM | `swift build`, `swift test`, with output formatting | Planned |
 | Signing | Keychain unlock; the password goes to `security -i` on standard input, never as an argument | Prototype |
@@ -642,7 +682,10 @@ For now, the external one is always fastlane. These are the rules:
    version it used.
 4. **SwiftCI does not install fallbacks.** If a project uses the fastlane
    fallback, the project provides fastlane, typically through its own `Gemfile`
-   and Bundler. SwiftCI only invokes it.
+   and Bundler. SwiftCI only invokes it. The project chooses how: `.direct` runs
+   `fastlane` from `PATH`, and `.bundler(gemfile:)` runs `bundle exec fastlane`,
+   with `BUNDLE_GEMFILE` set when a Gemfile path is given. SwiftCI never looks
+   for a Gemfile by itself.
 5. **Native must earn its place.** A native implementation becomes the
    recommended choice only once it has automated tests against realistic
    fixtures and has been used in real CI runs.
@@ -662,7 +705,8 @@ SwiftCI writes each tool's output to two places:
 
 - **Console.** Filtered, coloured and compact. Each integration has a default
   filter that keeps progress (e.g. "Compiling Foo.swift"), warnings, errors and
-  test results, and drops noise. `--verbose` disables filtering. Colours follow
+  test results, and drops noise. `--verbose` skips the filters, so every line
+  reaches the console; secrets are still masked. Colours follow
   terminal detection and the `NO_COLOR` convention **(planned)**.
 - **Full log.** The complete output of every tool, unfiltered but with secrets
   redacted. It has one file per command, with step headers. The log is saved as
@@ -673,6 +717,11 @@ SwiftCI writes each tool's output to two places:
 Filters are plain Swift functions of type `(String) -> String?`. A filter returns
 the line, a rewritten line, or `nil` to hide it. Projects can replace or extend
 the default filters of any tool.
+
+A line whose meaning depends on the lines around it is decided by a
+`BlockFilter`, which may show several lines for one or hold a line back. The
+helper `tableFilter(keeping:otherLines:)` shows or hides each table of the output
+as a whole, by its title, and passes the other lines on to a plain filter.
 
 Secret handling follows these rules:
 
@@ -943,8 +992,8 @@ Typical Bitrise steps and fastlane actions, and their SwiftCI counterparts:
 | `script` | `step(name) { … }` with Swift code, or `Tool(shellCommand:)` for shell |
 | `xcode-test` / `scan` | `Xcode.test` **(planned)** |
 | `xcode-archive` / `gym` | `Xcode.archiveAndExport`, a step itself. No `step` wrapper needed |
-| `xcode-project-info` | `Xcode.getBuildSettings` |
-| `set-xcode-build-number` / `increment_build_number` | Version and build number API **(planned)** |
+| `xcode-project-info` | `Xcode.getBuildSettings(target:)` and `Xcode.getVersion` |
+| `set-xcode-build-number` / `increment_build_number` | `Xcode.setBuildNumber`; read the current value with `Xcode.getVersion` |
 | `fastlane match` (readonly) | `Signing.installMatchAssets(using: .native)` |
 | `deploy-to-itunesconnect-deliver` / `pilot` | `AppStoreConnect.upload` **(planned)**, or the fastlane fallback |
 | `slack` | `Slack.send`, a step itself |
@@ -953,7 +1002,7 @@ Typical Bitrise steps and fastlane actions, and their SwiftCI counterparts:
 | `is_always_run` | `cleanup { … }` |
 | `is_skippable` | `step(name, failure: .allowed) { … }` |
 | `envman add` (pass values between steps) | `CI.export`, which passes a value to later steps. Inside one script, use Swift variables |
-| `run_if` | Ordinary Swift `if` |
+| `run_if` | `step(name, when: condition, skipReason: …) { … }`, which logs the skipped step, or an ordinary Swift `if` |
 
 Migration can be gradual. Keep the existing CI server, replace one Bitrise
 workflow or fastlane lane at a time with a SwiftCI command, and call that
@@ -1054,8 +1103,8 @@ The order of work follows from adopting SwiftCI in a real project. See the
 2. **Core and modules.** Split the package into the core and first-party
    modules and `SwiftCITesting` (done on macOS). Make the extension API public,
    and build and test the core on Linux.
-3. **Clean output.** Add a default `xcodebuild` formatter, a step summary
-   and `--verbose`. The artifacts directory is in the core; the
+3. **Clean output.** Add a default `xcodebuild` formatter and a step summary.
+   The artifacts directory is in the core; the
    integrations that write files into it follow.
 4. **Xcode test path.** Add `Xcode.test`, xcresult summaries, JUnit reports,
    simulator management, Xcode preflight checks, and SwiftPM build and test

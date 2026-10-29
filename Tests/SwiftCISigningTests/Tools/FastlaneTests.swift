@@ -10,7 +10,7 @@ extension GlobalStateTests {
         @Test func matchRunsFastlaneByNameWithTheArgumentArray() async throws {
             let (_, runner) = registerToolMocks()
 
-            try await Fastlane.match(type: .appstore, appIdentifier: "com.example.myapp", teamId: "TEAM123")
+            try await Fastlane.match(type: .appstore, appIdentifiers: ["com.example.myapp"], teamId: "TEAM123")
 
             #expect(runner.tools.count == 1)
             #expect(runner.tools[0].command == "fastlane")
@@ -22,12 +22,157 @@ extension GlobalStateTests {
         @Test func matchUpdateRunsFastlaneByNameWithForce() async throws {
             let (_, runner) = registerToolMocks()
 
-            try await Fastlane.matchUpdate(type: .adhoc, appIdentifier: "com.example.myapp", teamId: "TEAM123")
+            try await Fastlane.matchUpdate(type: .adhoc, appIdentifiers: ["com.example.myapp"], teamId: "TEAM123")
 
             #expect(runner.tools.count == 1)
             #expect(runner.tools[0].command == "fastlane")
             #expect(runner.tools[0].arguments == [
                 "match", "adhoc", "--force", "--app_identifier", "com.example.myapp", "--team_id", "TEAM123",
+            ])
+        }
+
+        @Test func verbosePassesTheVerboseFlagAfterTheMode() async throws {
+            let (_, runner) = registerToolMocks()
+
+            try await Fastlane.match(type: .adhoc, appIdentifiers: ["com.example.myapp"], teamId: "TEAM123", verbose: true)
+            try await Fastlane.matchUpdate(
+                type: .adhoc, appIdentifiers: ["com.example.myapp"], teamId: "TEAM123", verbose: true
+            )
+
+            #expect(runner.tools.count == 2)
+            #expect(runner.tools[0].arguments == [
+                "match", "adhoc", "--readonly", "--verbose", "--app_identifier", "com.example.myapp", "--team_id", "TEAM123",
+            ])
+            #expect(runner.tools[1].arguments == [
+                "match", "adhoc", "--force", "--verbose", "--app_identifier", "com.example.myapp", "--team_id", "TEAM123",
+            ])
+        }
+
+        @Test func severalAppIdentifiersAreJoinedWithCommas() async throws {
+            let (_, runner) = registerToolMocks()
+
+            try await Fastlane.match(
+                type: .adhoc, appIdentifiers: ["com.example.myapp", "com.example.other"], teamId: "TEAM123"
+            )
+            try await Fastlane.matchUpdate(
+                type: .adhoc, appIdentifiers: ["com.example.myapp", "com.example.other"], teamId: "TEAM123"
+            )
+
+            #expect(runner.tools.map(\.arguments) == [
+                ["match", "adhoc", "--readonly", "--app_identifier", "com.example.myapp,com.example.other", "--team_id", "TEAM123"],
+                ["match", "adhoc", "--force", "--app_identifier", "com.example.myapp,com.example.other", "--team_id", "TEAM123"],
+            ])
+        }
+
+        /// An empty list is a usage error that stops the call before the step opens and before any process runs.
+        @Test func emptyAppIdentifiersIsAUsageErrorBeforeAnyProcessRuns() async {
+            let (log, runner) = registerToolMocks()
+            var matchError: BuildError?
+            var updateError: BuildError?
+
+            do {
+                try await Fastlane.match(type: .appstore, appIdentifiers: [], teamId: "TEAM123")
+            } catch let error as BuildError {
+                matchError = error
+            } catch {}
+            do {
+                try await Fastlane.matchUpdate(type: .appstore, appIdentifiers: [], teamId: "TEAM123")
+            } catch let error as BuildError {
+                updateError = error
+            } catch {}
+
+            #expect(matchError?.code == .usage)
+            #expect(updateError?.code == .usage)
+            #expect(runner.tools.isEmpty)
+            #expect(log.loggedLines.isEmpty)
+        }
+
+        @Test func bundlerRunsFastlaneThroughBundleExec() async throws {
+            let (_, runner) = registerToolMocks()
+
+            try await Fastlane.match(
+                type: .appstore, appIdentifiers: ["com.example.myapp"], teamId: "TEAM123", invocation: .bundler()
+            )
+
+            #expect(runner.tools.count == 1)
+            #expect(runner.tools[0].command == "bundle")
+            #expect(runner.tools[0].arguments == [
+                "exec", "fastlane", "match", "appstore", "--readonly", "--app_identifier", "com.example.myapp", "--team_id", "TEAM123",
+            ])
+            #expect(runner.tools[0].environment.isEmpty)
+        }
+
+        /// `BUNDLE_GEMFILE` is set to the Gemfile's path, and it overrides the same variable given in `environment`.
+        @Test func bundlerWithGemfileSetsBundleGemfile() async throws {
+            let (_, runner) = registerToolMocks()
+            let gemfile = URL(fileURLWithPath: "/tmp/project/Gemfile")
+
+            try await Fastlane.matchUpdate(
+                type: .adhoc,
+                appIdentifiers: ["com.example.myapp"],
+                teamId: "TEAM123",
+                invocation: .bundler(gemfile: gemfile),
+                environment: ["BUNDLE_GEMFILE": "/elsewhere/Gemfile", "LC_ALL": "en_US.UTF-8"]
+            )
+
+            #expect(runner.tools[0].command == "bundle")
+            #expect(runner.tools[0].arguments == [
+                "exec", "fastlane", "match", "adhoc", "--force", "--app_identifier", "com.example.myapp", "--team_id", "TEAM123",
+            ])
+            #expect(runner.tools[0].environment == [
+                "BUNDLE_GEMFILE": .text("/tmp/project/Gemfile"),
+                "LC_ALL": .text("en_US.UTF-8"),
+            ])
+        }
+
+        /// The variables reach the process. A secret is revealed only in the process environment, and it is in neither
+        /// the arguments nor any log.
+        @Test func environmentReachesTheToolAndSecretStaysOutOfArgumentsAndLog() async throws {
+            let restore = secretsSetUp()
+            defer { restore() }
+            let runner = ProcessRunnerMock()
+            let password = Secret(value: "match-PW-VALUE")
+            var fullLog = ""
+
+            let result = await SwiftCITest.run(["match"]) {
+                register(ProcessRunner.self, runner)
+                command(Command("match") {
+                    try await Fastlane.match(
+                        type: .appstore,
+                        appIdentifiers: ["com.example.myapp"],
+                        teamId: "TEAM123",
+                        environment: ["LC_ALL": "en_US.UTF-8", "MATCH_PASSWORD": .secret(password)]
+                    )
+                    fullLog = try String(contentsOfFile: FullLog.path?.filePath ?? "", encoding: .utf8)
+                })
+            }
+
+            #expect(result.exitCode == 0)
+            #expect(runner.tools[0].environment == ["LC_ALL": .text("en_US.UTF-8"), "MATCH_PASSWORD": .secret(password)])
+            let environment = try runner.tools[0].effectiveEnvironment()
+            #expect(environment["LC_ALL"] == "en_US.UTF-8")
+            #expect(environment["MATCH_PASSWORD"] == "match-PW-VALUE")
+            #expect(!runner.tools[0].arguments.contains { $0.contains("match-PW-VALUE") })
+            #expect(!result.log.contains { $0.contains("match-PW-VALUE") })
+            #expect(!fullLog.contains("match-PW-VALUE"))
+            #expect(fullLog.contains("MATCH_PASSWORD"))
+        }
+
+        /// With several identifiers the default step name gives their count, not the list.
+        @Test func severalAppIdentifiersNameTheStepByCount() async {
+            let runner = ProcessRunnerMock()
+            let identifiers = (1...25).map { "com.example.app\($0)" }
+
+            let result = await SwiftCITest.run(["match"]) {
+                register(ProcessRunner.self, runner)
+                command(Command("match") {
+                    try await Fastlane.match(type: .adhoc, appIdentifiers: identifiers, teamId: "TEAM123")
+                })
+            }
+
+            #expect(result.exitCode == 0)
+            #expect(enteredSteps(in: result.log) == [
+                "Entering step [Install signing assets with fastlane match (adhoc, 25 app identifiers)]",
             ])
         }
 
@@ -37,7 +182,7 @@ extension GlobalStateTests {
             let result = await SwiftCITest.run(["match"]) {
                 register(ProcessRunner.self, runner)
                 command(Command("match") {
-                    try await Fastlane.match(type: .appstore, appIdentifier: "com.example.myapp", teamId: "TEAM123")
+                    try await Fastlane.match(type: .appstore, appIdentifiers: ["com.example.myapp"], teamId: "TEAM123")
                 })
             }
 

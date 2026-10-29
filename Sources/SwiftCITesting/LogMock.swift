@@ -24,7 +24,8 @@ public final class LogMock: Log {
     public private(set) var warnings: [String] = []
     /// The messages passed to ``error(_:)``.
     public private(set) var errors: [String] = []
-    /// The step events, in order: each step that starts, finishes, fails or fails with the failure allowed.
+    /// The step events, in order: each step that starts, finishes, fails, fails with the failure allowed, or is
+    /// skipped.
     public private(set) var steps: [StepEvent] = []
     /// The arguments of each ``lines(title:lines:)`` call, in order.
     public private(set) var titledLines: [TitledLines] = []
@@ -39,6 +40,8 @@ public final class LogMock: Log {
         case failed(name: String, depth: Int)
         /// The step failed, and the command continues.
         case allowedFailed(name: String, depth: Int)
+        /// The step was skipped, for `reason`. Its body did not run.
+        case skipped(name: String, reason: String, depth: Int)
     }
 
     /// The arguments of a ``lines(title:lines:)`` call.
@@ -91,6 +94,11 @@ public final class LogMock: Log {
     public func allowedFailedStep(name: String, depth: Int) throws {
         steps.append(.allowedFailed(name: name, depth: depth))
         try formatter.allowedFailedStep(name: name, depth: depth)
+    }
+
+    public func skippedStep(name: String, reason: String, depth: Int) throws {
+        steps.append(.skipped(name: name, reason: reason, depth: depth))
+        try formatter.skippedStep(name: name, reason: reason, depth: depth)
     }
 
     public func lines(title: String, lines: [String]) {

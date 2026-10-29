@@ -1,0 +1,226 @@
+WARN [2026-10-29 14:06:26.52]: [33mIn the config file './Matchfile' you have the line keychain_password, but didn't provide any value. Make sure to append a value right after the option name. Make sure to check the docs for more information[0m
+INFO [2026-10-29 14:06:26.52]: [32mSuccessfully loaded '/Users/ci/work/Matchfile' 📄[0m
+
++------------------------------------------------------+
+|          Detected Values from './Matchfile'          |
++---------------+--------------------------------------+
+| git_url       | git@git.example.com:org/certificate  |
+|               | s.git                                |
+| username      | ci@example.com                       |
+| keychain_name | fastlane.keychain                    |
++---------------+--------------------------------------+
+
+
++-----------------------------------------------------------------------------+
+|                          [32mSummary for match 2.232.2[0m                          |
++--------------------------------------+--------------------------------------+
+| verbose                              | true                                 |
+| readonly                             | true                                 |
+| app_identifier                       | ["com.example.app1",                 |
+|                                      | "com.example.app2",                  |
+|                                      | "com.example.app3"]                  |
+| team_id                              | TEAMID1234                           |
+| type                                 | adhoc                                |
+| generate_apple_certs                 | true                                 |
+| skip_provisioning_profiles           | false                                |
+| username                             | ci@example.com                       |
+| storage_mode                         | git                                  |
+| git_url                              | git@git.example.com:org/certificate  |
+|                                      | s.git                                |
+| git_branch                           | master                               |
+| shallow_clone                        | false                                |
+| clone_branch_directly                | false                                |
+| skip_google_cloud_account_confirmat  | false                                |
+| ion                                  |                                      |
+| s3_skip_encryption                   | false                                |
+| gitlab_host                          | https://gitlab.com                   |
+| keychain_name                        | fastlane.keychain                    |
+| force                                | false                                |
+| force_for_new_devices                | false                                |
+| include_mac_in_profiles              | false                                |
+| include_all_certificates             | false                                |
+| force_for_new_certificates           | false                                |
+| skip_confirmation                    | false                                |
+| safe_remove_certs                    | false                                |
+| skip_docs                            | false                                |
+| platform                             | ios                                  |
+| derive_catalyst_app_identifier       | false                                |
+| fail_on_name_taken                   | false                                |
+| skip_certificate_matching            | false                                |
+| skip_set_partition_list              | false                                |
+| force_legacy_encryption              | false                                |
++--------------------------------------+--------------------------------------+
+
+INFO [2026-10-29 14:06:26.53]: Cloning remote git repo...
+INFO [2026-10-29 14:06:26.53]: If cloning the repo takes too long, you can use the `clone_branch_directly` option in match.
+INFO [2026-10-29 14:06:26.53]: [36m$ git clone git@git.example.com:org/certificates.git /var/folders/xx/abcdefghijklmnopqrstuvwx0000gn/T/d20261029-52390-x20pc7[0m
+INFO [2026-10-29 14:06:26.57]: ▸ [35mCloning into '/var/folders/xx/abcdefghijklmnopqrstuvwx0000gn/T/d20261029-52390-x20pc7'...[0m
+INFO [2026-10-29 14:06:27.02]: ▸ [35mremote: Enumerating objects: 1419, done.[K[0m
+INFO [2026-10-29 14:06:27.04]: ▸ [35mremote: Counting objects: 100% (971/971), done.[K[0m
+INFO [2026-10-29 14:06:27.71]: ▸ [35mremote: Compressing objects: 100% (957/957), done.[K[0m
+INFO [2026-10-29 14:06:28.16]: ▸ [35mremote: Total 1419 (delta 91), reused 0 (delta 0), pack-reused 448 (from 1)[K[0m
+INFO [2026-10-29 14:06:28.16]: ▸ [35mReceiving objects: 100% (1419/1419), 11.70 MiB | 26.69 MiB/s, done.[0m
+INFO [2026-10-29 14:06:28.16]: ▸ [35mResolving deltas: 100% (187/187), done.[0m
+INFO [2026-10-29 14:06:28.25]: [36m$ git --no-pager branch --list origin/master --no-color -r[0m
+INFO [2026-10-29 14:06:28.27]: ▸ [35m  origin/master[0m
+INFO [2026-10-29 14:06:28.27]: Checking out branch master...
+INFO [2026-10-29 14:06:28.27]: [36m$ git checkout master[0m
+INFO [2026-10-29 14:06:28.49]: ▸ [35mAlready on 'master'[0m
+INFO [2026-10-29 14:06:28.49]: ▸ [35mYour branch is up to date with 'origin/master'.[0m
+INFO [2026-10-29 14:06:28.50]: [32m🔓  Decrypted 'CERT123456.cer'[0m
+INFO [2026-10-29 14:06:28.50]: [32m🔓  Decrypted 'CERT123456.p12'[0m
+INFO [2026-10-29 14:06:28.59]: [32m🔓  Decrypted 'AdHoc_com.example.app3.mobileprovision'[0m
+INFO [2026-10-29 14:06:28.59]: [32m🔓  Decrypted 'AdHoc_com.example.app2.mobileprovision'[0m
+INFO [2026-10-29 14:06:28.60]: [32m🔓  Decrypted 'AdHoc_com.example.app1.mobileprovision'[0m
+INFO [2026-10-29 14:06:28.69]: [32m🔓  Decrypted 'AppStore_com.example.app3.mobileprovision'[0m
+INFO [2026-10-29 14:06:28.69]: [32m🔓  Decrypted 'AppStore_com.example.app2.mobileprovision'[0m
+INFO [2026-10-29 14:06:28.70]: [32m🔓  Decrypted 'AppStore_com.example.app1.mobileprovision'[0m
+INFO [2026-10-29 14:06:28.73]: [32m🔓  Successfully decrypted certificates repo[0m
+DEBUG [2026-10-29 14:06:28.73]: Your certificate 'CERT123456.cer' is valid
+INFO [2026-10-29 14:06:28.73]: Installing certificate...
+DEBUG [2026-10-29 14:06:28.75]: Installing WWDR Cert: curl -f -o /var/folders/xx/abcdefghijklmnopqrstuvwx0000gn/T/DeveloperIDCA20261029-52390-v6073b.cer https://www.apple.com/certificateauthority/DeveloperIDCA.cer && security import /var/folders/xx/abcdefghijklmnopqrstuvwx0000gn/T/DeveloperIDCA20261029-52390-v6073b.cer -k /Users/ci/Library/Keychains/fastlane.keychain-db
+INFO [2026-10-29 14:06:28.92]: ▸ [35m100  1032  100  1032    0     0   9479      0 --:--:-- --:--:-- --:--:--  9555[0m
+INFO [2026-10-29 14:06:28.92]: ▸ [35msecurity: SecKeychainItemImport: The specified item already exists in the keychain.[0m
+DEBUG [2026-10-29 14:06:28.92]: Failed to install WWDR Certificate, checking output to see why
+DEBUG [2026-10-29 14:06:28.92]: WWDR Certificate was already installed
+DEBUG [2026-10-29 14:06:28.92]: Installing WWDR Cert: curl -f -o /var/folders/xx/abcdefghijklmnopqrstuvwx0000gn/T/DeveloperIDG2CA20261029-52390-h9pqvs.cer https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer && security import /var/folders/xx/abcdefghijklmnopqrstuvwx0000gn/T/DeveloperIDG2CA20261029-52390-h9pqvs.cer -k /Users/ci/Library/Keychains/fastlane.keychain-db
+INFO [2026-10-29 14:06:29.05]: ▸ [35m100  1090  100  1090    0     0  15476      0 --:--:-- --:--:-- --:--:-- 15571[0m
+INFO [2026-10-29 14:06:29.05]: ▸ [35msecurity: SecKeychainItemImport: The specified item already exists in the keychain.[0m
+DEBUG [2026-10-29 14:06:29.05]: Failed to install WWDR Certificate, checking output to see why
+DEBUG [2026-10-29 14:06:29.05]: WWDR Certificate was already installed
+DEBUG [2026-10-29 14:06:29.12]: Certificate 'CERT123456.cer' is already installed on this machine
+
++------------------------------------------------------------------+
+|                      [32mInstalled Certificate[0m                       |
++-------------------+----------------------------------------------+
+| User ID           | TEAMID1234                                   |
+| Common Name       | Apple Distribution: Example Org (TEAMID1234) |
+| Organisation Unit | TEAMID1234                                   |
+| Organisation      | Example Org                                  |
+| Country           | US                                           |
+| Start Datetime    | 2026-06-15 08:02:59 UTC                      |
+| End Datetime      | 2027-06-15 08:02:58 UTC                      |
++-------------------+----------------------------------------------+
+
+INFO [2026-10-29 14:06:29.18]: Installing provisioning profile...
+WARN [2026-10-29 14:06:29.26]: [33mSetting environment variable 'sigh_com.example.app1_adhoc' to '00000000-0000-4000-8000-000000000001'[0m
+WARN [2026-10-29 14:06:29.26]: [33mSetting environment variable 'sigh_com.example.app1_adhoc_team-id' to 'TEAMID1234'[0m
+WARN [2026-10-29 14:06:29.26]: [33mSetting environment variable 'sigh_com.example.app1_adhoc_certificate-name' to 'Apple Distribution: Example Org (TEAMID1234)'[0m
+WARN [2026-10-29 14:06:29.26]: [33mSetting environment variable 'sigh_com.example.app1_adhoc_profile-name' to 'match AdHoc com.example.app1'[0m
+WARN [2026-10-29 14:06:29.26]: [33mSetting environment variable 'sigh_com.example.app1_adhoc_profile-path' to '/Users/ci/Library/Developer/Xcode/UserData/Provisioning Profiles/00000000-0000-4000-8000-000000000001.mobileprovision'[0m
+INFO [2026-10-29 14:06:29.31]: Installing provisioning profile...
+WARN [2026-10-29 14:06:29.38]: [33mSetting environment variable 'sigh_com.example.app2_adhoc' to '00000000-0000-4000-8000-000000000002'[0m
+WARN [2026-10-29 14:06:29.38]: [33mSetting environment variable 'sigh_com.example.app2_adhoc_team-id' to 'TEAMID1234'[0m
+WARN [2026-10-29 14:06:29.38]: [33mSetting environment variable 'sigh_com.example.app2_adhoc_certificate-name' to 'Apple Distribution: Example Org (TEAMID1234)'[0m
+WARN [2026-10-29 14:06:29.38]: [33mSetting environment variable 'sigh_com.example.app2_adhoc_profile-name' to 'match AdHoc com.example.app2'[0m
+WARN [2026-10-29 14:06:29.38]: [33mSetting environment variable 'sigh_com.example.app2_adhoc_profile-path' to '/Users/ci/Library/Developer/Xcode/UserData/Provisioning Profiles/00000000-0000-4000-8000-000000000002.mobileprovision'[0m
+INFO [2026-10-29 14:06:29.43]: Installing provisioning profile...
+WARN [2026-10-29 14:06:29.50]: [33mSetting environment variable 'sigh_com.example.app3_adhoc' to '00000000-0000-4000-8000-000000000003'[0m
+WARN [2026-10-29 14:06:29.50]: [33mSetting environment variable 'sigh_com.example.app3_adhoc_team-id' to 'TEAMID1234'[0m
+WARN [2026-10-29 14:06:29.50]: [33mSetting environment variable 'sigh_com.example.app3_adhoc_certificate-name' to 'Apple Distribution: Example Org (TEAMID1234)'[0m
+WARN [2026-10-29 14:06:29.50]: [33mSetting environment variable 'sigh_com.example.app3_adhoc_profile-name' to 'match AdHoc com.example.app3'[0m
+WARN [2026-10-29 14:06:29.50]: [33mSetting environment variable 'sigh_com.example.app3_adhoc_profile-path' to '/Users/ci/Library/Developer/Xcode/UserData/Provisioning Profiles/00000000-0000-4000-8000-000000000003.mobileprovision'[0m
+
++-----------------------------------------------------------------------+
+|                    [32mInstalled Provisioning Profile[0m                     |
++---------------------+------------------------+------------------------+
+| Parameter           | Environment Variable   | Value                  |
++---------------------+------------------------+------------------------+
+| App Identifier      |                        | com.example.app1       |
+| Type                |                        | adhoc                  |
+| Platform            |                        | ios                    |
+| Profile UUID        | sigh_com.example.app1  | 00000000-0000-4000-80  |
+|                     | _adhoc                 | 00-000000000001        |
+| Profile Name        | sigh_com.example.app1  | match AdHoc            |
+|                     | _adhoc_profile-name    | com.example.app1       |
+| Profile Path        | sigh_com.example.app1  | /Users/ci/Library/Dev  |
+|                     | _adhoc_profile-path    | eloper/Xcode/UserData  |
+|                     |                        | /Provisioning          |
+|                     |                        | Profiles/00000000-000  |
+|                     |                        | 0-4000-8000-000000000  |
+|                     |                        | 001.mobileprovision    |
+| Development Team ID | sigh_com.example.app1  | TEAMID1234             |
+|                     | _adhoc_team-id         |                        |
+| Certificate Name    | sigh_com.example.app1  | Apple Distribution:    |
+|                     | _adhoc_certificate-na  | Example Org            |
+|                     | me                     | (TEAMID1234)           |
++---------------------+------------------------+------------------------+
+
+
++-----------------------------------------------------------------------+
+|                    [32mInstalled Provisioning Profile[0m                     |
++---------------------+------------------------+------------------------+
+| Parameter           | Environment Variable   | Value                  |
++---------------------+------------------------+------------------------+
+| App Identifier      |                        | com.example.app2       |
+| Type                |                        | adhoc                  |
+| Platform            |                        | ios                    |
+| Profile UUID        | sigh_com.example.app2  | 00000000-0000-4000-80  |
+|                     | _adhoc                 | 00-000000000002        |
+| Profile Name        | sigh_com.example.app2  | match AdHoc            |
+|                     | _adhoc_profile-name    | com.example.app2       |
+| Profile Path        | sigh_com.example.app2  | /Users/ci/Library/Dev  |
+|                     | _adhoc_profile-path    | eloper/Xcode/UserData  |
+|                     |                        | /Provisioning          |
+|                     |                        | Profiles/00000000-000  |
+|                     |                        | 0-4000-8000-000000000  |
+|                     |                        | 002.mobileprovision    |
+| Development Team ID | sigh_com.example.app2  | TEAMID1234             |
+|                     | _adhoc_team-id         |                        |
+| Certificate Name    | sigh_com.example.app2  | Apple Distribution:    |
+|                     | _adhoc_certificate-na  | Example Org            |
+|                     | me                     | (TEAMID1234)           |
++---------------------+------------------------+------------------------+
+
+
++-----------------------------------------------------------------------+
+|                    [32mInstalled Provisioning Profile[0m                     |
++---------------------+------------------------+------------------------+
+| Parameter           | Environment Variable   | Value                  |
++---------------------+------------------------+------------------------+
+| App Identifier      |                        | com.example.app3       |
+| Type                |                        | adhoc                  |
+| Platform            |                        | ios                    |
+| Profile UUID        | sigh_com.example.app3  | 00000000-0000-4000-80  |
+|                     | _adhoc                 | 00-000000000003        |
+| Profile Name        | sigh_com.example.app3  | match AdHoc            |
+|                     | _adhoc_profile-name    | com.example.app3       |
+| Profile Path        | sigh_com.example.app3  | /Users/ci/Library/Dev  |
+|                     | _adhoc_profile-path    | eloper/Xcode/UserData  |
+|                     |                        | /Provisioning          |
+|                     |                        | Profiles/00000000-000  |
+|                     |                        | 0-4000-8000-000000000  |
+|                     |                        | 003.mobileprovision    |
+| Development Team ID | sigh_com.example.app3  | TEAMID1234             |
+|                     | _adhoc_team-id         |                        |
+| Certificate Name    | sigh_com.example.app3  | Apple Distribution:    |
+|                     | _adhoc_certificate-na  | Example Org            |
+|                     | me                     | (TEAMID1234)           |
++---------------------+------------------------+------------------------+
+
+INFO [2026-10-29 14:06:32.19]: [32m[32mAll required keys, certificates and provisioning profiles are installed 🙌[0m
+
+#######################################################################
+# fastlane 2.241.2 is available. You are on 2.232.2.
+# You should use the latest version.
+# Please update using `bundle update fastlane`.
+#######################################################################
+
+[32m2.241.2 Improvements[0m
+* [match] Example improvement (#1) via Example Author (@example)
+* [spaceship] Another example improvement (#2) via Example Author (@example)
+* build(deps): bump example from 1.0.0 to 1.1.0 (#3) via dependabot[bot] (@dependabot[bot])
+
+[32m2.241.1 Improvements[0m
+* [match] Example improvement (#1) via Example Author (@example)
+* [spaceship] Another example improvement (#2) via Example Author (@example)
+* build(deps): bump example from 1.0.0 to 1.1.0 (#3) via dependabot[bot] (@dependabot[bot])
+
+[32m2.241.0 Improvements[0m
+* [match] Example improvement (#1) via Example Author (@example)
+* [spaceship] Another example improvement (#2) via Example Author (@example)
+* build(deps): bump example from 1.0.0 to 1.1.0 (#3) via dependabot[bot] (@dependabot[bot])
+
+[32mTo see all new releases, open https://github.com/fastlane/fastlane/releases[0m
+
+[32mPlease update using `bundle update fastlane`[0m

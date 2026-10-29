@@ -11,7 +11,8 @@ import Foundation
 /// with `environment` added). The first directory that holds an executable file wins.
 ///
 /// Each line of stdout and stderr goes unfiltered to the full log, stderr lines with a `[stderr] ` prefix. Lines from
-/// both streams pass through `filters` to the console.
+/// both streams pass through `blockFilter`, if any, and then `filters` to the console, unless the run was started with
+/// `--verbose`. Then the console shows every line unfiltered. Secrets are masked in both cases.
 public struct Tool {
     /// Creates a tool that runs `command` with `arguments`.
     ///
@@ -23,7 +24,10 @@ public struct Tool {
     ///   - input: Written to standard input, which is then closed. Without input, standard input is empty.
     ///   - timeout: Ends the process after this duration (SIGTERM, then SIGKILL after a short grace period) and throws.
     ///     There is no default timeout.
-    ///   - filters: Applied to each line before it reaches the console. A filter returns `nil` to hide a line.
+    ///   - filters: Applied to each line before it reaches the console. A filter returns `nil` to hide a line. A run with
+    ///     `--verbose` skips them, so the console shows every line.
+    ///   - blockFilter: Decides the console lines together with the lines around them, before `filters`. It may show
+    ///     several lines for one, or none. See ``BlockFilter``. A run with `--verbose` skips it too.
     public init(
         command: String,
         arguments: [String] = [],
@@ -31,7 +35,8 @@ public struct Tool {
         workingDirectory: URL? = nil,
         input: ToolInput? = nil,
         timeout: Duration? = nil,
-        filters: [Filter] = []
+        filters: [Filter] = [],
+        blockFilter: BlockFilter? = nil
     ) {
         self.init(
             command: command,
@@ -41,6 +46,7 @@ public struct Tool {
             input: input,
             timeout: timeout,
             filters: filters,
+            blockFilter: blockFilter,
             displayName: URL(fileURLWithPath: command).lastPathComponent
         )
     }
@@ -66,6 +72,7 @@ public struct Tool {
             input: input,
             timeout: timeout,
             filters: filters,
+            blockFilter: nil,
             displayName: "Shell command"
         )
     }
@@ -78,6 +85,7 @@ public struct Tool {
         input: ToolInput?,
         timeout: Duration?,
         filters: [Filter],
+        blockFilter: BlockFilter?,
         displayName: String
     ) {
         self.command = command
@@ -87,6 +95,7 @@ public struct Tool {
         self.input = input
         self.timeout = timeout
         self.filters = filters
+        self.blockFilter = blockFilter
         self.displayName = displayName
     }
 
@@ -104,6 +113,8 @@ public struct Tool {
     public let timeout: Duration?
     /// The filters applied to each console line, in order.
     public let filters: [Filter]
+    /// The block filter, which decides the console lines before `filters`, or `nil` for none.
+    public let blockFilter: BlockFilter?
 
     /// The name used in error messages and warnings: the last path component of `command`, or "Shell command" for a
     /// shell tool. Read-only.
@@ -143,7 +154,7 @@ public struct Tool {
         try writeHeader()
         return try await runner.run(self) { line in
             try FullLog.write(line.stream == .stderr ? "[stderr] \(line.text)" : line.text)
-            applyFilters(line: line.text).map(log.callAsFunction)
+            consoleTexts(for: line.text).forEach(log.callAsFunction)
         }
     }
 
@@ -171,6 +182,16 @@ public struct Tool {
             message += "\n" + result.stderr.components(separatedBy: "\n").suffix(10).joined(separator: "\n")
         }
         throw BuildError(message: message)
+    }
+
+    /// The lines on the console for a line of output: the line itself with `--verbose`, otherwise what the block filter
+    /// and the filters keep. Secrets are not checked here, because the registered log masks every line it writes.
+    private func consoleTexts(for line: String) -> [String] {
+        if RunOptions.current?.verbose == true {
+            return [line]
+        }
+        let lines = blockFilter?(line) ?? [line]
+        return lines.compactMap { applyFilters(line: $0) }
     }
 
     private func applyFilters(line: String) -> String? {
