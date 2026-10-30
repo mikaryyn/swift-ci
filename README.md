@@ -478,7 +478,7 @@ in mind:
   adapter protocol. Built-in adapters cover Jenkins (including GitLab plugin
   variables), GitLab CI, GitHub Actions, Bitrise and local runs. Extensions
   can register more.
-- Report model and JUnit writer
+- Report model (`TestReport`, `TestSuite`, `TestCase`) and JUnit writer (`JUnit.write`)
 - `SwiftCITesting`: mocks and helpers (log, shell/process, environment) for
   testing CI scripts and extensions
 
@@ -494,7 +494,7 @@ own release pace.
 | Product | Platforms | Contents |
 |---|---|---|
 | `SwiftCI` | macOS, Linux | Core: commands, steps, processes, logging, filters, secrets, environment, artifacts, reports, Git, SwiftPM (`swift build` / `swift test`) |
-| `SwiftCIXcode` | macOS | `xcodebuild`, xcresult reports, simulators, Xcode selection, version and build numbers, app icon overlay |
+| `SwiftCIXcode` | macOS | `xcodebuild`, xcresult test reports (`Xcode.testReport`, `Xcode.writeJUnitReport`), simulators, Xcode selection, version and build numbers, app icon overlay |
 | `SwiftCISigning` | macOS | Keychains, match-compatible signing asset install, provisioning profiles, fastlane `match` fallback |
 | `SwiftCIAppStoreConnect` | macOS (core of the client may later run on Linux) | Minimal native App Store Connect client: API key auth, build upload, build processing status; notarization; fastlane fallbacks |
 | `SwiftCISlack` | macOS, Linux | Slack incoming webhooks |
@@ -647,7 +647,7 @@ implemented.
 | Core | CI output export to later steps (`CI.export`): `envman`, `$GITHUB_ENV` and `artifacts/outputs.env` | Prototype |
 | Xcode | clean, build, archive and export (IPA and dSYM zip to the artifacts directory by default), resolve packages, build settings, docbuild | Prototype |
 | Xcode | test, with result bundle, code coverage and raw log file; xcresult summary of failures and coverage is planned | Prototype |
-| Reports | JUnit XML test reports from `.xcresult` | Planned (core) |
+| Reports | JUnit XML test reports from `.xcresult`: `Xcode.testReport` (model) and `Xcode.writeJUnitReport` (file, in a step); the writer is in the core | Prototype |
 | Reports | Coverage reports (Cobertura XML) from `.xcresult` | Planned (later) |
 | Reports | Warning and error annotations (GitLab Code Quality, GitHub workflow commands) | Planned (optional, later) |
 | Xcode | Default `xcodebuild` console filter: errors, warnings and the result line | Prototype |

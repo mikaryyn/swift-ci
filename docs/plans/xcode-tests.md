@@ -1,6 +1,7 @@
 # Xcode tests
 
-Status: **proposed**. Part of Phase 1 of the
+Status: **implemented** (T1 and T3 in 0.4.0, T2 after it); the two-device and
+repetition mappings of T2 are tested with hand-written JSON, not a recording. Part of Phase 1 of the
 [implementation plan](implementation-plan.md#phase-1-replace-bitrise): the
 generic pieces of the second ported workflow, merge request unit tests.
 
