@@ -9,12 +9,19 @@ public struct BuildError: Error {
     ///   - message: The message logged once, where the error is finally handled. Say what the user should do.
     ///   - code: The exit code of the run. Use ``ErrorCode/usage`` for usage or configuration errors.
     public init(message: String, code: ErrorCode = .failure) {
+        self.init(message: message, code: code, isTimeout: false)
+    }
+
+    package init(message: String, code: ErrorCode = .failure, isTimeout: Bool) {
         self.message = message
         self.code = code
+        self.isTimeout = isTimeout
     }
 
     let message: String
     let code: ErrorCode
+    /// Whether a ``Tool`` was ended because its timeout passed.
+    public let isTimeout: Bool
 }
 
 /// The exit code of a SwiftCI run.

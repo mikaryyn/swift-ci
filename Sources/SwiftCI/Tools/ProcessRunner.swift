@@ -148,7 +148,7 @@ struct ProcessRunnerImpl: ProcessRunner {
 
         switch state.outcome {
         case .timedOut?:
-            throw BuildError(message: "\(name) timed out after \(tool.timeout ?? .zero).")
+            throw BuildError(message: "\(name) timed out after \(tool.timeout ?? .zero).", isTimeout: true)
         case .failed(let error)?:
             throw error
         case nil:

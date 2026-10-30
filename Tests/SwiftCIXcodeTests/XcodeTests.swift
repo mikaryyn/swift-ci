@@ -536,6 +536,58 @@ extension GlobalStateTests {
             #expect(error?.message == "xcodebuild test of scheme 'MyApp' exited with code 65.")
         }
 
+        @Test func testWithTimeoutPassesItToTheTool() async throws {
+            let (_, runner) = registerToolMocks()
+            let root = temporaryTestDirectory()
+            defer { try? FileManager.default.removeItem(at: root) }
+            let bundle = root.appending(path: "Result.xcresult", directoryHint: .isDirectory)
+
+            try await makeXcode().test(resultBundleURL: bundle, timeout: .seconds(600))
+
+            #expect(runner.tools[0].timeout == .seconds(600))
+        }
+
+        /// A run that is ended by its timeout says that the tests did not finish, and names the raw log and the bundle
+        /// if they exist.
+        @Test func testTimeoutSaysTheTestsDidNotFinish() async throws {
+            let (_, runner) = registerToolMocks()
+            let root = temporaryTestDirectory()
+            defer { try? FileManager.default.removeItem(at: root) }
+            let bundle = root.appending(path: "Result.xcresult", directoryHint: .isDirectory)
+            let rawLog = root.appending(path: "logs/raw.log")
+            runner.handler = { tool in
+                let path = try Self.argument(after: "-resultBundlePath", in: tool)
+                try FileManager.default.createDirectory(at: URL(filePath: path), withIntermediateDirectories: true)
+                throw BuildError(message: "xcodebuild timed out after 0.01 seconds.", isTimeout: true)
+            }
+
+            let error = await thrownError {
+                try await makeXcode().test(resultBundleURL: bundle, rawLogURL: rawLog, timeout: .milliseconds(10))
+            }
+
+            let message = try #require(error?.message)
+            #expect(message.hasPrefix("xcodebuild test of scheme 'MyApp' did not finish within "))
+            #expect(message.contains(", so it was ended. The tests did not complete."))
+            #expect(message.contains(" The result bundle is at '\(bundle.filePath)'."))
+            #expect(message.hasSuffix(" The raw log is at '\(rawLog.filePath)'."))
+            #expect(runner.tools[0].timeout == .milliseconds(10))
+        }
+
+        /// An error other than the timeout keeps its own message.
+        @Test func testErrorBeforeTheTimeoutKeepsItsMessage() async throws {
+            let (_, runner) = registerToolMocks()
+            let root = temporaryTestDirectory()
+            defer { try? FileManager.default.removeItem(at: root) }
+            let bundle = root.appending(path: "Result.xcresult", directoryHint: .isDirectory)
+            runner.handler = { _ in throw BuildError(message: "Failed to execute tool 'xcodebuild'.") }
+
+            let error = await thrownError {
+                try await makeXcode().test(resultBundleURL: bundle, timeout: .seconds(600))
+            }
+
+            #expect(error?.message == "Failed to execute tool 'xcodebuild'.")
+        }
+
         /// The raw log gets every line as xcodebuild printed it, without the `[stderr] ` prefix. The passing test line,
         /// which the console filter hides, is in it.
         @Test func testRawLogGetsEveryLineUnfiltered() async throws {

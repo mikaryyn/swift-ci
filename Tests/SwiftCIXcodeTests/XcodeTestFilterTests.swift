@@ -176,5 +176,67 @@ extension GlobalStateTests {
 
             #expect(shown(lines) == ["Failing tests:", "\tMyAppTests.testFails()"])
         }
+
+        /// The CoreSimulator errors, and the failure of the diagnostics, as xcodebuild printed them.
+        nonisolated private static let infrastructureFailureLines: [String] = [
+            "[-[SimLaunchHostConnection _connectToServiceName:]_block_invoke:242] ERROR : Lost connection to "
+                + "com.apple.CoreSimulator.SimLaunchHost-arm64 (interrupted)",
+            "[-[SimDevice _onBootstrapQueue_shutdownWithError:]:2677] ERROR : Error Domain=NSPOSIXErrorDomain Code=61 "
+                + "\"Connection refused\" UserInfo={NSLocalizedDescription=Loaded CoreSimulatorService "
+                + "is no longer valid for this process.",
+            "2026-10-30 14:40:34.822 xcodebuild[87465:2772745]  IDETestOperationsObserverDebug: Failure collecting "
+                + "diagnostics from simulator: Timed out after 600.0 seconds while waiting for a response from the "
+                + "invoked process",
+        ]
+
+        /// The CoreSimulator errors and the diagnostics failure are shown.
+        @Test(arguments: Self.infrastructureFailureLines)
+        func testInfrastructureFailuresAreShown(line: String) {
+            #expect(shown([line]) == [line])
+        }
+
+        /// The NOTICE, XPC and timing lines of the simulator and the test operations, as xcodebuild printed them.
+        nonisolated private static let noiseLines: [String] = [
+            "[-[SimLaunchHostConnection _connectToServiceName:]_block_invoke:242] NOTICE: Connecting to the service",
+            "\t\"XPCErrorDescription\" => \"Connection interrupted\"",
+            "2026-10-30 14:40:34.822 xcodebuild[87465:2772745]  IDETestOperationsObserverDebug: 675.955 elapsed -- "
+                + "Testing started completed.",
+            "2026-10-30 14:40:34.822 xcodebuild[87465:2772745]  IDETestOperationsObserverDebug: 0.001 elapsed -- start",
+            "2026-10-30 14:40:34.822 xcodebuild[87465:2772745]  IDETestOperationsObserverDebug: 675.955 elapsed -- end",
+        ]
+
+        /// The noise of the simulator and the test operations is hidden, so the failure lines stand out.
+        @Test(arguments: Self.noiseLines)
+        func simulatorNoiseIsHidden(line: String) {
+            #expect(shown([line]).isEmpty)
+        }
+
+        /// The `Testing failed:` list is shown with its indented lines, as the `Failing tests:` list is.
+        @Test func testingFailedListIsShown() {
+            let lines: [String] = [
+                "Testing failed:",
+                "\tMDNiOS (12345) encountered an error (Early unexpected exit, operation never finished "
+                    + "bootstrapping - no restart will be attempted. Failed to launch the test runner.)",
+                "",
+                "** TEST FAILED **",
+            ]
+
+            #expect(shown(lines) == ["Testing failed:", lines[1], "** TEST FAILED **"])
+        }
+
+        /// The lines of a test runner that restarts, crashes, hangs or exits early, as xcodebuild printed them.
+        nonisolated private static let runnerFailureLines: [String] = [
+            "Restarting after unexpected exit, crash, or test timeout in MDNiOS (12345); "
+                + "summary will include totals from previous run(s).",
+            "Test crashed with signal kill.",
+            "The test runner hung before establishing connection.",
+            "Early unexpected exit, operation never finished bootstrapping - no restart will be attempted.",
+        ]
+
+        /// The lines that report a restart, a crash, a hung test runner or an early exit are shown.
+        @Test(arguments: Self.runnerFailureLines)
+        func testRunnerFailuresAreShown(line: String) {
+            #expect(shown([line]) == [line])
+        }
     }
 }

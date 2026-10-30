@@ -59,12 +59,17 @@ public struct Xcode {
     /// `testPlan` is passed as `-testPlan`, to run a test plan of the scheme other than its default one.
     ///
     /// The console shows the failing and skipped tests with their issues, and the summary lines. Passing tests are
-    /// hidden.
+    /// hidden. It also shows the lines of the test infrastructure that report a failure, such as a lost connection to
+    /// the simulator or a test runner that exited early. See ``testOutputFilter()``.
     /// If `rawLogURL` is set, every line of the output goes to that file unfiltered (see ``Tool/outputFile``).
     ///
     /// If `xcodebuild` exits with a non-zero code, the error names the scheme and the exit code, and gives the path of the
     /// result bundle if the bundle exists. The bundle and the raw log are complete then, so a caller can catch the error,
     /// read them, and rethrow.
+    ///
+    /// `timeout` ends `xcodebuild` after that duration. The error then says the tests did not finish, and names the
+    /// result bundle and the raw log if they exist. There is no default timeout: a run that is stuck, for example while
+    /// the simulator diagnostics are collected, is not ended without one.
     ///
     /// Opens a step named "Test MyApp" when called at the top level of a command. `step` renames it.
     public func test(
@@ -73,6 +78,7 @@ public struct Xcode {
         resultBundleURL: URL,
         rawLogURL: URL? = nil,
         enableCodeCoverage: Bool = true,
+        timeout: Duration? = nil,
         step name: String? = nil
     ) async throws {
         try await step(default: "Test \(stepSubject)", name: name) {
@@ -89,10 +95,17 @@ public struct Xcode {
             let tool = Tool(
                 command: Self.xcodebuildPath,
                 arguments: arguments,
+                timeout: timeout,
                 blockFilter: Self.testOutputFilter(),
                 outputFile: rawLogURL
             )
-            let result = try await tool.result()
+            let result: ToolResult
+            do {
+                result = try await tool.result()
+            } catch let error as BuildError where error.isTimeout {
+                let outcome = "did not finish within \(timeout), so it was ended. The tests did not complete."
+                throw BuildError(message: testRunMessage(outcome, resultBundleURL: resultBundleURL, rawLogURL: rawLogURL))
+            }
             guard result.exitCode == 0 else {
                 throw BuildError(message: testFailureMessage(exitCode: result.exitCode, resultBundleURL: resultBundleURL))
             }
@@ -108,10 +121,19 @@ public struct Xcode {
     }
 
     private func testFailureMessage(exitCode: Int32, resultBundleURL: URL) -> String {
+        testRunMessage("exited with code \(exitCode).", resultBundleURL: resultBundleURL)
+    }
+
+    /// The message of a test run that ended with `outcome`. It names the scheme, and gives the paths of the result bundle
+    /// and the raw log if they exist.
+    private func testRunMessage(_ outcome: String, resultBundleURL: URL, rawLogURL: URL? = nil) -> String {
         let subject = scheme.map { "scheme '\($0)'" } ?? "the Xcode project"
-        var message = "xcodebuild test of \(subject) exited with code \(exitCode)."
+        var message = "xcodebuild test of \(subject) \(outcome)"
         if FileManager.default.fileExists(atPath: resultBundleURL.filePath) {
             message += " The result bundle is at '\(resultBundleURL.filePath)'."
+        }
+        if let rawLogURL, FileManager.default.fileExists(atPath: rawLogURL.filePath) {
+            message += " The raw log is at '\(rawLogURL.filePath)'."
         }
         return message
     }

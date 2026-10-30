@@ -646,11 +646,11 @@ implemented.
 | Core | CI environment detection (`CI.environment`: Jenkins, GitLab CI, GitHub Actions, Bitrise, generic CI, local) | Prototype |
 | Core | CI output export to later steps (`CI.export`): `envman`, `$GITHUB_ENV` and `artifacts/outputs.env` | Prototype |
 | Xcode | clean, build, archive and export (IPA and dSYM zip to the artifacts directory by default), resolve packages, build settings, docbuild | Prototype |
-| Xcode | test, with result bundle, code coverage and raw log file; xcresult summary of failures and coverage is planned | Prototype |
+| Xcode | test, with result bundle, code coverage, test plan, timeout and raw log file; xcresult summary of failures and coverage is planned | Prototype |
 | Reports | JUnit XML test reports from `.xcresult`: `Xcode.testReport` (model) and `Xcode.writeJUnitReport` (file, in a step); the writer is in the core | Prototype |
 | Reports | Coverage reports (Cobertura XML) from `.xcresult` | Planned (later) |
 | Reports | Warning and error annotations (GitLab Code Quality, GitHub workflow commands) | Planned (optional, later) |
-| Xcode | Default `xcodebuild` console filter: errors, warnings and the result line | Prototype |
+| Xcode | Default `xcodebuild` console filter: errors, warnings and the result line; for `test`, also the failing tests, the summaries, and the simulator and test runner failures (lost connection, restart, crash, hang, early exit) | Prototype |
 | Xcode | `xcodebuild` output formatter with progress (xcbeautify-style) | Planned |
 | Xcode | Xcode selection and preflight checks (version, SDKs, simulators) | Planned |
 | Xcode | Version and build number setting | Prototype |
