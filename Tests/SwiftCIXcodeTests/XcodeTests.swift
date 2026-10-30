@@ -431,6 +431,19 @@ extension GlobalStateTests {
             ])
         }
 
+        @Test func testWithTestPlanPassesIt() async throws {
+            let (_, runner) = registerToolMocks()
+            let root = temporaryTestDirectory()
+            defer { try? FileManager.default.removeItem(at: root) }
+            let bundle = root.appending(path: "Result.xcresult", directoryHint: .isDirectory)
+
+            try await makeXcode().test(testPlan: "SmokeTests", resultBundleURL: bundle)
+
+            #expect(runner.tools[0].arguments == [
+                "test", "-resultBundlePath", bundle.filePath, "-enableCodeCoverage", "YES", "-testPlan", "SmokeTests",
+            ] + Self.baseArguments)
+        }
+
         @Test func testWithCoverageOffPassesNo() async throws {
             let (_, runner) = registerToolMocks()
             let root = temporaryTestDirectory()

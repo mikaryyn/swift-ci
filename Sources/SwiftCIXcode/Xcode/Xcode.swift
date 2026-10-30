@@ -56,6 +56,7 @@ public struct Xcode {
     ///
     /// An existing bundle at `resultBundleURL` is removed first, because `xcodebuild` refuses to write over it. Its parent
     /// directory is created if it is missing. `enableCodeCoverage` sets `-enableCodeCoverage` to `YES` or `NO`.
+    /// `testPlan` is passed as `-testPlan`, to run a test plan of the scheme other than its default one.
     ///
     /// The console shows the failing and skipped tests with their issues, and the summary lines. Passing tests are
     /// hidden.
@@ -68,6 +69,7 @@ public struct Xcode {
     /// Opens a step named "Test MyApp" when called at the top level of a command. `step` renames it.
     public func test(
         destination: String? = nil,
+        testPlan: String? = nil,
         resultBundleURL: URL,
         rawLogURL: URL? = nil,
         enableCodeCoverage: Bool = true,
@@ -75,14 +77,15 @@ public struct Xcode {
     ) async throws {
         try await step(default: "Test \(stepSubject)", name: name) {
             try prepareResultBundle(at: resultBundleURL)
-            let arguments = try makeArguments(
-                [
-                    "test",
-                    "-resultBundlePath", resultBundleURL.filePath,
-                    "-enableCodeCoverage", enableCodeCoverage ? "YES" : "NO"
-                ],
-                destination: destination
-            )
+            var baseArguments = [
+                "test",
+                "-resultBundlePath", resultBundleURL.filePath,
+                "-enableCodeCoverage", enableCodeCoverage ? "YES" : "NO"
+            ]
+            if let testPlan {
+                baseArguments += ["-testPlan", testPlan]
+            }
+            let arguments = try makeArguments(baseArguments, destination: destination)
             let tool = Tool(
                 command: Self.xcodebuildPath,
                 arguments: arguments,

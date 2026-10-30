@@ -768,8 +768,9 @@ CI systems can render a few standard report formats themselves. That is more
 useful than scrolling through logs. SwiftCI writes reports to the artifacts
 directory, and the CI configuration publishes them.
 
-**JUnit XML test reports (planned, core).** `Xcode.test` (and later
-`swift test`) writes a JUnit XML file converted from the `.xcresult` bundle.
+**JUnit XML test reports.** `Xcode.writeJUnitReport` writes a JUnit XML file
+converted from the `.xcresult` bundle of `Xcode.test` (`swift test` is
+planned).
 
 - Jenkins (`junit` step) shows failed tests per build, test trends and
   durations, and can mark builds with only test failures as unstable.
@@ -999,14 +1000,14 @@ Typical Bitrise steps and fastlane actions, and their SwiftCI counterparts:
 | Bitrise step / fastlane action | SwiftCI |
 |---|---|
 | `script` | `step(name) { … }` with Swift code, or `Tool(shellCommand:)` for shell |
-| `xcode-test` / `scan` | `Xcode.test` (result bundle and coverage; the JUnit report is planned) |
+| `xcode-test` / `scan` | `Xcode.test` (result bundle, coverage and test plan) |
 | `xcode-archive` / `gym` | `Xcode.archiveAndExport`, a step itself. No `step` wrapper needed |
 | `xcode-project-info` | `Xcode.getBuildSettings(target:)` and `Xcode.getVersion` |
 | `set-xcode-build-number` / `increment_build_number` | `Xcode.setBuildNumber`; read the current value with `Xcode.getVersion` |
 | `fastlane match` (readonly) | `Signing.installMatchAssets(using: .native)` |
 | `deploy-to-itunesconnect-deliver` / `pilot` | `AppStoreConnect.upload` **(planned)**, or the fastlane fallback |
 | `slack` | `Slack.sendAttachment` for the same attachment format with a colored bar, or `Slack.send` for Block Kit; both are steps themselves |
-| `trainer` | JUnit report written by `Xcode.test` **(planned)** |
+| `trainer` | `Xcode.writeJUnitReport` from the result bundle |
 | `before_run` / `after_run` workflows | Reusable `async throws` functions, and `cleanup { }` / `onFailure { }` handlers |
 | `is_always_run` | `cleanup { … }` |
 | `is_skippable` | `step(name, failure: .allowed) { … }` |
