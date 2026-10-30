@@ -645,7 +645,7 @@ implemented.
 | Core | Step summary at end of run (status and duration per step) | Planned |
 | Core | CI environment detection (`CI.environment`: Jenkins, GitLab CI, GitHub Actions, Bitrise, generic CI, local) | Prototype |
 | Core | CI output export to later steps (`CI.export`): `envman`, `$GITHUB_ENV` and `artifacts/outputs.env` | Prototype |
-| Xcode | clean, build, archive and export (IPA and dSYM zip to the artifacts directory by default), resolve packages, build settings, docbuild | Prototype |
+| Xcode | clean, build, archive and export (ad-hoc or App Store; IPA and dSYM zip to the artifacts directory by default; App Store export writes the IPA only, upload is separate), resolve packages, build settings, docbuild | Prototype |
 | Xcode | test, with result bundle, code coverage, test plan, timeout and raw log file; xcresult summary of failures and coverage is planned | Prototype |
 | Reports | JUnit XML test reports from `.xcresult`: `Xcode.testReport` (model) and `Xcode.writeJUnitReport` (file, in a step); the writer is in the core | Prototype |
 | Reports | Coverage reports (Cobertura XML) from `.xcresult` | Planned (later) |

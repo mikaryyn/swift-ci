@@ -103,7 +103,7 @@ public struct Xcode {
             do {
                 result = try await tool.result()
             } catch let error as BuildError where error.isTimeout {
-                let outcome = "did not finish within \(timeout), so it was ended. The tests did not complete."
+                let outcome = "did not finish within \(timeout ?? .zero), so it was ended. The tests did not complete."
                 throw BuildError(message: testRunMessage(outcome, resultBundleURL: resultBundleURL, rawLogURL: rawLogURL))
             }
             guard result.exitCode == 0 else {
@@ -140,6 +140,15 @@ public struct Xcode {
 
     /// Archives the project, exports it as an IPA and copies the IPA to `outputURL` as `<ipaFileName>.ipa`.
     ///
+    /// `method` is the export method. The default, ``ExportMethod/adhoc``, exports for ad-hoc distribution.
+    /// ``ExportMethod/appstore`` exports for App Store Connect. An App Store export only writes the IPA: it is not
+    /// uploaded, so uploading it is the caller's job, for example with fastlane `deliver`.
+    ///
+    /// `provisioningProfile` names the provisioning profile of the export. It is called with the bundle identifier of
+    /// the archive, and its result is the profile name. Use it when the profile is not the one of the build settings, for
+    /// example when the archive is signed with an ad-hoc profile but the export needs the App Store profile of the same
+    /// app. Without it, the export uses `PROVISIONING_PROFILE_SPECIFIER` of the build settings, and reads them.
+    ///
     /// Unless `includeDSYMZip` is `false`, it also zips the dSYMs of the archive to `outputURL` as
     /// `<ipaFileName>.dSYM.zip`, with the `.dSYM` bundles at the root of the zip. If the archive has no dSYMs, a warning
     /// is logged and no zip is written; the step still succeeds.
@@ -152,12 +161,17 @@ public struct Xcode {
     ///
     /// - Parameters:
     ///   - ipaFileName: The name of the IPA without the `.ipa` extension, for example `MyApp`.
+    ///   - method: The export method. Defaults to ad-hoc.
+    ///   - provisioningProfile: Returns the provisioning profile name for the bundle identifier of the archive. Defaults
+    ///     to the `PROVISIONING_PROFILE_SPECIFIER` build setting.
     ///   - outputURL: The directory that receives the IPA and the dSYM zip. Defaults to the artifacts directory.
     ///   - includeDSYMZip: Whether to write the dSYM zip. Pass `false` to write only the IPA.
     ///   - name: The name of the step, if it is not the default.
     /// - Returns: The bundle identifier, signing identity and team identifier of the archive.
     public func archiveAndExport(
         ipaFileName: String,
+        method: ExportMethod = .adhoc,
+        provisioningProfile: ((_ bundleIdentifier: String) -> String)? = nil,
         outputURL: URL = Artifacts.directory,
         includeDSYMZip: Bool = true,
         step name: String? = nil
@@ -171,13 +185,18 @@ public struct Xcode {
 
             let archiveInfo = try await archive(to: archiveURL)
 
-            let buildSettings = try await getBuildSettings()
+            let profileName: String
+            if let provisioningProfile {
+                profileName = provisioningProfile(archiveInfo.bundleIdentifier)
+            } else {
+                profileName = try await getBuildSettings().provisioningProfileSpecifier
+            }
 
             try createExportOptions(
                 file: exportOptionsURL,
-                method: .adhoc,
+                method: method,
                 bundleIdentifier: archiveInfo.bundleIdentifier,
-                provisioningProfile: buildSettings.provisioningProfileSpecifier,
+                provisioningProfile: profileName,
                 signingCertificate: archiveInfo.signingIdentity,
                 teamIdentifier: archiveInfo.teamIdentifier
             )
@@ -283,7 +302,8 @@ public struct Xcode {
     }
 
     public enum ExportMethod: String {
-        case appstore
+        /// App Store Connect. Needs Xcode 15.3 or later.
+        case appstore = "app-store-connect"
         case adhoc = "ad-hoc"
         case development
         case enterprise
@@ -406,19 +426,22 @@ public struct Xcode {
         signingCertificate: String,
         teamIdentifier: String
     ) throws {
-        let lines = try Plist.save(
-            to: file,
-            contents: [
-                "compileBitcode": false,
-                "distributionBundleIdentifier": bundleIdentifier,
-                "method": method.rawValue,
-                "provisioningProfiles": [
-                    bundleIdentifier: provisioningProfile
-                ],
-                "signingCertificate": signingCertificate,
-                "teamID": teamIdentifier
-            ]
-        )
+        var contents: [String: Any] = [
+            "compileBitcode": false,
+            "distributionBundleIdentifier": bundleIdentifier,
+            "method": method.rawValue,
+            "provisioningProfiles": [
+                bundleIdentifier: provisioningProfile
+            ],
+            "signingCertificate": signingCertificate,
+            "teamID": teamIdentifier
+        ]
+        if method == .appstore {
+            // The IPA is written, not uploaded. Xcode does not set the version and build numbers.
+            contents["destination"] = "export"
+            contents["manageAppVersionAndBuildNumber"] = false
+        }
+        let lines = try Plist.save(to: file, contents: contents)
 
         log.lines(title: "Contents of generated '\(file.filePath)' file:", lines: lines)
     }
