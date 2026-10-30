@@ -13,6 +13,8 @@ import Foundation
 /// Each line of stdout and stderr goes unfiltered to the full log, stderr lines with a `[stderr] ` prefix. Lines from
 /// both streams pass through `blockFilter`, if any, and then `filters` to the console, unless the run was started with
 /// `--verbose`. Then the console shows every line unfiltered. Secrets are masked in both cases.
+///
+/// If `outputFile` is set, every line also goes unfiltered to that file, without the `[stderr] ` prefix. See the initializers.
 public struct Tool {
     /// Creates a tool that runs `command` with `arguments`.
     ///
@@ -28,6 +30,10 @@ public struct Tool {
     ///     `--verbose` skips them, so the console shows every line.
     ///   - blockFilter: Decides the console lines together with the lines around them, before `filters`. It may show
     ///     several lines for one, or none. See ``BlockFilter``. A run with `--verbose` skips it too.
+    ///   - outputFile: A file that receives a copy of every line of stdout and stderr: unfiltered, without the `[stderr] `
+    ///     prefix of the full log, and with secrets masked as in the full log. Lines are written as they arrive. The file
+    ///     is created or truncated when the tool starts, and its directory is created if missing. `--verbose` does not
+    ///     change it. `nil` for no copy.
     public init(
         command: String,
         arguments: [String] = [],
@@ -36,7 +42,8 @@ public struct Tool {
         input: ToolInput? = nil,
         timeout: Duration? = nil,
         filters: [Filter] = [],
-        blockFilter: BlockFilter? = nil
+        blockFilter: BlockFilter? = nil,
+        outputFile: URL? = nil
     ) {
         self.init(
             command: command,
@@ -47,6 +54,7 @@ public struct Tool {
             timeout: timeout,
             filters: filters,
             blockFilter: blockFilter,
+            outputFile: outputFile,
             displayName: URL(fileURLWithPath: command).lastPathComponent
         )
     }
@@ -55,14 +63,15 @@ public struct Tool {
     ///
     /// Errors name the tool "Shell command".
     ///
-    /// - Parameters: See ``init(command:arguments:environment:workingDirectory:input:timeout:filters:)``.
+    /// - Parameters: See ``init(command:arguments:environment:workingDirectory:input:timeout:filters:blockFilter:outputFile:)``.
     public init(
         shellCommand: String,
         environment: [String: ToolEnvironmentValue] = [:],
         workingDirectory: URL? = nil,
         input: ToolInput? = nil,
         timeout: Duration? = nil,
-        filters: [Filter] = []
+        filters: [Filter] = [],
+        outputFile: URL? = nil
     ) {
         self.init(
             command: "/bin/sh",
@@ -73,6 +82,7 @@ public struct Tool {
             timeout: timeout,
             filters: filters,
             blockFilter: nil,
+            outputFile: outputFile,
             displayName: "Shell command"
         )
     }
@@ -86,6 +96,7 @@ public struct Tool {
         timeout: Duration?,
         filters: [Filter],
         blockFilter: BlockFilter?,
+        outputFile: URL?,
         displayName: String
     ) {
         self.command = command
@@ -96,6 +107,7 @@ public struct Tool {
         self.timeout = timeout
         self.filters = filters
         self.blockFilter = blockFilter
+        self.outputFile = outputFile
         self.displayName = displayName
     }
 
@@ -115,6 +127,8 @@ public struct Tool {
     public let filters: [Filter]
     /// The block filter, which decides the console lines before `filters`, or `nil` for none.
     public let blockFilter: BlockFilter?
+    /// The file that receives a copy of every output line, unfiltered, or `nil` for no copy.
+    public let outputFile: URL?
 
     /// The name used in error messages and warnings: the last path component of `command`, or "Shell command" for a
     /// shell tool. Read-only.
@@ -152,10 +166,20 @@ public struct Tool {
 
         try validateSecrets()
         try writeHeader()
-        return try await runner.run(self) { line in
-            try FullLog.write(line.stream == .stderr ? "[stderr] \(line.text)" : line.text)
-            consoleTexts(for: line.text).forEach(log.callAsFunction)
+        let copy = try outputFile.map { try ToolOutputFile(url: $0) }
+        let result: ToolResult
+        do {
+            result = try await runner.run(self) { line in
+                try FullLog.write(line.stream == .stderr ? "[stderr] \(line.text)" : line.text)
+                try copy?.write(line.text)
+                consoleTexts(for: line.text).forEach(log.callAsFunction)
+            }
+        } catch {
+            try? copy?.close()
+            throw error
         }
+        try copy?.close()
+        return result
     }
 
     /// The full log header: the command, its arguments, the working directory and the names (never the values) of the

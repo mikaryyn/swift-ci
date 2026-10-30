@@ -281,7 +281,7 @@ exec swift run --package-path CI -c release ci "$@"
 |---|---|
 | **Command** | A named entry point invoked from the command line, e.g. `./ci test`. Several commands can be given and run in order. Inside the body, `cleanup { }` and `onFailure { }` register handlers that run when the command ends. A command reads inputs with `try input("track", default: "beta")`, from `--track=production` on the command line, then from the environment variable `TRACK`, then from the default. |
 | **Step** | A named, timed unit of work inside a command, written `try await step("Name") { … }`. Steps run sequentially and return the value of their body. A step that throws is logged as failed. An error that escapes the command body fails the command, but a script can catch a step's error with `do`/`catch` and continue. A step started inside another step is shown in the outer step's group. A step that may fail is written `await step("Name", failure: .allowed) { … }`. It returns `nil` if it failed, logs the error as a warning, and the command continues. A step that runs only under a condition is written `try await step("Name", when: condition, skipReason: "not on CI") { … }`; when the condition is false, the log shows the step as skipped, with the reason. |
-| **Tool** | A child process (`xcodebuild`, `git`, a shell script). `run()` streams stdout and stderr to the console and the full log, and throws on a non-zero exit. `output()` returns stdout, and `result()` returns stdout, stderr and the exit code. A tool can set environment variables, a working directory, input, a timeout and filters. A program name is looked up in `PATH`. `Tool(shellCommand:)` runs `/bin/sh -c` for shell scripts. |
+| **Tool** | A child process (`xcodebuild`, `git`, a shell script). `run()` streams stdout and stderr to the console and the full log, and throws on a non-zero exit. `output()` returns stdout, and `result()` returns stdout, stderr and the exit code. A tool can set environment variables, a working directory, input, a timeout, filters and an output file (a copy of its unfiltered output). A program name is looked up in `PATH`. `Tool(shellCommand:)` runs `/bin/sh -c` for shell scripts. |
 | **Integration** | Typed Swift API for a tool or service: `Xcode`, `Keychain`, `Signing`, `AppStoreConnect`, `Slack`, `Git`, … A call that does work, such as `xcode.archiveAndExport(…)`, is a step itself, with a default name. `step: "Name"` renames it. A query, such as `Git.getCommitHash()`, is not a step. A call made inside a step is part of that step. |
 | **Extension** | A Swift library that adds integrations, ready-made steps, filters or report writers on top of the core. |
 | **Filter** | A function that hides, rewrites or highlights a line of tool output. Every integration ships a default. |
@@ -291,9 +291,10 @@ exec swift run --package-path CI -c release ci "$@"
 
 *Illustrative. Commands, throwing steps, allowed failures, inline `cleanup` /
 `onFailure` handlers and inputs are implemented. Integration calls as steps are
-implemented for `Xcode`, `Keychain`, `Slack`, `Fastlane` and `Icon`. The other
-integration calls (`xcode.test`, `Simulator`, `Signing`, `AppStoreConnect`) are
-planned; see the [roadmap](#roadmap) and the [capabilities](#capabilities).*
+implemented for `Xcode`, `Keychain`, `Slack`, `Fastlane`, `Icon` and
+`Simulator` (shutdown only). The other integration calls (`Signing`,
+`AppStoreConnect`) are planned; see the [roadmap](#roadmap) and the
+[capabilities](#capabilities).*
 
 ```swift
 import SwiftCI
@@ -309,7 +310,10 @@ let test = Command("test", description: "Run the unit tests") {
     cleanup { try await Simulator.shutdownAll() }
 
     try await xcode.resolvePackages()
-    try await xcode.test(destination: .iOSSimulator(name: device))
+    try await xcode.test(
+        destination: "platform=iOS Simulator,name=\(device),OS=latest",
+        resultBundleURL: try Artifacts.url("MyApp.xcresult")
+    )
 }
 
 let release = Command("release", description: "Build and upload to TestFlight") {
@@ -642,7 +646,7 @@ implemented.
 | Core | CI environment detection (`CI.environment`: Jenkins, GitLab CI, GitHub Actions, Bitrise, generic CI, local) | Prototype |
 | Core | CI output export to later steps (`CI.export`): `envman`, `$GITHUB_ENV` and `artifacts/outputs.env` | Prototype |
 | Xcode | clean, build, archive and export (IPA and dSYM zip to the artifacts directory by default), resolve packages, build settings, docbuild | Prototype |
-| Xcode | test, with xcresult summary of failures and coverage | Planned |
+| Xcode | test, with result bundle, code coverage and raw log file; xcresult summary of failures and coverage is planned | Prototype |
 | Reports | JUnit XML test reports from `.xcresult` | Planned (core) |
 | Reports | Coverage reports (Cobertura XML) from `.xcresult` | Planned (later) |
 | Reports | Warning and error annotations (GitLab Code Quality, GitHub workflow commands) | Planned (optional, later) |
@@ -651,7 +655,8 @@ implemented.
 | Xcode | Xcode selection and preflight checks (version, SDKs, simulators) | Planned |
 | Xcode | Version and build number setting | Prototype |
 | Xcode | Over-the-air install files (`manifest.plist` and install page) | Prototype |
-| Simulators | Boot, shut down, erase via `simctl` | Planned |
+| Simulators | Shut down all simulators via `simctl` (`Simulator.shutdownAll`) | Prototype |
+| Simulators | Boot and erase via `simctl` | Planned |
 | SwiftPM | `swift build`, `swift test`, with output formatting | Planned |
 | Signing | Keychain unlock; the password goes to `security -i` on standard input, never as an argument | Prototype |
 | Signing | Temporary keychain create / import / partition list / delete | Planned |
@@ -713,6 +718,10 @@ SwiftCI writes each tool's output to two places:
   `logs/<command>.log` in the artifacts directory, so that CI can archive it. A
   second run of the same command overwrites it. See
   [Running in CI and locally](#running-in-ci-and-locally).
+
+A `Tool` can also copy its unfiltered output to a file of its own with
+`outputFile:`. The copy is written as the lines arrive, without the `[stderr] `
+prefix, with secrets masked, and `--verbose` does not change it.
 
 Filters are plain Swift functions of type `(String) -> String?`. A filter returns
 the line, a rewritten line, or `nil` to hide it. Projects can replace or extend
@@ -990,7 +999,7 @@ Typical Bitrise steps and fastlane actions, and their SwiftCI counterparts:
 | Bitrise step / fastlane action | SwiftCI |
 |---|---|
 | `script` | `step(name) { … }` with Swift code, or `Tool(shellCommand:)` for shell |
-| `xcode-test` / `scan` | `Xcode.test` **(planned)** |
+| `xcode-test` / `scan` | `Xcode.test` (result bundle and coverage; the JUnit report is planned) |
 | `xcode-archive` / `gym` | `Xcode.archiveAndExport`, a step itself. No `step` wrapper needed |
 | `xcode-project-info` | `Xcode.getBuildSettings(target:)` and `Xcode.getVersion` |
 | `set-xcode-build-number` / `increment_build_number` | `Xcode.setBuildNumber`; read the current value with `Xcode.getVersion` |

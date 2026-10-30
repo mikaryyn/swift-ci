@@ -48,6 +48,71 @@ public struct Xcode {
         }
     }
 
+    /// Runs `xcodebuild test` and writes the result bundle to `resultBundleURL`.
+    ///
+    /// `destination` is passed as `-destination`. Without it, the destination of this `Xcode` value is used. A test run
+    /// needs a concrete destination, such as `platform=iOS Simulator,name=iPhone 17,OS=latest`. The default destination,
+    /// `generic/platform=iOS`, fails in `xcodebuild` for tests.
+    ///
+    /// An existing bundle at `resultBundleURL` is removed first, because `xcodebuild` refuses to write over it. Its parent
+    /// directory is created if it is missing. `enableCodeCoverage` sets `-enableCodeCoverage` to `YES` or `NO`.
+    ///
+    /// The console shows the failing and skipped tests with their issues, and the summary lines. Passing tests are
+    /// hidden.
+    /// If `rawLogURL` is set, every line of the output goes to that file unfiltered (see ``Tool/outputFile``).
+    ///
+    /// If `xcodebuild` exits with a non-zero code, the error names the scheme and the exit code, and gives the path of the
+    /// result bundle if the bundle exists. The bundle and the raw log are complete then, so a caller can catch the error,
+    /// read them, and rethrow.
+    ///
+    /// Opens a step named "Test MyApp" when called at the top level of a command. `step` renames it.
+    public func test(
+        destination: String? = nil,
+        resultBundleURL: URL,
+        rawLogURL: URL? = nil,
+        enableCodeCoverage: Bool = true,
+        step name: String? = nil
+    ) async throws {
+        try await step(default: "Test \(stepSubject)", name: name) {
+            try prepareResultBundle(at: resultBundleURL)
+            let arguments = try makeArguments(
+                [
+                    "test",
+                    "-resultBundlePath", resultBundleURL.filePath,
+                    "-enableCodeCoverage", enableCodeCoverage ? "YES" : "NO"
+                ],
+                destination: destination
+            )
+            let tool = Tool(
+                command: Self.xcodebuildPath,
+                arguments: arguments,
+                blockFilter: Self.testOutputFilter(),
+                outputFile: rawLogURL
+            )
+            let result = try await tool.result()
+            guard result.exitCode == 0 else {
+                throw BuildError(message: testFailureMessage(exitCode: result.exitCode, resultBundleURL: resultBundleURL))
+            }
+        }
+    }
+
+    /// Removes an existing result bundle at `url`, and creates its parent directory.
+    private func prepareResultBundle(at url: URL) throws {
+        if FileManager.default.fileExists(atPath: url.filePath) {
+            try FileManager.default.removeItem(at: url)
+        }
+        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+    }
+
+    private func testFailureMessage(exitCode: Int32, resultBundleURL: URL) -> String {
+        let subject = scheme.map { "scheme '\($0)'" } ?? "the Xcode project"
+        var message = "xcodebuild test of \(subject) exited with code \(exitCode)."
+        if FileManager.default.fileExists(atPath: resultBundleURL.filePath) {
+            message += " The result bundle is at '\(resultBundleURL.filePath)'."
+        }
+        return message
+    }
+
     /// Archives the project, exports it as an IPA and copies the IPA to `outputURL` as `<ipaFileName>.ipa`.
     ///
     /// Unless `includeDSYMZip` is `false`, it also zips the dSYMs of the archive to `outputURL` as
@@ -153,7 +218,8 @@ public struct Xcode {
         var xcconfig: [String: String]
     }
 
-    internal func makeArguments(_ baseArguments: [String]) throws -> [String] {
+    /// The arguments of an xcodebuild run. `destination` replaces the destination of this value when it is set.
+    internal func makeArguments(_ baseArguments: [String], destination: String? = nil) throws -> [String] {
         var result = baseArguments
         if let workspace {
             result.append(contentsOf: ["-workspace", workspace.filePath])
@@ -164,7 +230,7 @@ public struct Xcode {
         if let scheme {
             result.append(contentsOf: ["-scheme", scheme])
         }
-        if let destination {
+        if let destination = destination ?? self.destination {
             result.append(contentsOf: ["-destination", destination])
         }
         if let configuration {

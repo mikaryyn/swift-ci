@@ -1,0 +1,235 @@
+{
+  "devices" : [
+    {
+      "architecture" : "arm64",
+      "deviceId" : "00000000-0000-4000-8000-000000000001",
+      "deviceName" : "iPhone 17",
+      "modelName" : "iPhone 17",
+      "osBuildNumber" : "24B114",
+      "osVersion" : "27.2",
+      "platform" : "iOS Simulator"
+    }
+  ],
+  "testNodes" : [
+    {
+      "children" : [
+        {
+          "children" : [
+            {
+              "children" : [
+                {
+                  "children" : [
+                    {
+                      "name" : "XCTAssertEqual failed: (\"2\") is not equal to (\"3\") - addition is wrong",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/tmp/sci-sample/Tests/SampleXCTests/SampleXCTests.swift",
+                        "lineNumber" : 10
+                      }
+                    }
+                  ],
+                  "duration" : "1s",
+                  "durationInSeconds" : 1.07869291305542,
+                  "name" : "testFailsOnMismatch()",
+                  "nodeIdentifier" : "SampleXCTests/testFailsOnMismatch()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SampleApp/SampleXCTests/SampleXCTests/testFailsOnMismatch",
+                  "nodeType" : "Test Case",
+                  "result" : "Failed"
+                },
+                {
+                  "children" : [
+                    {
+                      "name" : "XCTAssertEqual failed: (\"Hello, A\") is not equal to (\"Hello, B\") - first message",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/tmp/sci-sample/Tests/SampleXCTests/SampleXCTests.swift",
+                        "lineNumber" : 18
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertTrue failed - second message",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/tmp/sci-sample/Tests/SampleXCTests/SampleXCTests.swift",
+                        "lineNumber" : 19
+                      }
+                    }
+                  ],
+                  "duration" : "0,0028s",
+                  "durationInSeconds" : 0.002753019332885742,
+                  "name" : "testFailsTwice()",
+                  "nodeIdentifier" : "SampleXCTests/testFailsTwice()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SampleApp/SampleXCTests/SampleXCTests/testFailsTwice",
+                  "nodeType" : "Test Case",
+                  "result" : "Failed"
+                },
+                {
+                  "duration" : "0,0012s",
+                  "durationInSeconds" : 0.0012160539627075195,
+                  "name" : "testPasses()",
+                  "nodeIdentifier" : "SampleXCTests/testPasses()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SampleApp/SampleXCTests/SampleXCTests/testPasses",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "children" : [
+                    {
+                      "name" : "Test skipped - skipped on purpose",
+                      "nodeType" : "Skip Message"
+                    }
+                  ],
+                  "duration" : "0,012s",
+                  "durationInSeconds" : 0.012356996536254883,
+                  "name" : "testSkipped()",
+                  "nodeIdentifier" : "SampleXCTests/testSkipped()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SampleApp/SampleXCTests/SampleXCTests/testSkipped",
+                  "nodeType" : "Test Case",
+                  "result" : "Skipped"
+                }
+              ],
+              "name" : "SampleXCTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/SampleApp/SampleXCTests/SampleXCTests",
+              "nodeType" : "Test Suite",
+              "result" : "Failed"
+            }
+          ],
+          "name" : "SampleXCTests",
+          "nodeIdentifierURL" : "test://com.apple.xcode/SampleApp/SampleXCTests",
+          "nodeType" : "Unit test bundle",
+          "result" : "Failed"
+        },
+        {
+          "children" : [
+            {
+              "children" : [
+                {
+                  "children" : [
+                    {
+                      "name" : "Test skipped: disabled on purpose",
+                      "nodeType" : "Skip Message"
+                    }
+                  ],
+                  "name" : "disabled()",
+                  "nodeIdentifier" : "SampleSwiftTestingTests/disabled()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SampleApp/SampleSwiftTestingTests/SampleSwiftTestingTests/disabled()",
+                  "nodeType" : "Test Case",
+                  "result" : "Skipped"
+                },
+                {
+                  "children" : [
+                    {
+                      "name" : "Caught error: SampleError()",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/tmp/sci-sample/Tests/SampleSwiftTestingTests/SampleSwiftTestingTests.swift",
+                        "lineNumber" : 26
+                      }
+                    }
+                  ],
+                  "duration" : "0,0087s",
+                  "durationInSeconds" : 0.008658170700073242,
+                  "name" : "throwsError()",
+                  "nodeIdentifier" : "SampleSwiftTestingTests/throwsError()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SampleApp/SampleSwiftTestingTests/SampleSwiftTestingTests/throwsError()",
+                  "nodeType" : "Test Case",
+                  "result" : "Failed"
+                },
+                {
+                  "children" : [
+                    {
+                      "duration" : "0,000065s",
+                      "durationInSeconds" : 6.508827209472656e-05,
+                      "name" : "1",
+                      "nodeIdentifierURL" : "test://com.apple.xcode/SampleApp/SampleSwiftTestingTests/SampleSwiftTestingTests/parameterized(value:)?args=6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+                      "nodeType" : "Arguments",
+                      "result" : "Passed"
+                    },
+                    {
+                      "children" : [
+                        {
+                          "name" : "Expectation failed: value != 2\nvalue → 2: argument 2 is rejected",
+                          "nodeType" : "Failure Message",
+                          "sourceLocation" : {
+                            "filePath" : "/tmp/sci-sample/Tests/SampleSwiftTestingTests/SampleSwiftTestingTests.swift",
+                            "lineNumber" : 22
+                          }
+                        }
+                      ],
+                      "duration" : "0,0081s",
+                      "durationInSeconds" : 0.008120298385620117,
+                      "name" : "2",
+                      "nodeIdentifierURL" : "test://com.apple.xcode/SampleApp/SampleSwiftTestingTests/SampleSwiftTestingTests/parameterized(value:)?args=d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35",
+                      "nodeType" : "Arguments",
+                      "result" : "Failed"
+                    },
+                    {
+                      "duration" : "0,00045s",
+                      "durationInSeconds" : 0.0004489421844482422,
+                      "name" : "3",
+                      "nodeIdentifierURL" : "test://com.apple.xcode/SampleApp/SampleSwiftTestingTests/SampleSwiftTestingTests/parameterized(value:)?args=4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce",
+                      "nodeType" : "Arguments",
+                      "result" : "Passed"
+                    }
+                  ],
+                  "duration" : "0,0029s",
+                  "durationInSeconds" : 0.002878109614054362,
+                  "name" : "parameterized(value:)",
+                  "nodeIdentifier" : "SampleSwiftTestingTests/parameterized(value:)",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SampleApp/SampleSwiftTestingTests/SampleSwiftTestingTests/parameterized(value:)",
+                  "nodeType" : "Test Case",
+                  "result" : "Failed"
+                },
+                {
+                  "duration" : "0,000013s",
+                  "durationInSeconds" : 1.2874603271484375e-05,
+                  "name" : "passes()",
+                  "nodeIdentifier" : "SampleSwiftTestingTests/passes()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SampleApp/SampleSwiftTestingTests/SampleSwiftTestingTests/passes()",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "children" : [
+                    {
+                      "name" : "Expectation failed: sum(1, 1) == 3\nsum(1, 1) → 2: addition is wrong",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/tmp/sci-sample/Tests/SampleSwiftTestingTests/SampleSwiftTestingTests.swift",
+                        "lineNumber" : 12
+                      }
+                    }
+                  ],
+                  "duration" : "0,0092s",
+                  "durationInSeconds" : 0.009226799011230469,
+                  "name" : "failsOnMismatch()",
+                  "nodeIdentifier" : "SampleSwiftTestingTests/failsOnMismatch()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SampleApp/SampleSwiftTestingTests/SampleSwiftTestingTests/failsOnMismatch()",
+                  "nodeType" : "Test Case",
+                  "result" : "Failed"
+                }
+              ],
+              "name" : "SampleSwiftTestingTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/SampleApp/SampleSwiftTestingTests/SampleSwiftTestingTests",
+              "nodeType" : "Test Suite",
+              "result" : "Failed"
+            }
+          ],
+          "name" : "SampleSwiftTestingTests",
+          "nodeIdentifierURL" : "test://com.apple.xcode/SampleApp/SampleSwiftTestingTests",
+          "nodeType" : "Unit test bundle",
+          "result" : "Failed"
+        }
+      ],
+      "name" : "SampleApp",
+      "nodeType" : "Test Plan",
+      "result" : "Failed"
+    }
+  ],
+  "testPlanConfigurations" : [
+    {
+      "configurationId" : "1",
+      "configurationName" : "Test Scheme Action"
+    }
+  ]
+}

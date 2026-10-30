@@ -376,5 +376,197 @@ extension GlobalStateTests {
             #expect(result.exitCode == 0)
             #expect(try String(contentsOf: artifacts.appending(path: "MyApp.ipa"), encoding: .utf8) == "new ipa")
         }
+
+        /// A temporary folder for the result bundle of a test run. The test removes it.
+        func temporaryTestDirectory() -> URL {
+            FileManager.default.temporaryDirectory.appending(path: "xcode-test-\(UUID().uuidString)", directoryHint: .isDirectory)
+        }
+
+        /// The arguments of a test run with the workspace of `makeXcode()`, the default destination and coverage on.
+        static func testArguments(resultBundle: URL, coverage: String = "YES") -> [String] {
+            ["test", "-resultBundlePath", resultBundle.filePath, "-enableCodeCoverage", coverage] + baseArguments
+        }
+
+        @Test func testRunsXcodebuildWithTheExpectedArguments() async throws {
+            let (_, runner) = registerToolMocks()
+            let root = temporaryTestDirectory()
+            defer { try? FileManager.default.removeItem(at: root) }
+            let bundle = root.appending(path: "Result.xcresult", directoryHint: .isDirectory)
+
+            try await makeXcode().test(resultBundleURL: bundle)
+
+            #expect(runner.tools.count == 1)
+            #expect(runner.tools[0].command == "/usr/bin/xcodebuild")
+            #expect(runner.tools[0].arguments == Self.testArguments(resultBundle: bundle))
+        }
+
+        @Test func testRunsXcodebuildWithAProject() async throws {
+            let (_, runner) = registerToolMocks()
+            let root = temporaryTestDirectory()
+            defer { try? FileManager.default.removeItem(at: root) }
+            let bundle = root.appending(path: "Result.xcresult", directoryHint: .isDirectory)
+            let xcode = Xcode(project: URL(filePath: "/work/MyApp.xcodeproj"), scheme: "MyApp", config: .init(xcconfig: [:]))
+
+            try await xcode.test(resultBundleURL: bundle)
+
+            #expect(runner.tools[0].arguments == [
+                "test", "-resultBundlePath", bundle.filePath, "-enableCodeCoverage", "YES",
+                "-project", "/work/MyApp.xcodeproj", "-scheme", "MyApp", "-destination", "generic/platform=iOS",
+            ])
+        }
+
+        /// The destination of the call replaces the destination of the value.
+        @Test func testUsesTheDestinationOfTheCall() async throws {
+            let (_, runner) = registerToolMocks()
+            let root = temporaryTestDirectory()
+            defer { try? FileManager.default.removeItem(at: root) }
+            let bundle = root.appending(path: "Result.xcresult", directoryHint: .isDirectory)
+            let destination = "platform=iOS Simulator,name=iPhone 17,OS=latest"
+
+            try await makeXcode().test(destination: destination, resultBundleURL: bundle)
+
+            #expect(runner.tools[0].arguments == [
+                "test", "-resultBundlePath", bundle.filePath, "-enableCodeCoverage", "YES",
+                "-workspace", "/work/MyApp.xcworkspace", "-scheme", "MyApp", "-destination", destination,
+            ])
+        }
+
+        @Test func testWithCoverageOffPassesNo() async throws {
+            let (_, runner) = registerToolMocks()
+            let root = temporaryTestDirectory()
+            defer { try? FileManager.default.removeItem(at: root) }
+            let bundle = root.appending(path: "Result.xcresult", directoryHint: .isDirectory)
+
+            try await makeXcode().test(resultBundleURL: bundle, enableCodeCoverage: false)
+
+            #expect(runner.tools[0].arguments == Self.testArguments(resultBundle: bundle, coverage: "NO"))
+        }
+
+        @Test func testWithConfigurationAndXcconfigPassesBoth() async throws {
+            let (_, runner) = registerToolMocks()
+            let root = temporaryTestDirectory()
+            defer { try? FileManager.default.removeItem(at: root) }
+            let bundle = root.appending(path: "Result.xcresult", directoryHint: .isDirectory)
+            let xcode = Xcode(
+                workspace: URL(filePath: "/work/MyApp.xcworkspace"),
+                scheme: "MyApp",
+                configuration: "Release",
+                config: .init(xcconfig: ["A": "B"])
+            )
+
+            try await xcode.test(resultBundleURL: bundle)
+
+            let arguments = runner.tools[0].arguments
+            #expect(try Self.argument(after: "-configuration", in: runner.tools[0]) == "Release")
+            #expect(try Self.argument(after: "-xcconfig", in: runner.tools[0]).hasSuffix(".xcconfig"))
+            #expect(arguments.starts(with: ["test", "-resultBundlePath", bundle.filePath, "-enableCodeCoverage", "YES"]))
+        }
+
+        /// A bundle of an earlier run is removed, because xcodebuild refuses to write over it.
+        @Test func testRemovesAnExistingResultBundle() async throws {
+            _ = registerToolMocks()
+            let root = temporaryTestDirectory()
+            defer { try? FileManager.default.removeItem(at: root) }
+            let bundle = root.appending(path: "Result.xcresult", directoryHint: .isDirectory)
+            try FileManager.default.createDirectory(at: bundle, withIntermediateDirectories: true)
+            try Data("old".utf8).write(to: bundle.appending(path: "old.txt"))
+
+            try await makeXcode().test(resultBundleURL: bundle)
+
+            #expect(!FileManager.default.fileExists(atPath: bundle.filePath))
+        }
+
+        /// The parent directory of the result bundle is created when it is missing.
+        @Test func testCreatesTheMissingParentOfTheResultBundle() async throws {
+            _ = registerToolMocks()
+            let root = temporaryTestDirectory()
+            defer { try? FileManager.default.removeItem(at: root) }
+            let parent = root.appending(path: "nested/results", directoryHint: .isDirectory)
+            let bundle = parent.appending(path: "Result.xcresult", directoryHint: .isDirectory)
+
+            try await makeXcode().test(resultBundleURL: bundle)
+
+            #expect(FileManager.default.fileExists(atPath: parent.filePath))
+        }
+
+        /// A failing run names the scheme, the exit code and the result bundle, which the run has written by then.
+        @Test func testFailureNamesTheSchemeExitCodeAndTheWrittenBundle() async throws {
+            let (_, runner) = registerToolMocks()
+            let root = temporaryTestDirectory()
+            defer { try? FileManager.default.removeItem(at: root) }
+            let bundle = root.appending(path: "Result.xcresult", directoryHint: .isDirectory)
+            runner.handler = { tool in
+                let path = try Self.argument(after: "-resultBundlePath", in: tool)
+                try FileManager.default.createDirectory(at: URL(filePath: path), withIntermediateDirectories: true)
+                return response(stderr: "error: boom", exitCode: 65)
+            }
+
+            let error = await thrownError {
+                try await makeXcode().test(resultBundleURL: bundle)
+            }
+
+            #expect(error?.message == "xcodebuild test of scheme 'MyApp' exited with code 65. The result bundle is at '\(bundle.filePath)'.")
+        }
+
+        /// Without a bundle on disk, the error names the scheme and the exit code only.
+        @Test func testFailureWithoutABundleOmitsItsPath() async throws {
+            let (_, runner) = registerToolMocks()
+            let root = temporaryTestDirectory()
+            defer { try? FileManager.default.removeItem(at: root) }
+            let bundle = root.appending(path: "Result.xcresult", directoryHint: .isDirectory)
+            runner.handler = { _ in response(exitCode: 65) }
+
+            let error = await thrownError {
+                try await makeXcode().test(resultBundleURL: bundle)
+            }
+
+            #expect(error?.message == "xcodebuild test of scheme 'MyApp' exited with code 65.")
+        }
+
+        /// The raw log gets every line as xcodebuild printed it, without the `[stderr] ` prefix. The passing test line,
+        /// which the console filter hides, is in it.
+        @Test func testRawLogGetsEveryLineUnfiltered() async throws {
+            let (_, runner) = registerToolMocks()
+            let root = temporaryTestDirectory()
+            defer { try? FileManager.default.removeItem(at: root) }
+            let bundle = root.appending(path: "Result.xcresult", directoryHint: .isDirectory)
+            let rawLog = root.appending(path: "logs/raw.log")
+            runner.responses = [ProcessRunnerMock.Response(
+                lines: [
+                    stdoutLine("Test Case '-[MyAppTests testPasses]' passed (0.001 seconds)."),
+                    stderrLine("error: broken"),
+                ],
+                result: ToolResult(stdout: "", stderr: "error: broken", exitCode: 0)
+            )]
+
+            try await makeXcode().test(resultBundleURL: bundle, rawLogURL: rawLog)
+
+            #expect(runner.tools[0].outputFile == rawLog)
+            #expect(try String(contentsOf: rawLog, encoding: .utf8) == "Test Case '-[MyAppTests testPasses]' passed (0.001 seconds).\nerror: broken\n")
+        }
+
+        /// The step is named "Test MyApp" by default, and `step:` renames it.
+        @Test func testStepOpensItsDefaultNameAndCanBeRenamed() async {
+            let runner = ProcessRunnerMock()
+            let xcode = makeXcode()
+            let root = temporaryTestDirectory()
+            defer { try? FileManager.default.removeItem(at: root) }
+            let bundle = root.appending(path: "Result.xcresult", directoryHint: .isDirectory)
+
+            let result = await SwiftCITest.run(["check"]) {
+                register(ProcessRunner.self, runner)
+                command(Command("check") {
+                    try await xcode.test(resultBundleURL: bundle)
+                    try await xcode.test(resultBundleURL: bundle, step: "Run unit tests")
+                })
+            }
+
+            #expect(result.exitCode == 0)
+            #expect(enteredSteps(in: result.log) == [
+                "Entering step [Test MyApp]",
+                "Entering step [Run unit tests]",
+            ])
+            #expect(runner.tools.count == 2)
+        }
     }
 }

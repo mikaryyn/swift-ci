@@ -58,6 +58,7 @@ let package = Package(
         .testTarget(
             name: "SwiftCIXcodeTests",
             dependencies: ["SwiftCIXcode", "SwiftCITesting", "SwiftCITestSupport"],
+            resources: [.copy("Fixtures")],
             swiftSettings: moduleSettings,
         ),
         .testTarget(

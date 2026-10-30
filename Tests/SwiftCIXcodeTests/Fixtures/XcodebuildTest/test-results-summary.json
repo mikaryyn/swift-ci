@@ -1,0 +1,87 @@
+{
+  "devicesAndConfigurations" : [
+    {
+      "device" : {
+        "architecture" : "arm64",
+        "deviceId" : "00000000-0000-4000-8000-000000000001",
+        "deviceName" : "iPhone 17",
+        "modelName" : "iPhone 17",
+        "osBuildNumber" : "24B114",
+        "osVersion" : "27.2",
+        "platform" : "iOS Simulator"
+      },
+      "expectedFailures" : 0,
+      "failedTests" : 5,
+      "passedTests" : 4,
+      "skippedTests" : 2,
+      "testPlanConfiguration" : {
+        "configurationId" : "1",
+        "configurationName" : "Test Scheme Action"
+      }
+    }
+  ],
+  "environmentDescription" : "SampleApp · Built with macOS 27.2",
+  "expectedFailures" : 0,
+  "failedTests" : 5,
+  "finishTime" : 1793353115.979,
+  "passedTests" : 2,
+  "result" : "Failed",
+  "runtimeWarnings" : [
+
+  ],
+  "skippedTests" : 2,
+  "startTime" : 1793352906.1,
+  "statistics" : [
+    {
+      "subtitle" : "3 test runs",
+      "title" : "1 test ran with dynamic parameters"
+    }
+  ],
+  "testFailures" : [
+    {
+      "failureText" : "Expectation failed: sum(1, 1) == 3\nsum(1, 1) → 2: addition is wrong",
+      "targetName" : "SampleSwiftTestingTests",
+      "testIdentifier" : 9,
+      "testIdentifierString" : "SampleSwiftTestingTests/failsOnMismatch()",
+      "testIdentifierURL" : "test://com.apple.xcode/SampleApp/SampleSwiftTestingTests/SampleSwiftTestingTests/failsOnMismatch()",
+      "testName" : "failsOnMismatch()"
+    },
+    {
+      "failureText" : "Expectation failed: value != 2\nvalue → 2: argument 2 is rejected",
+      "targetName" : "SampleSwiftTestingTests",
+      "testIdentifier" : 7,
+      "testIdentifierString" : "SampleSwiftTestingTests/parameterized(value:)",
+      "testIdentifierURL" : "test://com.apple.xcode/SampleApp/SampleSwiftTestingTests/SampleSwiftTestingTests/parameterized(value:)",
+      "testName" : "parameterized(value:)"
+    },
+    {
+      "failureText" : "Caught error: SampleError()",
+      "targetName" : "SampleSwiftTestingTests",
+      "testIdentifier" : 6,
+      "testIdentifierString" : "SampleSwiftTestingTests/throwsError()",
+      "testIdentifierURL" : "test://com.apple.xcode/SampleApp/SampleSwiftTestingTests/SampleSwiftTestingTests/throwsError()",
+      "testName" : "throwsError()"
+    },
+    {
+      "failureText" : "XCTAssertEqual failed: (\"2\") is not equal to (\"3\") - addition is wrong",
+      "targetName" : "SampleXCTests",
+      "testIdentifier" : 1,
+      "testIdentifierString" : "SampleXCTests/testFailsOnMismatch()",
+      "testIdentifierURL" : "test://com.apple.xcode/SampleApp/SampleXCTests/SampleXCTests/testFailsOnMismatch",
+      "testName" : "testFailsOnMismatch()"
+    },
+    {
+      "failureText" : "XCTAssertEqual failed: (\"Hello, A\") is not equal to (\"Hello, B\") - first message",
+      "targetName" : "SampleXCTests",
+      "testIdentifier" : 2,
+      "testIdentifierString" : "SampleXCTests/testFailsTwice()",
+      "testIdentifierURL" : "test://com.apple.xcode/SampleApp/SampleXCTests/SampleXCTests/testFailsTwice",
+      "testName" : "testFailsTwice()"
+    }
+  ],
+  "title" : "Test - SampleApp",
+  "topInsights" : [
+
+  ],
+  "totalTestCount" : 9
+}
