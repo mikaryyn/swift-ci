@@ -199,6 +199,9 @@ is uninstalled from the CI machine.
 
 ### Phase 2: replace Danger
 
+The generic pieces are planned in
+[Merge request feedback](merge-request-feedback.md).
+
 - **Run report in the core.** Steps add messages, warnings, failures and
   Markdown to a run-level report. Renderers: console summary (core), merge
   request comment (GitLab module), later GitHub step summary and annotations.
