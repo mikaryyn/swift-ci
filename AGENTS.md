@@ -93,6 +93,8 @@ Sources/SwiftCI/              Core
     BuildError.swift          Error type and exit codes
     Artifacts.swift           Artifacts directory: resolution, creation, `Artifacts.directory`, `Artifacts.url(_:)`
     Arguments.swift           Command-line parsing (`RunArguments`: command names, `--name=value` options, reserved flags) and the run's options state (`RunOptions`)
+    MarkdownReport.swift      `MarkdownReport`: the run report as Markdown, masked and truncated to a length limit
+    RunReportOutput.swift     The run report summary on the console and in the full log, and `report-<command>.md`
     Input.swift               `input(_:default:)` and `input(_:)` for `LosslessStringConvertible` and raw-value types
     CI.swift                  CI environment types (`CI`, `CIEnvironment`, `MergeRequest`, `CISystem`), `CIAdapter`, `CIExporter`
     CIDetection.swift         Detection of the CI environment and the built-in adapters, in order; the full log's CI line

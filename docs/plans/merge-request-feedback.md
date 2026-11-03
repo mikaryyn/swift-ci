@@ -11,7 +11,7 @@ generic pieces that replace Danger.
   command.
 - [x] (2026-11-03) R1, second part: `onReport`, the outcome, and rule 4.
 - [x] (2026-11-03) R2, first part: the Markdown renderer `MarkdownReport`.
-- [ ] R2, second part: the console summary and `report-<command>.md`.
+- [x] (2026-11-03) R2, second part: the console summary and `report-<command>.md`.
 - [ ] R3 to R6.
 
 ## Goal
@@ -463,6 +463,13 @@ milestone is a separate change with its own tests and README updates
   cut, and each cut list ends with "N more left out". The footer is kept,
   without leading and trailing blank lines. Whether GitLab renders `\|`
   inside a code span in a table cell is checked in the dry run.
+
+- **The summary also goes to the full log** (2026-11-03), without colour,
+  so the full log has every finding. It is printed, and the file written,
+  after the outcome is set and before the `onReport` handlers. A failed write
+  of the file fails an otherwise successful command with exit code 3, like a
+  failed full log write; it does not change the outcome or run the
+  `onFailure` handlers, which have already run.
 
 ## Open questions
 

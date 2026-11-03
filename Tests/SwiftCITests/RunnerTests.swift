@@ -99,7 +99,7 @@ extension GlobalStateTests {
             let lines = result.log.map(stripANSI)
             #expect(result.exitCode == 1)
             #expect(lines.contains("Step [Compile] failed"))
-            #expect(lines.filter { $0.contains("Compiler failed.") } == ["<Error> Compiler failed."])
+            #expect(lines.filter { $0.hasPrefix("<Error>") && $0.contains("Compiler failed.") } == ["<Error> Compiler failed."])
             #expect(lines.contains("Command [build] failed"))
         }
 

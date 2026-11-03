@@ -41,7 +41,7 @@ extension GlobalStateTests {
             #expect(result.exitCode == 1)
             #expect(lines.contains("  Step [Inner] failed"))
             #expect(lines.contains("Step [Outer] failed"))
-            #expect(lines.filter { $0.contains("Boom.") } == ["<Error> Boom."])
+            #expect(lines.filter { $0.hasPrefix("<Error>") && $0.contains("Boom.") } == ["<Error> Boom."])
         }
 
         @Test func callerCanCatchOriginalErrorType() async {

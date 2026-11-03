@@ -230,7 +230,8 @@ extension GlobalStateTests {
             #expect(result.exitCode == 1)
             #expect(seen?.failures == [ReportFinding(severity: .failure, text: "The command failed: boom")])
             #expect(lines.filter { $0 == "<Error> boom" }.count == 1)
-            #expect(!lines.contains { $0.contains("The command failed:") })
+            #expect(!lines.contains { $0.hasPrefix("<Error>") && $0.contains("The command failed:") })
+            #expect(lines.filter { $0 == "  failure  The command failed: boom" }.count == 1)
         }
 
         /// The body failed after a report failure. The report keeps only the failure that was added, and no rule-4 finding.

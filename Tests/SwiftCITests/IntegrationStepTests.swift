@@ -157,7 +157,7 @@ extension GlobalStateTests {
             let lines = result.log.map(stripANSI)
             #expect(result.exitCode == 1)
             #expect(!ranAfter)
-            #expect(lines.filter { $0.contains("boom") } == ["<Error> boom"])
+            #expect(lines.filter { $0.hasPrefix("<Error>") && $0.contains("boom") } == ["<Error> boom"])
             #expect(lines.contains("Command [test] failed"))
         }
 

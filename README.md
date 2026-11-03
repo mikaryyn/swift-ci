@@ -643,7 +643,7 @@ implemented.
 | Core | Split into core and first-party modules (`SwiftCI`, `SwiftCIXcode`, `SwiftCISigning`, `SwiftCISlack`; macOS verified, Linux not yet) | Prototype |
 | Testing | `SwiftCITesting`: `ProcessRunnerMock`, `LogMock`, `SwiftCITest.run` and scoped environment and mocks, for scripts and extensions (macOS verified) | Prototype |
 | Core | Step summary at end of run (status and duration per step) | Planned |
-| Core | Run report API: `Report` findings and sections, `onReport` handlers that receive the final report; a report failure fails the command. The console summary and the Markdown renderer are planned | Prototype |
+| Core | Run report: `Report` findings and sections, `onReport` handlers that receive the final report, a console and full log summary, and `report-<command>.md` in the artifacts directory; a report failure fails the command. `MarkdownReport` renders a report as Markdown. Posting it to a merge request is planned | Prototype |
 | Core | CI environment detection (`CI.environment`: Jenkins, GitLab CI, GitHub Actions, Bitrise, generic CI, local) | Prototype |
 | Core | CI output export to later steps (`CI.export`): `envman`, `$GITHUB_ENV` and `artifacts/outputs.env` | Prototype |
 | Xcode | clean, build, archive and export (ad-hoc or App Store; IPA and dSYM zip to the artifacts directory by default; App Store export writes the IPA only, upload is separate), resolve packages, build settings, docbuild | Prototype |
@@ -768,6 +768,24 @@ Secret handling follows these rules:
 CI systems can render a few standard report formats themselves. That is more
 useful than scrolling through logs. SwiftCI writes reports to the artifacts
 directory, and the CI configuration publishes them.
+
+**Run report.** A command records its findings with `Report.failure(_:file:line:)`,
+`Report.warning(…)` and `Report.message(…)`, and adds sections with
+`Report.markdown(_:title:)`. When the command ends, SwiftCI prints a summary of
+the findings and writes `report-<command>.md` to the artifacts directory. An
+`onReport { report in … }` handler receives the finished report. A failure in
+the report fails the command, so every check runs before the run ends.
+
+```swift
+let lint = Command("lint") {
+    onReport { report in
+        try await notifier.send(text: "\(report.failures.count) finding(s)")
+    }
+    try await step("Check files") {
+        Report.failure("Force unwrap.", file: "Sources/App/View.swift", line: 12)
+    }
+}
+```
 
 **JUnit XML test reports.** `Xcode.writeJUnitReport` writes a JUnit XML file
 converted from the `.xcresult` bundle of `Xcode.test` (`swift test` is

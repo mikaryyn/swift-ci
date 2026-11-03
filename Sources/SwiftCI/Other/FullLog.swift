@@ -6,6 +6,10 @@ public struct FullLog {
     static var path: URL?
     static var file: FileHandle?
 
+    /// `true` once a write to the log of the running command has failed. Reset by ``open(name:)``. Later writes to a broken
+    /// log fail the same way, so their errors would only repeat the first one, which is logged where it happened.
+    private(set) static var hasFailed = false
+
     /// Creates the `logs` directory in the artifacts directory. Replaced in tests to simulate a failure.
     static var makeDirectory: (URL) throws -> Void = { try FileManager.default.createDirectory(at: $0, withIntermediateDirectories: true) }
 
@@ -27,6 +31,7 @@ public struct FullLog {
             )
         }
         FullLog.path = path
+        hasFailed = false
     }
 
     /// Closes the log file and clears the path and the file, also if closing fails.
@@ -57,6 +62,7 @@ public struct FullLog {
             try file.write(contentsOf: Data(SecretRegistry.redact(line).utf8))
             try file.write(contentsOf: linebreak)
         } catch {
+            hasFailed = true
             throw BuildError(
                 message: "Failed to write into the build log. Check that the disk is not full. Details: \(error)",
                 code: .internal

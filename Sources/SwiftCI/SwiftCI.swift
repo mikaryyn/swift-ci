@@ -214,16 +214,19 @@ private func logCommandList() {
 /// The order is: create the artifacts directory if needed, open the full log and write the CI summary line to it, run the
 /// body, run the `cleanup` handlers in reverse order, fail the command if the body and the cleanup handlers succeeded but
 /// the run report has failures, run the `onFailure` handlers in reverse order if the command has failed so far, set the
-/// outcome of the run report, run the `onReport` handlers in registration order, then close the full log.
+/// outcome of the run report, print the summary of the report and write it to the artifacts directory (see
+/// ``publishRunReport(_:failure:)``), run the `onReport` handlers in registration order, then close the full log.
 ///
 /// A failure of the body decides the exit code. A failure of a handler decides it only if nothing failed before, and an
 /// allowed handler failure never does. The report check is one such failure: it fails the command with exit code 1 only
 /// if nothing failed before, and it is logged once. A failure to close the full log decides it only if nothing failed
 /// before.
 ///
-/// The outcome is set before the `onReport` handlers run, so they all see the same outcome. A failure of an `onReport`
-/// handler can still decide the exit code, but it does not change the outcome. If the full log cannot be closed after a
-/// successful run, the outcome stays ``CommandOutcome/succeeded``, and the report handlers have already seen it.
+/// The outcome is set before the summary and the `onReport` handlers run, so they all see the same outcome. A failure of an
+/// `onReport` handler can still decide the exit code, but it does not change the outcome. If the full log cannot be closed
+/// after a successful run, the outcome stays ``CommandOutcome/succeeded``, and the report handlers have already seen it.
+/// A failure to write the report file or the summary to the full log decides the exit code in the same way, if nothing
+/// failed before, and it does not run the `onFailure` handlers, which have already run.
 ///
 /// If the close fails and nothing failed before, the `onFailure` handlers have not run yet. They run after the close, and
 /// their failures are logged but do not change the exit code (3).
@@ -258,6 +261,7 @@ internal func run(command: Command) async -> Int32? {
     }
 
     finishReport(context, failure: failure)
+    publishRunReport(context, failure: &failure)
     await runHandlers(.report, in: context, failure: &failure)
 
     do {

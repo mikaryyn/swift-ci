@@ -69,8 +69,9 @@ public func onFailure(failure: FailureMode? = nil, _ body: @escaping () async th
 /// }
 /// ```
 ///
-/// The handler runs after the body, the `cleanup` and `onFailure` handlers, and the outcome is set.
-/// The report it receives has its ``RunReport/outcome`` set. Report handlers run in registration
+/// The handler runs after the body, the `cleanup` and `onFailure` handlers, and the outcome is set. The summary of
+/// the report is printed and the report file is written before it runs (see ``Report``). The report it receives has
+/// its ``RunReport/outcome`` set, and it is the same report as the one in the file. Report handlers run in registration
 /// order, not in reverse. Each one is logged as a step named "Report".
 ///
 /// A report handler cannot add to the report. `Report.failure`, `Report.warning`, `Report.message` and

@@ -132,6 +132,10 @@ public enum CommandOutcome: Equatable, Sendable {
 /// function called from it. Calling them outside a running command stops the process with a
 /// `preconditionFailure`, as ``step(_:_:)`` does. This check is not unit tested.
 ///
+/// When the command ends, a report that is not empty is printed after the handlers that add to it, as a summary, and
+/// written to `report-<command>.md` in the artifacts directory, rendered by ``MarkdownReport``. The summary is printed
+/// before the `onReport` handlers run. Findings added in an `onReport` handler are not in the summary or the file.
+///
 /// The report is final in an `onReport` handler, so these functions stop the process with a `preconditionFailure`
 /// there too. Only ``current`` may be read in that handler. This check is not unit tested.
 public enum Report {
@@ -196,8 +200,9 @@ private func addFinding(_ finding: ReportFinding) {
     }
 }
 
-/// The text of the console line of `finding`: the text, after its location if it has a file.
-private func consoleText(_ finding: ReportFinding) -> String {
+/// The text of the console line of `finding`: the text, after its location if it has a file. The summary of the run
+/// report uses it too.
+func consoleText(_ finding: ReportFinding) -> String {
     guard let file = finding.file else { return finding.text }
     let location = finding.line.map { "\(file):\($0)" } ?? file
     return "\(location): \(finding.text)"
