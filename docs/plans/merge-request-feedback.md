@@ -12,7 +12,8 @@ generic pieces that replace Danger.
 - [x] (2026-11-03) R1, second part: `onReport`, the outcome, and rule 4.
 - [x] (2026-11-03) R2, first part: the Markdown renderer `MarkdownReport`.
 - [x] (2026-11-03) R2, second part: the console summary and `report-<command>.md`.
-- [ ] R3 to R6.
+- [x] (2026-11-03) R4: `Git.reportUncommittedChanges` and `Git.reportLines`.
+- [ ] R3, R5 and R6.
 
 ## Goal
 
@@ -470,6 +471,11 @@ milestone is a separate change with its own tests and README updates
   of the file fails an otherwise successful command with exit code 3, like a
   failed full log write; it does not change the outcome or run the
   `onFailure` handlers, which have already run.
+
+- **The repository checks take an optional `repository` URL** (2026-11-03),
+  the working directory of `git` and the base of the files that
+  `reportLines` reads, so tests use a temporary directory. A file that cannot
+  be read as UTF-8 is skipped with a warning in the log, not a finding.
 
 ## Open questions
 

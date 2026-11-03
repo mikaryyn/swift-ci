@@ -221,7 +221,7 @@ private func largestFitting(_ total: Int, _ fits: (Int) -> Bool) -> Int {
 
 /// Wraps `text` in inline code. The fence is one backtick longer than the longest run of backticks in `text`, so the
 /// text may contain backticks. A space is added inside the fence if the text starts or ends with a backtick.
-private func codeSpan(_ text: String) -> String {
+func codeSpan(_ text: String) -> String {
     var longest = 0
     var run = 0
     for character in text {

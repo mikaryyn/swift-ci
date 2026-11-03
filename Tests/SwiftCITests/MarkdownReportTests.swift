@@ -273,7 +273,7 @@ extension GlobalStateTests {
         @Test func outputNeverExceedsTheLimitWhenFixedPartsFit() {
             let report = RunReport(
                 commandName: "lint",
-                findings: (1...3000).flatMap { index in
+                findings: (1...3000).flatMap { (index: Int) -> [ReportFinding] in
                     [
                         ReportFinding(severity: .failure, text: "failure \(index)", file: "F.swift", line: index),
                         ReportFinding(severity: .warning, text: "warning \(index)"),
