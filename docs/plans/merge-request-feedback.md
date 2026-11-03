@@ -9,7 +9,7 @@ generic pieces that replace Danger.
 - [x] (2026-11-03) R1, first part: the model, `Report.failure/warning/message/markdown`
   and `Report.current`, findings logged when added, report failures fail the
   command.
-- [ ] R1, second part: `onReport`, the outcome, and rule 4.
+- [x] (2026-11-03) R1, second part: `onReport`, the outcome, and rule 4.
 - [ ] R2 to R6.
 
 ## Goal
@@ -442,6 +442,15 @@ milestone is a separate change with its own tests and README updates
 - **Findings are logged to the console only when added** (2026-11-03), like
   other error and warning lines; they do not go to the full log. The printed
   report of R2 decides whether the full log gets the report.
+
+- **A failing `onReport` handler does not change the outcome** (2026-11-03).
+  The outcome is set once, before the report handlers run, so they all see
+  the same report. A failing handler can still decide the exit code, and it
+  does not run the `onFailure` handlers.
+- **The stored report is not masked** (2026-11-03). Findings and the outcome
+  message keep their text; console lines are masked as always. Everything
+  that renders the report for output (R2's console summary and Markdown file,
+  R6's comment) must mask secrets in the rendered text.
 
 ## Open questions
 

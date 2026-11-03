@@ -84,7 +84,8 @@ public struct RunReport: Equatable, Sendable {
     public var findings: [ReportFinding]
     /// The sections, in the order they were added.
     public var sections: [ReportSection]
-    /// How the command ended, or `nil` while it runs.
+    /// How the command ended, or `nil` until the outcome is set. It is set before the `onReport` handlers run, and
+    /// `nil` in the `cleanup` and `onFailure` handlers.
     public var outcome: CommandOutcome?
 
     /// The findings with severity ``ReportSeverity/failure``, in the order they were added.
@@ -130,6 +131,9 @@ public enum CommandOutcome: Equatable, Sendable {
 /// Only call these inside a command body, or in a `cleanup` or `onFailure` handler, directly or through a
 /// function called from it. Calling them outside a running command stops the process with a
 /// `preconditionFailure`, as ``step(_:_:)`` does. This check is not unit tested.
+///
+/// The report is final in an `onReport` handler, so these functions stop the process with a `preconditionFailure`
+/// there too. Only ``current`` may be read in that handler. This check is not unit tested.
 public enum Report {
     /// Adds a failure. The command fails at the end of its handlers, with the exit code of a failed command.
     ///
@@ -167,11 +171,11 @@ public enum Report {
     ///   - markdown: Markdown block content.
     ///   - title: The heading of the section, or `nil` for none.
     public static func markdown(_ markdown: String, title: String? = nil) {
-        runningContext("Report.markdown").report.sections.append(ReportSection(title: title, markdown: markdown))
+        addingContext("Report.markdown").report.sections.append(ReportSection(title: title, markdown: markdown))
     }
 
     /// A copy of the report of the running command, with the findings and sections added so far.
-    /// Its ``RunReport/outcome`` is `nil` until the command ends.
+    /// Its ``RunReport/outcome`` is `nil` until the outcome is set, before the `onReport` handlers run.
     public static var current: RunReport {
         runningContext("Report.current").report
     }
@@ -182,7 +186,7 @@ public enum Report {
 private func addFinding(_ finding: ReportFinding) {
     @Use var log: Log
 
-    runningContext("Report").report.findings.append(finding)
+    addingContext("Report").report.findings.append(finding)
 
     let text = consoleText(finding)
     switch finding.severity {
@@ -204,6 +208,17 @@ private func consoleText(_ finding: ReportFinding) -> String {
 private func runningContext(_ name: String) -> RunContext {
     guard let context = RunContext.current else {
         preconditionFailure("\(name) may only be called while a command runs, inside a Command body.")
+    }
+    return context
+}
+
+/// The running command's context, for a call that adds to the report. Stops the process if no command runs, or if the
+/// call is made inside an `onReport` handler, where the report is final.
+@MainActor
+private func addingContext(_ name: String) -> RunContext {
+    let context = runningContext(name)
+    guard !context.isRunningReportHandler else {
+        preconditionFailure("\(name) may not be called inside an onReport handler. The report is final there; read it with Report.current.")
     }
     return context
 }

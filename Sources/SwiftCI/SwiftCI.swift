@@ -212,15 +212,21 @@ private func logCommandList() {
 /// otherwise the exit code of the failure.
 ///
 /// The order is: create the artifacts directory if needed, open the full log and write the CI summary line to it, run the
-/// body, run the `cleanup` handlers in reverse order, fail the command if the body and the cleanup handlers succeeded
-/// but the run report has failures, run the `onFailure` handlers in reverse order if the command has failed so far, then
-/// close the full log. A failure of the body decides the exit code. A failure of a handler decides it only if nothing
-/// failed before, and an allowed handler failure never does. The report check is one such failure: it fails the command
-/// with exit code 1 only if nothing failed before, and it is logged once. A failure to close the full log decides it
-/// only if nothing failed before.
+/// body, run the `cleanup` handlers in reverse order, fail the command if the body and the cleanup handlers succeeded but
+/// the run report has failures, run the `onFailure` handlers in reverse order if the command has failed so far, set the
+/// outcome of the run report, run the `onReport` handlers in registration order, then close the full log.
 ///
-/// If the close fails and nothing failed before, the `onFailure` handlers have not run yet. They
-/// run after the close, and their failures are logged but do not change the exit code (3).
+/// A failure of the body decides the exit code. A failure of a handler decides it only if nothing failed before, and an
+/// allowed handler failure never does. The report check is one such failure: it fails the command with exit code 1 only
+/// if nothing failed before, and it is logged once. A failure to close the full log decides it only if nothing failed
+/// before.
+///
+/// The outcome is set before the `onReport` handlers run, so they all see the same outcome. A failure of an `onReport`
+/// handler can still decide the exit code, but it does not change the outcome. If the full log cannot be closed after a
+/// successful run, the outcome stays ``CommandOutcome/succeeded``, and the report handlers have already seen it.
+///
+/// If the close fails and nothing failed before, the `onFailure` handlers have not run yet. They run after the close, and
+/// their failures are logged but do not change the exit code (3).
 ///
 /// An internal error recorded by a status-line write is checked after the body and after each
 /// handler. It fails the command with ``ErrorCode/internal`` if nothing failed before.
@@ -234,64 +240,84 @@ internal func run(command: Command) async -> Int32? {
     RunContext.current = context
     defer { RunContext.current = nil }
 
-    var exitCode: ErrorCode?
+    var failure: CommandFailure?
     do {
         try Artifacts.prepareDirectory()
         try FullLog.open(name: command.name)
         try FullLog.write(CIDetection.summary(CI.environment))
         try await command.run()
     } catch {
-        exitCode = logFailure(error)
+        failure = logFailure(error)
     }
-    absorbInternalError(context, into: &exitCode)
+    absorbInternalError(context, into: &failure)
 
-    await runHandlers(.cleanup, in: context, exitCode: &exitCode)
-    absorbReportFailures(context, into: &exitCode)
-    if exitCode != nil {
-        await runHandlers(.onFailure, in: context, exitCode: &exitCode)
+    await runHandlers(.cleanup, in: context, failure: &failure)
+    absorbReportFailures(context, into: &failure)
+    if failure != nil {
+        await runHandlers(.onFailure, in: context, failure: &failure)
     }
+
+    finishReport(context, failure: failure)
+    await runHandlers(.report, in: context, failure: &failure)
 
     do {
         try FullLog.close()
     } catch {
         // Log first: `??` would skip logging when the command already failed.
-        let closeCode = logFailure(error)
-        if exitCode == nil {
-            exitCode = closeCode
+        let closeFailure = logFailure(error)
+        if failure == nil {
+            failure = closeFailure
             // The full log is closed now, so the output of these handlers goes to the console only.
-            await runHandlers(.onFailure, in: context, exitCode: &exitCode)
+            await runHandlers(.onFailure, in: context, failure: &failure)
         }
     }
 
-    guard let exitCode else { return nil }
+    guard let failure else { return nil }
     log("Command [\(command.name.red().bold())] failed")
-    return exitCode.rawValue
+    return failure.code.rawValue
 }
 
-/// Logs the first internal error recorded since the last check, and sets the exit code
-/// to its code if nothing failed before.
+/// Logs the first internal error recorded since the last check, and sets the failure to it
+/// if nothing failed before.
 @MainActor
-internal func absorbInternalError(_ context: RunContext, into exitCode: inout ErrorCode?) {
+internal func absorbInternalError(_ context: RunContext, into failure: inout CommandFailure?) {
     guard let error = context.takeInternalError() else { return }
-    let internalCode = logFailure(error)
-    exitCode = exitCode ?? internalCode
+    let internalFailure = logFailure(error)
+    failure = failure ?? internalFailure
 }
 
 /// Fails the command if the run report has failures and nothing failed before. The error is logged once, as a
 /// failure of the command.
 @MainActor
-internal func absorbReportFailures(_ context: RunContext, into exitCode: inout ErrorCode?) {
+internal func absorbReportFailures(_ context: RunContext, into failure: inout CommandFailure?) {
     let count = context.report.failures.count
-    guard exitCode == nil, count > 0 else { return }
-    exitCode = logFailure(BuildError(message: "The run report has \(count) failure(s)."))
+    guard failure == nil, count > 0 else { return }
+    failure = logFailure(BuildError(message: "The run report has \(count) failure(s)."))
 }
 
-/// Logs the message of an error that failed a command, and returns the exit code it maps to.
-internal func logFailure(_ error: Error) -> ErrorCode {
+/// Sets the outcome of the run report from the failure that decided the exit code, or to success if nothing failed.
+///
+/// If the command failed and the report has no failure, adds the failure "The command failed: <message>" to the report.
+/// It is not logged, because the error that failed the command was already logged once.
+@MainActor
+internal func finishReport(_ context: RunContext, failure: CommandFailure?) {
+    guard let failure else {
+        context.report.outcome = .succeeded
+        return
+    }
+    if context.report.failures.isEmpty {
+        context.report.findings.append(ReportFinding(severity: .failure, text: "The command failed: \(failure.message)"))
+    }
+    context.report.outcome = .failed(message: failure.message)
+}
+
+/// Logs the message of an error that failed a command, and returns the failure it makes.
+internal func logFailure(_ error: Error) -> CommandFailure {
     @Use var log: Log
 
-    log.error(errorMessage(error))
-    return (error as? BuildError)?.code ?? .failure
+    let message = errorMessage(error)
+    log.error(message)
+    return CommandFailure(code: (error as? BuildError)?.code ?? .failure, message: message)
 }
 
 /// The message shown for an error: the message of a `BuildError`, or the error's description.

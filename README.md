@@ -643,6 +643,7 @@ implemented.
 | Core | Split into core and first-party modules (`SwiftCI`, `SwiftCIXcode`, `SwiftCISigning`, `SwiftCISlack`; macOS verified, Linux not yet) | Prototype |
 | Testing | `SwiftCITesting`: `ProcessRunnerMock`, `LogMock`, `SwiftCITest.run` and scoped environment and mocks, for scripts and extensions (macOS verified) | Prototype |
 | Core | Step summary at end of run (status and duration per step) | Planned |
+| Core | Run report API: `Report` findings and sections, `onReport` handlers that receive the final report; a report failure fails the command. The console summary and the Markdown renderer are planned | Prototype |
 | Core | CI environment detection (`CI.environment`: Jenkins, GitLab CI, GitHub Actions, Bitrise, generic CI, local) | Prototype |
 | Core | CI output export to later steps (`CI.export`): `envman`, `$GITHUB_ENV` and `artifacts/outputs.env` | Prototype |
 | Xcode | clean, build, archive and export (ad-hoc or App Store; IPA and dSYM zip to the artifacts directory by default; App Store export writes the IPA only, upload is separate), resolve packages, build settings, docbuild | Prototype |

@@ -169,5 +169,184 @@ extension GlobalStateTests {
             #expect(result.exitCode == 0)
             #expect(secondFindings == [])
         }
+
+        /// Cleanup handlers run in reverse order, then onFailure handlers in reverse order, then onReport handlers in
+        /// registration order, last.
+        @Test func reportHandlersRunLastInRegistrationOrder() async {
+            var events: [String] = []
+            let result = await SwiftCITest.run(["test"]) {
+                command(Command("test") {
+                    onReport { _ in events.append("r1") }
+                    onFailure { events.append("o1") }
+                    cleanup { events.append("c1") }
+                    onReport { _ in events.append("r2") }
+                    onFailure { events.append("o2") }
+                    cleanup { events.append("c2") }
+                    throw BuildError(message: "Body failed.")
+                })
+            }
+
+            #expect(result.exitCode == 1)
+            #expect(events == ["c2", "c1", "o2", "o1", "r1", "r2"])
+        }
+
+        @Test func cleanRunSetsSucceededOutcomeForReportHandler() async {
+            var seen: RunReport?
+            let result = await SwiftCITest.run(["test"]) {
+                command(Command("test") {
+                    onReport { seen = $0 }
+                })
+            }
+
+            #expect(result.exitCode == 0)
+            #expect(seen?.outcome == .succeeded)
+            #expect(seen?.isClean == true)
+        }
+
+        @Test func failedBodySetsFailedOutcomeWithItsMessage() async {
+            var seen: RunReport?
+            let result = await SwiftCITest.run(["test"]) {
+                command(Command("test") {
+                    onReport { seen = $0 }
+                    throw BuildError(message: "Body failed.", code: .usage)
+                })
+            }
+
+            #expect(result.exitCode == 2)
+            #expect(seen?.outcome == .failed(message: "Body failed."))
+        }
+
+        /// The body failed without a report failure, so the command adds the failure once, and does not log it again.
+        @Test func rule4AddsCommandFailedFindingOnlyWithoutReportFailures() async {
+            var seen: RunReport?
+            let result = await SwiftCITest.run(["test"]) {
+                command(Command("test") {
+                    onReport { seen = $0 }
+                    throw TestError.boom
+                })
+            }
+
+            let lines = result.log.map(stripANSI)
+            #expect(result.exitCode == 1)
+            #expect(seen?.failures == [ReportFinding(severity: .failure, text: "The command failed: boom")])
+            #expect(lines.filter { $0 == "<Error> boom" }.count == 1)
+            #expect(!lines.contains { $0.contains("The command failed:") })
+        }
+
+        /// The body failed after a report failure. The report keeps only the failure that was added, and no rule-4 finding.
+        @Test func rule4IsNotAppliedWhenReportAlreadyHasFailures() async {
+            var seen: RunReport?
+            let result = await SwiftCITest.run(["test"]) {
+                command(Command("test") {
+                    onReport { seen = $0 }
+                    Report.failure("Lint failed.")
+                    throw BuildError(message: "Body failed.", code: .usage)
+                })
+            }
+
+            #expect(result.exitCode == 2)
+            #expect(seen?.failures.map(\.text) == ["Lint failed."])
+            #expect(seen?.outcome == .failed(message: "Body failed."))
+        }
+
+        @Test func reportCheckFailureSetsFailedOutcomeWithoutRule4Finding() async {
+            var seen: RunReport?
+            let result = await SwiftCITest.run(["test"]) {
+                command(Command("test") {
+                    onReport { seen = $0 }
+                    Report.failure("Lint failed.")
+                })
+            }
+
+            #expect(result.exitCode == 1)
+            #expect(seen?.outcome == .failed(message: "The run report has 1 failure(s)."))
+            #expect(seen?.findings == [ReportFinding(severity: .failure, text: "Lint failed.")])
+        }
+
+        /// The cleanup and onFailure handlers add findings, and the report that onReport receives has them.
+        @Test func findingsFromCleanupAndOnFailureReachReportHandler() async {
+            var seen: RunReport?
+            let result = await SwiftCITest.run(["test"]) {
+                command(Command("test") {
+                    onReport { seen = $0 }
+                    onFailure { Report.message("From onFailure.") }
+                    cleanup { Report.warning("From cleanup.") }
+                    throw TestError.boom
+                })
+            }
+
+            #expect(result.exitCode == 1)
+            #expect(seen?.warnings.map(\.text) == ["From cleanup."])
+            #expect(seen?.messages.map(\.text) == ["From onFailure."])
+        }
+
+        /// A failing report handler fails a successful command, and the next report handler still runs and sees the
+        /// outcome as it was. The onFailure handlers do not run because of it.
+        @Test func failingReportHandlerFailsSuccessfulCommand() async {
+            var events: [String] = []
+            var secondOutcome: CommandOutcome?
+            let result = await SwiftCITest.run(["test"]) {
+                command(Command("test") {
+                    onFailure { events.append("onFailure") }
+                    onReport { _ in
+                        events.append("first")
+                        throw TestError.boom
+                    }
+                    onReport { secondOutcome = $0.outcome }
+                })
+            }
+
+            let lines = result.log.map(stripANSI)
+            #expect(result.exitCode == 1)
+            #expect(events == ["first"])
+            #expect(secondOutcome == .succeeded)
+            #expect(lines.contains("Step [Report] failed"))
+            #expect(lines.filter { $0 == "<Error> boom" }.count == 1)
+            #expect(lines.contains("Command [test] failed"))
+        }
+
+        @Test func allowedFailingReportHandlerKeepsExitCodeZero() async {
+            var secondRan = false
+            let result = await SwiftCITest.run(["test"]) {
+                command(Command("test") {
+                    onReport(failure: .allowed) { _ in throw TestError.boom }
+                    onReport { _ in secondRan = true }
+                })
+            }
+
+            let lines = result.log.map(stripANSI)
+            #expect(result.exitCode == 0)
+            #expect(secondRan)
+            #expect(lines.contains("Step [Report] failed (allowed)"))
+            #expect(lines.filter { $0 == "<Warning> boom" }.count == 1)
+            #expect(!lines.contains { $0.hasPrefix("<Error>") })
+            #expect(!lines.contains("Command [test] failed"))
+        }
+
+        /// The body's failure decides the exit code, so a failing report handler does not change it.
+        @Test func failingReportHandlerAfterFailedBodyKeepsBodyCode() async {
+            let result = await SwiftCITest.run(["test"]) {
+                command(Command("test") {
+                    onReport { _ in throw BuildError(message: "Report failed.", code: .internal) }
+                    throw BuildError(message: "Body failed.", code: .usage)
+                })
+            }
+
+            let lines = result.log.map(stripANSI)
+            #expect(result.exitCode == 2)
+            #expect(lines.filter { $0 == "<Error> Body failed." }.count == 1)
+            #expect(lines.filter { $0 == "<Error> Report failed." }.count == 1)
+        }
+
+        @Test func reportHandlerIsLoggedAsReportStep() async {
+            let result = await SwiftCITest.run(["test"]) {
+                command(Command("test") {
+                    onReport { _ in }
+                })
+            }
+
+            #expect(result.exitCode == 0)
+            #expect(enteredSteps(in: result.log) == ["Entering step [Report]"])
+        }
     }
 }
