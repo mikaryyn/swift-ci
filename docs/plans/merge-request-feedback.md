@@ -10,7 +10,9 @@ generic pieces that replace Danger.
   and `Report.current`, findings logged when added, report failures fail the
   command.
 - [x] (2026-11-03) R1, second part: `onReport`, the outcome, and rule 4.
-- [ ] R2 to R6.
+- [x] (2026-11-03) R2, first part: the Markdown renderer `MarkdownReport`.
+- [ ] R2, second part: the console summary and `report-<command>.md`.
+- [ ] R3 to R6.
 
 ## Goal
 
@@ -451,6 +453,16 @@ milestone is a separate change with its own tests and README updates
   message keep their text; console lines are masked as always. Everything
   that renders the report for output (R2's console summary and Markdown file,
   R6's comment) must mask secrets in the rendered text.
+
+- **Markdown layout details** (2026-11-03). The heading says "failed" when
+  the report has failures or the command failed, otherwise "passed", also
+  with only warnings. The tables have a `**Failures**` or `**Warnings**`
+  line above them; messages have none. A path with backticks gets a longer
+  code fence. The renderer masks secrets itself, before measuring the
+  length. When the text is too long, a note is added whenever anything is
+  cut, and each cut list ends with "N more left out". The footer is kept,
+  without leading and trailing blank lines. Whether GitLab renders `\|`
+  inside a code span in a table cell is checked in the dry run.
 
 ## Open questions
 
