@@ -1,7 +1,7 @@
 /// Lifecycle state of the command that is running: its name, the number of steps currently open,
-/// the `cleanup` and `onFailure` handlers registered so far, and the first internal error of a
-/// status-line write that could not be thrown. Created by the runner for each command and cleared
-/// when the command ends.
+/// the `cleanup` and `onFailure` handlers registered so far, the run report, and the first internal
+/// error of a status-line write that could not be thrown. Created by the runner for each command and
+/// cleared when the command ends.
 ///
 /// This state never skips ordinary command or step code. A failure only changes how the
 /// command ends, not what runs before that.
@@ -29,6 +29,7 @@ final class RunContext {
 
     init(commandName: String) {
         self.commandName = commandName
+        report = RunReport(commandName: commandName)
     }
 
     /// The context of the command that is running, or `nil` outside a command.
@@ -41,6 +42,9 @@ final class RunContext {
 
     /// The handlers registered so far, in registration order.
     private(set) var handlers: [Handler] = []
+
+    /// The findings and sections that the command has added to its run report so far.
+    var report: RunReport
 
     /// `true` while a handler runs. Handlers cannot be registered then.
     var isRunningHandler = false

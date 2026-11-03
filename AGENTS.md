@@ -77,7 +77,8 @@ Sources/SwiftCI/              Core
   SwiftCI.swift               Entry point `SwiftCI { … }`, command dispatch, exit codes
   Command.swift               Command and step (throwing and allowed-failure steps, nesting)
   Handlers.swift              cleanup / onFailure registration and running
-  RunContext.swift            State of the running command: step depth, handlers, pending internal error
+  RunContext.swift            State of the running command: step depth, handlers, run report, pending internal error
+  RunReport.swift             Run report model and `Report` (failures, warnings, messages, Markdown sections)
   Tools/
     Tool.swift                Process values (Tool): run, output, result; output filters
     ProcessRunner.swift       The runner that starts a Tool's process: spawn, pipes, timeouts

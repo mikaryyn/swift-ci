@@ -212,11 +212,12 @@ private func logCommandList() {
 /// otherwise the exit code of the failure.
 ///
 /// The order is: create the artifacts directory if needed, open the full log and write the CI summary line to it, run the
-/// body, run the `cleanup` handlers in reverse order,
-/// run the `onFailure` handlers in reverse order if the command has failed so far, then close
-/// the full log. A failure of the body decides the exit code. A failure of a handler decides it
-/// only if nothing failed before, and an allowed handler failure never does. A failure to close
-/// the full log decides it only if nothing failed before.
+/// body, run the `cleanup` handlers in reverse order, fail the command if the body and the cleanup handlers succeeded
+/// but the run report has failures, run the `onFailure` handlers in reverse order if the command has failed so far, then
+/// close the full log. A failure of the body decides the exit code. A failure of a handler decides it only if nothing
+/// failed before, and an allowed handler failure never does. The report check is one such failure: it fails the command
+/// with exit code 1 only if nothing failed before, and it is logged once. A failure to close the full log decides it
+/// only if nothing failed before.
 ///
 /// If the close fails and nothing failed before, the `onFailure` handlers have not run yet. They
 /// run after the close, and their failures are logged but do not change the exit code (3).
@@ -245,6 +246,7 @@ internal func run(command: Command) async -> Int32? {
     absorbInternalError(context, into: &exitCode)
 
     await runHandlers(.cleanup, in: context, exitCode: &exitCode)
+    absorbReportFailures(context, into: &exitCode)
     if exitCode != nil {
         await runHandlers(.onFailure, in: context, exitCode: &exitCode)
     }
@@ -273,6 +275,15 @@ internal func absorbInternalError(_ context: RunContext, into exitCode: inout Er
     guard let error = context.takeInternalError() else { return }
     let internalCode = logFailure(error)
     exitCode = exitCode ?? internalCode
+}
+
+/// Fails the command if the run report has failures and nothing failed before. The error is logged once, as a
+/// failure of the command.
+@MainActor
+internal func absorbReportFailures(_ context: RunContext, into exitCode: inout ErrorCode?) {
+    let count = context.report.failures.count
+    guard exitCode == nil, count > 0 else { return }
+    exitCode = logFailure(BuildError(message: "The run report has \(count) failure(s)."))
 }
 
 /// Logs the message of an error that failed a command, and returns the exit code it maps to.

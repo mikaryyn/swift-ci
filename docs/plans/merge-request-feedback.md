@@ -4,6 +4,14 @@ Status: **planned**. Phase 2 of the
 [implementation plan](implementation-plan.md#phase-2-replace-danger): the
 generic pieces that replace Danger.
 
+## Progress
+
+- [x] (2026-11-03) R1, first part: the model, `Report.failure/warning/message/markdown`
+  and `Report.current`, findings logged when added, report failures fail the
+  command.
+- [ ] R1, second part: `onReport`, the outcome, and rule 4.
+- [ ] R2 to R6.
+
 ## Goal
 
 A script can replace a typical Danger setup with SwiftCI calls. Its steps add
@@ -423,6 +431,17 @@ milestone is a separate change with its own tests and README updates
 - **No inline diff comments for now** (2026-11-03). See Non-goals.
 - **Checks read the result bundle, not the console log** (2026-11-03).
   The bundle is structured and survives a custom console filter.
+
+- **The report check runs after the `cleanup` handlers and before the
+  `onFailure` handlers** (2026-11-03). Cleanup handlers may still add
+  failures that count, and `onFailure` handlers, such as a "build failed"
+  notification, also run when only the report failed the command.
+- **`ReportFinding.file` is a `String`** (2026-11-03), not a `URL`: it is a
+  repository-relative location for display and for links, not a path that
+  SwiftCI opens.
+- **Findings are logged to the console only when added** (2026-11-03), like
+  other error and warning lines; they do not go to the full log. The printed
+  report of R2 decides whether the full log gets the report.
 
 ## Open questions
 

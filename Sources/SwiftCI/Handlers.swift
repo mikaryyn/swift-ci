@@ -10,9 +10,11 @@ import Foundation
 /// ```
 ///
 /// Ordering: when the command body ends, all `cleanup` handlers run in reverse order of
-/// registration, like Swift's `defer`. Then, if the command has failed, the `onFailure`
-/// handlers run in reverse order of registration. A failed cleanup therefore also triggers
-/// the `onFailure` handlers. Every handler runs, even if an earlier one failed.
+/// registration, like Swift's `defer`. If the body and the cleanup handlers succeeded but the run
+/// report has failures (see ``Report``), the command fails then, before the `onFailure` handlers run.
+/// Then, if the command has failed, the `onFailure` handlers run in reverse order of registration.
+/// A failed cleanup therefore also triggers the `onFailure` handlers. Every handler runs, even if an
+/// earlier one failed.
 ///
 /// A handler is logged as a step named "Cleanup". A handler that fails, and is not allowed
 /// to, fails the command, unless the body already failed. The body's error decides the exit code.
@@ -34,8 +36,8 @@ public func cleanup(failure: FailureMode? = nil, _ body: @escaping () async thro
 
 /// Registers a handler that runs when the command ends, only if the command has failed.
 ///
-/// It runs after the `cleanup` handlers, so it also runs when a cleanup handler failed. Use it
-/// for work that reports a failure, such as a notification:
+/// It runs after the `cleanup` handlers, so it also runs when a cleanup handler failed, or when the
+/// run report has failures. Use it for work that reports a failure, such as a notification:
 ///
 /// ```swift
 /// onFailure { try await notifier.send(text: "Build failed") }
