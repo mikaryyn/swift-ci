@@ -228,12 +228,15 @@ The generic pieces are planned in
 
 ### Phase 3: replace fastlane
 
-By now only `match` is left. `trainer` and `deliver` were replaced in
-Phase 1.
+By now only `match` is left. `trainer` was replaced in Phase 1. The
+reference project kept fastlane `deliver` for its App Store upload, so its
+App Store deploy still runs fastlane after this phase (see the exit criteria).
 
 - **Read-only match.** Switch from `using: .fastlane` to `using: .native`
   after the native install is tested with v1 and v2 encrypted fixtures.
-  Decide between temporary keychains per run and a persistent CI keychain.
+  Planned in [Native match install](native-match.md). The install uses the
+  existing persistent CI keychain (decided 2026-11-03); temporary keychains
+  per run are a later option.
 - **Certificate and profile renewal** (`match --force`). Keep using fastlane
   locally for these rare, manual runs at first. A native implementation needs
   the App Store Connect certificates, profiles and bundle ID endpoints. It is
@@ -242,8 +245,9 @@ Phase 1.
   processing status, optionally TestFlight groups) is added when a workflow
   needs more than the upload in Phase 1.
 
-**Exit criteria.** CI never runs fastlane, and Ruby, rbenv and the `Gemfile`
-are removed from the CI machine.
+**Exit criteria.** CI never runs `fastlane match`. Ruby, rbenv and the
+`Gemfile` are removed from the CI machine once nothing else needs them; in the
+reference project the `deliver` upload still does.
 
 ### Phase 4: remaining tooling
 
