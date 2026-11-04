@@ -49,7 +49,7 @@ extension Xcode {
     }
 
     /// The path relative to the current directory if it is inside it, otherwise the path itself.
-    private static func repositoryPath(_ path: String) -> String {
+    static func repositoryPath(_ path: String) -> String {
         let prefix = FileManager.default.currentDirectoryPath + "/"
         guard path.hasPrefix(prefix) else {
             return path

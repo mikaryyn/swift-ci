@@ -14,9 +14,8 @@ generic pieces that replace Danger.
 - [x] (2026-11-03) R2, second part: the console summary and `report-<command>.md`.
 - [x] (2026-11-03) R4: `Git.reportUncommittedChanges` and `Git.reportLines`.
 - [x] (2026-11-04) R3, first part: `Xcode.reportTestFailures`.
-- [ ] R3, second part: `Xcode.reportBuildIssues`. Waits for the
-  `build-results` recording, which `xcodebuild` cannot make inside the agent
-  sandbox; `sample/record.sh` is prepared for it.
+- [x] (2026-11-04) R3, second part: `Xcode.reportBuildIssues`, with the
+  `build-results` recordings of the sample package.
 - [x] (2026-11-04) R5: the HTTP client and `HTTPClientMock`.
 - [x] (2026-11-04) R6, first part: the `SwiftCIGitLab` module with the
   connection and the merge request lookup, and the Jenkins `NOTE` fix.
@@ -518,6 +517,16 @@ milestone is a separate change with its own tests and README updates
   environment knows them. Called from `postReportToMergeRequest`, the work
   is logged inside the handler's "Report" step, because `step(default:)`
   opens no nested step there; a failed post fails the command.
+
+- **Build issue locations are one-based** (2026-11-04). The `sourceURL` of
+  `build-results` counts lines and columns from zero: the recorded warning on
+  line 10 of the sample has `StartingLineNumber=9`. `Xcode.reportBuildIssues`
+  adds one, so the line is the one the compiler prints. A `sourceURL` without
+  a readable line keeps its file and has no line.
+- **An error without `sourceURL` is a failure without a location**
+  (2026-11-04). The build's "Testing cancelled because the build failed." has
+  none. It is a failure like the other errors, which the plan counts, so a
+  failed build shows it next to the compile error.
 
 ## Open questions
 

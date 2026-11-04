@@ -646,7 +646,7 @@ implemented.
 | Core | Step summary at end of run (status and duration per step) | Planned |
 | Core | Run report: `Report` findings and sections, `onReport` handlers that receive the final report, a console and full log summary, and `report-<command>.md` in the artifacts directory; a report failure fails the command. `MarkdownReport` renders a report as Markdown. It is posted to a merge request by `SwiftCIGitLab` | Prototype |
 | Core | Repository checks for the run report: uncommitted changes compared with `HEAD` (`Git.reportUncommittedChanges`) and lines of tracked files that match a Swift `Regex` (`Git.reportLines`) | Prototype |
-| Xcode | Test failures from the `.xcresult` bundle for the run report: `Xcode.reportTestFailures`, with the totals (build issues from the result bundle are planned) | Prototype |
+| Xcode | Test failures and build issues from the `.xcresult` bundle for the run report: `Xcode.reportTestFailures`, with the totals, and `Xcode.reportBuildIssues` (build errors as failures; warnings only with `includeWarnings`) | Prototype |
 | Core | CI environment detection (`CI.environment`: Jenkins, GitLab CI, GitHub Actions, Bitrise, generic CI, local) | Prototype |
 | Core | CI output export to later steps (`CI.export`): `envman`, `$GITHUB_ENV` and `artifacts/outputs.env` | Prototype |
 | Xcode | clean, build, archive and export (ad-hoc or App Store; IPA and dSYM zip to the artifacts directory by default; App Store export writes the IPA only, upload is separate), resolve packages, build settings, docbuild | Prototype |
@@ -780,8 +780,9 @@ the findings and writes `report-<command>.md` to the artifacts directory. An
 the report fails the command, so every check runs before the run ends.
 The repository checks `Git.reportUncommittedChanges(ignoring:message:)` and
 `Git.reportLines(matching:in:message:)` add their findings to the report in the
-same way, and `Xcode.reportTestFailures(resultBundleURL:)` adds the failed tests of a
-result bundle.
+same way, `Xcode.reportTestFailures(resultBundleURL:)` adds the failed tests of a
+result bundle, and `Xcode.reportBuildIssues(resultBundleURL:includeWarnings:)` adds
+its build errors, and its warnings when asked.
 
 ```swift
 let lint = Command("lint") {

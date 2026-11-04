@@ -7,3 +7,4 @@
 .swiftpm/xcode/package.xcworkspace/xcuserdata
 .aider*
 artifacts/
+Tests/SwiftCIXcodeTests/Fixtures/XcodebuildTest/sample/out/

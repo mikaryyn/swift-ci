@@ -13,3 +13,18 @@ replaced with `/Users/ci` and the simulator ID with a placeholder.
   result bundle. Used by the JUnit report (T2).
 
 Swift Testing prefixes some lines with a zero-width space (U+200B).
+
+Recorded on 2026-11-04 with Xcode 27.2 on an iPhone 17 simulator (iOS 27.2), with
+`sample/record.sh`. The home directory is replaced with `/Users/ci` and the
+simulator ID with `00000000-0000-4000-8000-000000000001`.
+
+- `build-results-warning.json`: the output of `xcrun xcresulttool get build-results
+  --path <bundle> --format json` for the sample package as it is. One warning:
+  `unused` in `SampleKit.swift`, which is on line 10. Its `sourceURL` has
+  `StartingLineNumber=9`, so the line numbers in `sourceURL` are zero-based.
+- `build-results-compile-error.json`: the same output for a copy of the sample
+  in `/private/tmp/sci-sample-compile-error` with a file that does not compile.
+  Two errors: "Testing cancelled because the build failed.", which has no
+  `sourceURL`, and the compile error at `Broken.swift` line 2 (`StartingLineNumber=1`).
+
+Both are read by `Xcode.reportBuildIssues`.
