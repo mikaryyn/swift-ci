@@ -44,6 +44,8 @@ extension GitLab {
     /// comment up to date, which are created notes or threads, note updates, thread resolutions and note deletions. In `CommentMode/log` only the
     /// reads are sent, and the rendered text and the "Would …" line of each change are logged instead.
     ///
+    /// Logs the merge request and the token's user first, such as "Merge request !123 of project 42, as @danger-bot".
+    ///
     /// Opens a step named "Update merge request comment <id>" when called at the top level of a command, and does
     /// nothing else. Inside a report handler, the step is the handler's own, so the name is not used.
     ///
@@ -66,6 +68,7 @@ extension GitLab {
         mode: CommentMode = .post,
         step name: String? = nil
     ) async throws {
+        @Use var log: Log
         try await step(default: "Update merge request comment \(id)", name: name) {
             guard Self.isValidCommentID(id) else {
                 throw BuildError(
@@ -73,10 +76,18 @@ extension GitLab {
                 )
             }
             let body = Self.commentBody(for: report, id: id, title: title)
-            let existing = try await existingComment(id: id, on: mergeRequest)
+            let user = try decode(CurrentUser.self, from: try await send("GET", "/user"), "GET", "/user")
+            log("Merge request !\(mergeRequest.iid) of project \(Self.displayProject(mergeRequest.project)), as @\(user.username)")
+            let existing = try await existingComment(id: id, on: mergeRequest, user: user)
             let changes = CommentChange.plan(clean: report.isClean, whenClean: whenClean, existing: existing)
             try await applyChanges(changes, body: body, id: id, on: mergeRequest, mode: mode)
         }
+    }
+
+    /// The project as the log shows it: a URL-encoded path such as `group%2Fproject` is decoded to `group/project`, and a
+    /// numeric ID is kept as it is.
+    static func displayProject(_ project: String) -> String {
+        project.removingPercentEncoding ?? project
     }
 
     /// The hidden line that marks the comment of `id`. The ID is written as it is, so it must pass ``isValidCommentID(_:)``.

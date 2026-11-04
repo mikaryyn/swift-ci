@@ -528,6 +528,13 @@ milestone is a separate change with its own tests and README updates
   none. It is a failure like the other errors, which the plan counts, so a
   failed build shows it next to the compile error.
 
+- **The comment log names the merge request and the user** (2026-11-04). Each
+  `updateComment` call logs `Merge request !<iid> of project <project>, as
+  @<username>` after `GET /user`, in `post` and `log` mode, also when there is
+  nothing to do. A dry-run log must show which merge request and user the
+  lookup found, so a wrong lookup is caught before posting. The project is
+  shown with its path decoded.
+
 ## Open questions
 
 None at the moment.

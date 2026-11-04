@@ -148,6 +148,7 @@ extension GlobalStateTests {
         /// Runs `updateComment` on the test merge request with the mock client, and returns the requests and the console.
         static func update(
             _ report: RunReport,
+            on mergeRequest: GitLabMergeRequest = Self.mergeRequest,
             id: String = "tests",
             whenClean: CleanRunBehavior = .deleteComment,
             mode: CommentMode = .post,
@@ -155,7 +156,8 @@ extension GlobalStateTests {
             writes: [String] = [],
             environment: [String: String] = [:]
         ) async throws -> Outcome {
-            let client = client(discussionPages: discussionPages, writes: writes)
+            let base = "/projects/\(mergeRequest.project)/merge_requests/\(mergeRequest.iid)"
+            let client = client(base: base, discussionPages: discussionPages, writes: writes)
             let log = LogMock()
             try await SwiftCITest.withMocks(environment, httpClient: client, log: log) {
                 let gitLab = GitLab(apiURL: apiURL, token: Secret(value: token))
@@ -213,6 +215,31 @@ extension GlobalStateTests {
                 "Reopened merge request comment tests",
             ])
             #expect(nothing.log.completions == ["Nothing to do for merge request comment tests"])
+        }
+
+        /// The log names the merge request and the user of the token before the comment text, and a numeric project ID is
+        /// shown as it is. A clean run without a comment logs the same line.
+        @Test func logsTheMergeRequestAndUserForNumericProjectID() async throws {
+            let outcome = try await Self.update(
+                Self.report(clean: true),
+                on: GitLabMergeRequest(project: "42", iid: 123),
+                mode: .log
+            )
+
+            let line = "Merge request !123 of project 42, as @ci-bot"
+            let lineIndex = try #require(outcome.log.loggedLines.firstIndex(of: line))
+            let bodyIndex = try #require(outcome.log.loggedLines.firstIndex { $0.contains("## Unit tests") })
+            #expect(lineIndex < bodyIndex)
+            #expect(outcome.log.completions == ["Nothing to do for merge request comment tests"])
+        }
+
+        /// A project given as a URL-encoded path is shown decoded, in both modes.
+        @Test(arguments: [CommentMode.post, .log]) func logsTheMergeRequestAndUserForPathProject(mode: CommentMode) async throws {
+            let writes = mode == .post ? ["POST \(Self.base)/notes"] : []
+            let outcome = try await Self.update(Self.report(clean: false), mode: mode, writes: writes)
+
+            #expect(outcome.log.loggedLines.contains("Merge request !5 of project group/project, as @ci-bot"))
+            #expect(Self.describe(outcome.requests) == Self.reads + writes)
         }
 
         /// The pages of the discussions are read in order until the comment is found on the second page.

@@ -113,7 +113,7 @@ extension GlobalStateTests {
         /// A rejected write fails the command, as a failing report handler does, and the error names the request.
         @Test func failedPostFailsTheCommand() async {
             let client = HTTPClientMock()
-            client.respond("GET", Comment.url("/user"), body: Comment.json(["id": 7]))
+            client.respond("GET", Comment.url("/user"), body: Comment.json(["id": 7, "username": "ci-bot"]))
             client.respond("GET", Comment.url("\(Self.base)/discussions?per_page=100"), body: Comment.json([]))
             client.respond("POST", Comment.url("\(Self.base)/notes"), status: 500, body: Comment.json(["message": "Something broke"]))
 

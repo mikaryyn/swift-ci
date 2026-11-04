@@ -1,9 +1,10 @@
 import Foundation
 import SwiftCI
 
-/// The user that the token belongs to, as `GET /user` returns it. Only the ID is decoded.
+/// The user that the token belongs to, as `GET /user` returns it. Only the ID and the username are decoded.
 struct CurrentUser: Decodable {
     let id: Int
+    let username: String
 }
 
 /// A discussion of a merge request (a thread, or a plain note), as `GET …/discussions` returns it. Only the fields that
@@ -59,13 +60,12 @@ struct ThreadState: Encodable {
 }
 
 extension GitLab {
-    /// Finds the comment of `id` on `mergeRequest`: the first note, in the order of the discussions, whose author is the
-    /// token's user and whose text has the marker as a line of its own. Notes of other users are never a match. Reads
-    /// only: `GET /user` and the discussions of the merge request.
+    /// Finds the comment of `id` on `mergeRequest`: the first note, in the order of the discussions, whose author is `user`
+    /// and whose text has the marker as a line of its own. Notes of other users are never a match. Reads only: the
+    /// discussions of the merge request.
     ///
     /// - Returns: The comment, or `nil` if there is none.
-    func existingComment(id: String, on mergeRequest: GitLabMergeRequest) async throws -> ExistingComment? {
-        let user = try decode(CurrentUser.self, from: try await send("GET", "/user"), "GET", "/user")
+    func existingComment(id: String, on mergeRequest: GitLabMergeRequest, user: CurrentUser) async throws -> ExistingComment? {
         let discussions: [Discussion] = try await paginated(mergeRequest.apiPath + "/discussions")
         let marker = Self.marker(for: id)
         for discussion in discussions {
