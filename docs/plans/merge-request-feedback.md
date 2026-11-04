@@ -18,7 +18,10 @@ generic pieces that replace Danger.
   `build-results` recording, which `xcodebuild` cannot make inside the agent
   sandbox; `sample/record.sh` is prepared for it.
 - [x] (2026-11-04) R5: the HTTP client and `HTTPClientMock`.
-- [ ] R6.
+- [x] (2026-11-04) R6, first part: the `SwiftCIGitLab` module with the
+  connection and the merge request lookup, and the Jenkins `NOTE` fix.
+- [ ] R6, second part: one comment per report ID, `postReportToMergeRequest`,
+  and the `log` mode.
 
 ## Goal
 
@@ -497,6 +500,13 @@ milestone is a separate change with its own tests and README updates
   full URL, serves each queued response once, and fails on an unexpected
   request. Response header names keep the server's case, so R6 looks up
   `X-Next-Page` without regard to case.
+
+- **The merge request lookup has two forms** (2026-11-04).
+  `GitLabMergeRequest.mergeRequest()` is the merge request of the running
+  build: the IID of `CI.environment`, so a Jenkins push build has none.
+  `mergeRequest(from:)` reads the IID from the variables directly and does
+  not check the Jenkins action. The request helpers of `GitLab` (send,
+  decode, pagination) stay internal to the module for now.
 
 ## Open questions
 

@@ -502,8 +502,8 @@ own release pace.
 | `SwiftCITesting` | macOS, Linux | Test support for CI scripts and extensions: process runner and log mocks, and scoped setup of the environment and the mocks (prototype, see [Testing CI scripts and extensions](#testing-ci-scripts-and-extensions)) |
 
 Today the package has the products `SwiftCI`, `SwiftCIXcode`, `SwiftCISigning`,
-`SwiftCISlack` and `SwiftCITesting`. `SwiftCIAppStoreConnect` and `SwiftCIGitLab` have no code yet, so they
-become products when their first code lands. The modules are built and tested on macOS.
+`SwiftCISlack`, `SwiftCIGitLab` and `SwiftCITesting`. `SwiftCIAppStoreConnect` has no code yet, so it
+becomes a product when its first code lands. The modules are built and tested on macOS.
 Linux verification is tracked separately in the
 [Linux verification plan](docs/plans/linux-verification.md).
 
@@ -671,7 +671,7 @@ implemented.
 | App Store Connect | Upload via fastlane `pilot` / `deliver` (fallback) | Planned |
 | macOS | Notarization via `notarytool`, stapling | Planned |
 | Notifications | Slack incoming webhooks, as Block Kit (`Slack.send`) or legacy attachment (`Slack.sendAttachment`) messages, with optional sender name and icon; the webhook URL is a `Secret` | Prototype |
-| Merge requests | GitLab merge request comment from the run report (`SwiftCIGitLab`) | Planned |
+| Merge requests | `SwiftCIGitLab`: GitLab connection (`GitLab`, with the token sent as a secret header) and the merge request of the run from the CI variables (`GitLabMergeRequest.mergeRequest()`). The GitLab merge request comment from the run report is planned | Prototype |
 | Git | Commit hash, tag | Prototype |
 | Misc | App icon text overlay (e.g. build number or environment badge) | Prototype |
 | Generic | Arbitrary shell commands and scripts | Prototype |

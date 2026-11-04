@@ -62,13 +62,12 @@ that design, raise the conflict instead of diverging from it silently.
 
 ## Repository layout
 
-The package has five library products, `SwiftCI` (core), `SwiftCIXcode`,
-`SwiftCISigning`, `SwiftCISlack` and `SwiftCITesting`, one target each. Each module
+The package has six library products, `SwiftCI` (core), `SwiftCIXcode`,
+`SwiftCISigning`, `SwiftCISlack`, `SwiftCIGitLab` and `SwiftCITesting`, one target each. Each module
 depends only on `SwiftCI` and uses its public API. The core depends on no module.
 README.md ("Module layout") describes the planned products. `SwiftCITesting` is
 the test support for scripts and extensions.
-`SwiftCIAppStoreConnect` and `SwiftCIGitLab` become products when their first
-code lands.
+`SwiftCIAppStoreConnect` becomes a product when its first code lands.
 
 ```text
 Package.swift                 Swift tools 6.2, macOS 13+, no dependencies,
@@ -118,6 +117,9 @@ Sources/SwiftCISigning/       Module (macOS): keychains, match-compatible signin
   Fastlane.swift              fastlane match invocation + native match install (v1/v2 decryption)
 Sources/SwiftCISlack/         Module: Slack incoming webhooks
   Slack.swift
+Sources/SwiftCIGitLab/        Module: GitLab API connection and the merge request of the run
+  GitLab.swift                Connection, requests, error messages, JSON decoding and pagination (internal)
+  GitLabMergeRequest.swift    `GitLabMergeRequest` and its lookup from the CI variables
 Sources/SwiftCITesting/       Module: test support for scripts and extensions. Imports no test framework.
                               Uses `@_spi(Testing) import SwiftCI` only for the hooks in TestingSupport.swift
   SwiftCITest.swift           run(_:environment:artifactsDirectory:ciAdapters:runner:httpClient:script:), withMocks(_:runner:httpClient:log:artifactsDirectory:ciAdapters:_:), SwiftCITestResult
@@ -131,6 +133,7 @@ Tests/SwiftCITests/           Core tests (Swift Testing)
 Tests/SwiftCIXcodeTests/      Xcode tests
 Tests/SwiftCISigningTests/    Keychain, match, Git credential and `security -i` tests
 Tests/SwiftCISlackTests/      Slack tests
+Tests/SwiftCIGitLabTests/     GitLab connection and merge request tests
 Tests/SwiftCITestingTests/    Tests of SwiftCITesting as an extension author sees it: `import SwiftCI`,
                               `import SwiftCITesting` and `import Testing` only (no `@testable`, no SPI)
 docs/prior-art.md             Research on fastlane, Bitrise and alternatives
@@ -154,7 +157,7 @@ The release check builds the products without `-enable-testing`, so a module
 that uses internal core API fails:
 
 ```sh
-swift build -c release --product SwiftCI --product SwiftCIXcode --product SwiftCISigning --product SwiftCISlack --product SwiftCITesting
+swift build -c release --product SwiftCI --product SwiftCIXcode --product SwiftCISigning --product SwiftCISlack --product SwiftCIGitLab --product SwiftCITesting
 ```
 
 Plain `swift build -c release` builds every non-test target, including
@@ -202,7 +205,7 @@ marks its suite `.serialized` itself, because it may not import `SwiftCITestSupp
 
 - Use Swift 6.2 language mode with `MainActor` default isolation. Steps run
   sequentially. Do not introduce concurrency without a reason.
-- Module sources (`Sources/SwiftCIXcode`, `SwiftCISigning`, `SwiftCISlack`)
+- Module sources (`Sources/SwiftCIXcode`, `SwiftCISigning`, `SwiftCISlack`, `SwiftCIGitLab`)
   use `import SwiftCI` only. No `@testable import` and no internal core API. If a
   module needs core internals, stop and make a deliberate public API decision.
 - `SwiftCITesting` may use the core's test hooks, but only as `@_spi(Testing)`
