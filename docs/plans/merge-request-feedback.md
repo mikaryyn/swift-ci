@@ -1,6 +1,7 @@
 # Merge request feedback
 
-Status: **planned**. Phase 2 of the
+Status: **implemented** (R1 to R6), and in use by the first adopter since
+2026-11-04. Phase 2 of the
 [implementation plan](implementation-plan.md#phase-2-replace-danger): the
 generic pieces that replace Danger.
 
@@ -21,7 +22,12 @@ generic pieces that replace Danger.
   connection and the merge request lookup, and the Jenkins `NOTE` fix.
 - [x] (2026-11-04) R6, second part: one comment per report ID,
   `postReportToMergeRequest`, and the `log` mode.
-- [ ] Dry run on the adopter's merge requests (adopter side).
+- [x] (2026-11-04) Dry run on the adopter's merge requests (adopter side):
+  a clean run, a SwiftLint failure, a failed test and a build started by a
+  merge request comment, all in `log` mode, then posting with
+  `resolveThread`: a failing run posted a thread and a clean run resolved it.
+  The dry run showed that the log did not name the merge request and the
+  user, so `updateComment` now logs them (c472493).
 
 ## Goal
 
