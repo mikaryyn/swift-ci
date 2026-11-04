@@ -37,11 +37,13 @@ fastlane.
 - [x] (2026-11-04) Real repository check (N2) by the adopter's maintainer: 62
   files, 0 failed; 61 v2 and 1 v1; 1 certificate, 1 PEM private key, no
   PKCS#12, 60 profiles. Recorded in the fixture README.
-- [ ] Manual check on a developer Mac: the end-to-end install of the fixture
-  repository (`SWIFTCI_MANUAL_MATCH_CHECK=1 swift test --disable-sandbox
-  --filter MatchInstallManualCheck`). With the self-signed fixture certificate
-  the `find-identity -v` check must fail; the check asserts that, and that the
-  identity and the profiles were installed.
+- [x] (2026-11-04) Manual check on a developer Mac by the maintainer: the
+  end-to-end install of the fixture repository (`SWIFTCI_MANUAL_MATCH_CHECK=1
+  swift test --disable-sandbox --filter MatchInstallManualCheck`) passed. The
+  PEM key imported with `security import -P ""` and paired with its
+  certificate in a throwaway keychain, the profiles were written, the
+  `find-identity -v` check failed as expected for the self-signed
+  certificate, and the search list and default keychain were restored.
 - [ ] Parity run of `.native` and `.fastlane` on the adopter's CI Mac
   (adopter side, `docs/plans/swiftci-native-match.md` in the iOS repository).
 
