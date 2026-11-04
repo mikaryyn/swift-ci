@@ -114,7 +114,8 @@ Sources/SwiftCISigning/       Module (macOS): keychains, match-compatible signin
   Keychain.swift              Keychain unlock: a plain type with static methods
   SecurityInteractive.swift   Builds the one-line input of `security -i`
   GitCredentials.swift        Git credentials for the native match install
-  Fastlane.swift              fastlane match invocation + native match install (v1/v2 decryption)
+  Fastlane.swift              fastlane match invocation + native match install
+  MatchDecryption.swift       Decryption of fastlane match files (v1, v2) in memory, with a content check
 Sources/SwiftCISlack/         Module: Slack incoming webhooks
   Slack.swift
 Sources/SwiftCIGitLab/        Module: GitLab API connection and the merge request of the run
@@ -180,6 +181,15 @@ with:
 SWIFTCI_MANUAL_KEYCHAIN_CHECK=1 swift test --disable-sandbox --filter KeychainManualCheck
 ```
 
+The manual match check decrypts every encrypted file of a local match repository
+in memory and prints the format and the content of each. It writes nothing, and
+it is skipped by default. Run it with:
+
+```sh
+SWIFTCI_MANUAL_MATCH_REPOSITORY=<path to a local clone> MATCH_PASSWORD=<password> \
+    swift test --disable-sandbox --filter MatchDecryptionManualCheck
+```
+
 If SwiftPM fails with `sandbox-exec: sandbox_apply: Operation not permitted`
 (for example when the agent itself runs sandboxed), add `--disable-sandbox`.
 
@@ -193,8 +203,9 @@ temporary artifacts directory. A test that calls `runSwiftCI` directly passes `a
 (`temporaryArtifactsDirectory()` from `SwiftCITestSupport`), or the run writes `artifacts/` into the repository.
 
 Tests must not touch the real keychain, network, developer portal, App Store
-Connect, simulators or `~/Library`. The one exception is `KeychainManualCheck`,
-which runs only when `SWIFTCI_MANUAL_KEYCHAIN_CHECK=1` is set (see below). Replace the process runner with
+Connect, simulators or `~/Library`. The exceptions are the manual checks, which run
+only when their variable is set (see below): `KeychainManualCheck` uses a throwaway
+keychain, and `MatchDecryptionManualCheck` reads a local clone. Replace the process runner with
 `SwiftCITest.run` or `SwiftCITest.withMocks` from `SwiftCITesting`. The repository's
 tests that keep their own scope use `registerToolMocks()` from `SwiftCITestSupport`.
 See `Tests/SwiftCISigningTests/Tools/KeychainTest.swift` for an example. For

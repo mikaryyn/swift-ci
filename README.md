@@ -1187,6 +1187,10 @@ The order of work follows from adopting SwiftCI in a real project. See the
   `SwiftCISigning` imports `Security`, `CryptoKit` and `CommonCrypto` (match). The
   `ProcessRunner` Linux branches are also unverified. Paths are Foundation `URL`s,
   so `System` is not imported and no `swift-system` package is needed.
+- The native match install's decryption reads fastlane's v1 and v2 files. It is
+  tested with fixtures that fastlane 2.232's own encryption code wrote, but it has
+  not yet been run against a real match repository. `MatchDecryptionManualCheck`
+  does that.
 
 ## Open questions
 

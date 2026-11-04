@@ -3,12 +3,6 @@ import SwiftCI
 #if canImport(Security)
 import Security
 #endif
-#if canImport(CryptoKit)
-import CryptoKit
-#endif
-#if canImport(CommonCrypto)
-import CommonCrypto
-#endif
 
 /// Distribution methods supported by the builtin `Fastlane.matchUpdateBuiltin`.
 public enum MatchType: String {
@@ -436,179 +430,28 @@ private extension Fastlane {
 // MARK: - Decryption
 
 private extension Fastlane {
-    /// Walk the match repo and decrypt any supported file types in place.
+    /// Walk the match repo and decrypt any supported file types in place. The `.git` directory is skipped.
     func decryptMatchRepository(at dir: URL, password: String) async throws {
         let fm = FileManager.default
         guard let enumerator = fm.enumerator(atPath: dir.filePath) else { return }
         while let elem = enumerator.nextObject() as? String {
             let url = dir.appending(path: elem)
+            if url.lastPathComponent == ".git" {
+                enumerator.skipDescendants()
+                continue
+            }
             var isDir: ObjCBool = false
             if fm.fileExists(atPath: url.filePath, isDirectory: &isDir), isDir.boolValue { continue }
-            if ["cer", "p12", "mobileprovision", "provisionprofile"].contains(url.pathExtension.lowercased()) {
-                try decryptFileInPlace(url: url, password: password)
+            if MatchDecryption.encryptedExtensions.contains(url.pathExtension.lowercased()) {
+                try decryptFileInPlace(url: url, file: elem, password: password)
             }
         }
     }
 
-    /// Decrypt a single file in place if it uses match V1/V2 formats; ignore if already plaintext.
-    func decryptFileInPlace(url: URL, password: String) throws {
-        // Files are base64 text with prefixes: "match_encrypted_v2__" or "Salted__"
-        let text = try String(contentsOf: url, encoding: .utf8)
-        guard let raw = Data(base64Encoded: text) else { return } // already decrypted
-        let v2Prefix = "match_encrypted_v2__".data(using: .utf8)!
-        let v1Prefix = "Salted__".data(using: .utf8)!
-
-        let decrypted: Data
-        if raw.starts(with: v2Prefix) {
-            // [20:v2][8:salt][16:auth_tag][rest:cipher]
-            let salt = raw.subdata(in: 20..<(20+8))
-            let auth = raw.subdata(in: 28..<(28+16))
-            let cipher = raw.subdata(in: 44..<raw.count)
-            decrypted = try decryptV2(ciphertext: cipher, salt: salt, authTag: auth, password: password)
-        } else if raw.starts(with: v1Prefix) {
-            // [8:Salted__][8:salt][rest:cipher]
-            let salt = raw.subdata(in: 8..<(8+8))
-            let cipher = raw.subdata(in: 16..<raw.count)
-            // Try MD5 then fallback to SHA256 like Ruby implementation
-            if let data = try? decryptV1(ciphertext: cipher, salt: salt, password: password, hash: .md5) {
-                decrypted = data
-            } else {
-                decrypted = try decryptV1(ciphertext: cipher, salt: salt, password: password, hash: .sha256)
-            }
-        } else {
-            // Not encrypted (already plain DER/CMS) – nothing to do
-            return
-        }
-        try decrypted.write(to: url)
-    }
-}
-
-
-/// Hash algorithms supported for OpenSSL-compatible derivation.
-private enum HashAlgo { case md5, sha256 }
-
-private extension Fastlane {
-    /// Decrypt OpenSSL V1 (AES-256-CBC + EVP_BytesToKey) encrypted payload.
-    func decryptV1(ciphertext: Data, salt: Data, password: String, hash: HashAlgo) throws -> Data {
-        // Derive key (32) and iv (16)
-        let keyIv = evpBytesToKey(password: password.data(using: .utf8)!, salt: salt, keyLength: 32, ivLength: 16, hash: hash)
-        let key = keyIv.subdata(in: 0..<32)
-        let iv = keyIv.subdata(in: 32..<48)
-        return try aes256cbcDecrypt(data: ciphertext, key: key, iv: iv)
-    }
-
-    /// Decrypt V2 (AES-256-GCM) payload derived via PBKDF2-HMAC-SHA256 (10k iters).
-    func decryptV2(ciphertext: Data, salt: Data, authTag: Data, password: String) throws -> Data {
-        let derivedLen = 32 + 12 + 24
-        let derived = try pbkdf2sha256(password: password.data(using: .utf8)!, salt: salt, rounds: 10_000, length: derivedLen)
-        let key = derived.subdata(in: 0..<32)
-        let iv = derived.subdata(in: 32..<(32+12))
-        let authData = derived.subdata(in: (32+12)..<derived.count)
-        #if canImport(CryptoKit)
-        let sealedBox = try AES.GCM.SealedBox(nonce: AES.GCM.Nonce(data: iv), ciphertext: ciphertext, tag: authTag)
-        let opened = try AES.GCM.open(sealedBox, using: SymmetricKey(data: key), authenticating: authData)
-        return opened
-        #else
-        throw BuildError(message: "AES.GCM not available on this platform")
-        #endif
-    }
-
-    /// PBKDF2 (HMAC-SHA256) derivation helper.
-    func pbkdf2sha256(password: Data, salt: Data, rounds: Int, length: Int) throws -> Data {
-        #if canImport(CommonCrypto)
-        var out = Data(count: length)
-        let result = out.withUnsafeMutableBytes { outPtr in
-            salt.withUnsafeBytes { saltPtr in
-                password.withUnsafeBytes { pwdPtr in
-                    CCKeyDerivationPBKDF(CCPBKDFAlgorithm(kCCPBKDF2),
-                                         pwdPtr.bindMemory(to: Int8.self).baseAddress, password.count,
-                                         saltPtr.bindMemory(to: UInt8.self).baseAddress, salt.count,
-                                         CCPseudoRandomAlgorithm(kCCPRFHmacAlgSHA256),
-                                         UInt32(rounds),
-                                         outPtr.bindMemory(to: UInt8.self).baseAddress, length)
-                }
-            }
-        }
-        guard result == kCCSuccess else { throw BuildError(message: "PBKDF2 failed: \(result)") }
-        return out
-        #else
-        throw BuildError(message: "CommonCrypto not available for PBKDF2")
-        #endif
-    }
-
-    /// OpenSSL EVP_BytesToKey-compatible derivation producing key||iv.
-    func evpBytesToKey(password: Data, salt: Data, keyLength: Int, ivLength: Int, hash: HashAlgo) -> Data {
-        var d = Data()
-        var di = Data()
-        while d.count < keyLength + ivLength {
-            var ctx = Data()
-            ctx.append(di)
-            ctx.append(password)
-            ctx.append(salt)
-            di = digest(data: ctx, hash: hash)
-            d.append(di)
-        }
-        return d.subdata(in: 0..<(keyLength + ivLength))
-    }
-
-    /// Compute MD5/SHA256 digest using CryptoKit or CommonCrypto fallback.
-    func digest(data: Data, hash: HashAlgo) -> Data {
-        #if canImport(CryptoKit)
-        switch hash {
-        case .md5:
-            let d = Insecure.MD5.hash(data: data)
-            return Data(d)
-        case .sha256:
-            let d = SHA256.hash(data: data)
-            return Data(d)
-        }
-        #else
-        // Fallback using CommonCrypto
-        switch hash {
-        case .md5:
-            var out = [UInt8](repeating: 0, count: Int(CC_MD5_DIGEST_LENGTH))
-            data.withUnsafeBytes { ptr in _ = CC_MD5(ptr.baseAddress, CC_LONG(data.count), &out) }
-            return Data(out)
-        case .sha256:
-            var out = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
-            data.withUnsafeBytes { ptr in _ = CC_SHA256(ptr.baseAddress, CC_LONG(data.count), &out) }
-            return Data(out)
-        }
-        #endif
-    }
-
-    /// AES-256-CBC decrypt with PKCS#7 padding using CommonCrypto.
-    func aes256cbcDecrypt(data: Data, key: Data, iv: Data) throws -> Data {
-        #if canImport(CommonCrypto)
-        var outLength: size_t = 0
-        var outData = Data(count: data.count + kCCBlockSizeAES128)
-        let outCapacity = outData.count
-        let status: CCCryptorStatus = outData.withUnsafeMutableBytes { outPtr in
-            guard let outBase = outPtr.baseAddress else { return CCCryptorStatus(kCCMemoryFailure) }
-            return data.withUnsafeBytes { dataPtr in
-                let dataBase = dataPtr.baseAddress
-                return key.withUnsafeBytes { keyPtr in
-                    let keyBase = keyPtr.baseAddress
-                    return iv.withUnsafeBytes { ivPtr in
-                        let ivBase = ivPtr.baseAddress
-                        return CCCrypt(CCOperation(kCCDecrypt),
-                                       CCAlgorithm(kCCAlgorithmAES128),
-                                       CCOptions(kCCOptionPKCS7Padding),
-                                       keyBase, key.count,
-                                       ivBase,
-                                       dataBase, data.count,
-                                       outBase, outCapacity,
-                                       &outLength)
-                    }
-                }
-            }
-        }
-        guard status == kCCSuccess else { throw BuildError(message: "AES-CBC decryption failed: \(status)") }
-        outData.removeSubrange(outLength..<outData.count)
-        return outData
-        #else
-        throw BuildError(message: "CommonCrypto not available for AES-CBC")
-        #endif
+    /// Decrypt a single file in place with ``MatchDecryption``. `file` is the path relative to the repository.
+    func decryptFileInPlace(url: URL, file: String, password: String) throws {
+        let decrypted = try MatchDecryption.decrypt(Data(contentsOf: url), file: file, password: password)
+        try decrypted.data.write(to: url)
     }
 }
 

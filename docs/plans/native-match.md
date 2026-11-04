@@ -1,6 +1,6 @@
 # Native match install
 
-Status: **planned**. Phase 3 of the
+Status: **in progress** (N2 done). Phase 3 of the
 [implementation plan](implementation-plan.md#phase-3-replace-fastlane): the
 read-only install of signing assets from a fastlane match repository, without
 fastlane.
@@ -11,7 +11,10 @@ fastlane.
 - [x] (2026-11-04) Prototype reviewed against this plan and fastlane 2.232.2's
   source (see Starting point). It cannot have worked on a real repository:
   fastlane's base64 has line breaks, which the prototype's decoder rejects.
-- [ ] N2: decryption, with the fixtures. Start here (see Order).
+- [x] (2026-11-04) N2: decryption, with the fixtures. `MatchDecryption.swift`,
+  the fixtures (written by fastlane's own encryption code), 19 unit tests and
+  `MatchDecryptionManualCheck`, run against the v1 and v2 fixtures. The
+  prototype's `decryptFileInPlace` now calls it. Next: N3.
 - [ ] N3: selection.
 - [ ] N4: installation and check.
 - [ ] N1: the API and the fastlane path; `matchUpdateBuiltin` removed.
@@ -59,7 +62,7 @@ by the script before the install.
   prototype, added in 7f6335e (2026-10-27, "feat: add native fastlane match
   workflow") and since then only moved by the module split (eeac7e6) and the
   inputs rework (92555af). Nothing calls it, and nothing shows that it ever ran
-  against a real match repository. It It clones the repository, decrypts v1 and v2 files, imports the
+  against a real match repository. It clones the repository, decrypts v1 and v2 files, imports the
   certificate and key with `security import`, sets the partition list, and
   copies the profile. Its gaps decide this plan:
   - `Fastlane` has no public initializer, so another module cannot call it.
@@ -220,9 +223,12 @@ Move decryption into `MatchDecryption.swift`, internal, working on `Data`:
   an error, not "already decrypted": match repositories hold only encrypted
   files besides `README.md` and `match_version.txt`.
 - After decrypting, the content is checked by type: a `.cer` must be a DER
-  certificate (`SecCertificateCreateWithData`), a `.p12` must import into a
-  memory-only `SecPKCS12Import` with an empty passphrase, and a profile must
-  decode as CMS. This catches a wrong v1 password that happens to unpad.
+  certificate (`SecCertificateCreateWithData`), a `.p12` must be a PEM private
+  key (what fastlane writes) or a DER PKCS#12 (what `match import` can store),
+  checked by structure, and a profile must decode as CMS to a property list
+  dictionary. This catches a wrong v1 password that happens to unpad. A v1 file
+  whose MD5 result fails the content check is tried with SHA-256 too. See
+  Surprises & Discoveries for why `SecPKCS12Import` is not used.
 - A failure names the file and says "Couldn't decrypt <file>. Check the match
   password.", as fastlane does. The password is never logged.
 - A profile is checked by decoding it as in N3.
@@ -306,11 +312,11 @@ and committed with the script:
   -outform der`. A third profile for another team and a fourth that has
   expired.
 - The same repository layout encrypted twice with the password
-  `fixture-password`: once with v1 (`openssl enc -aes-256-cbc -md md5 -salt`,
-  then base64) and once with v2, by a small Swift encoder in the test support
-  that mirrors N2. Check the v2 encoder once against fastlane's
-  `Match::Encryption::OpenSSL` (fastlane 2.232) by decrypting a fastlane
-  encrypted file in a manual run; note the result in the fixture README.
+  `fixture-password`, once with v1 (MD5) and once with v2, by fastlane
+  2.232.2's own `Match::Encryption::MatchDataEncryption`, which the script
+  runs with Homebrew's Ruby from the installed gem. A v1 file with SHA-256 and
+  a PKCS#12 key encrypted with v2 are in `extra/`. (Done 2026-11-04; see
+  Decisions.)
 
 The key in the fixtures is a test key that signs nothing real.
 
@@ -382,6 +388,38 @@ capabilities table, the example, and Known issues).
 - Profiles from earlier runs pile up in the profile directory, as they do with
   fastlane. Cleaning them is not this plan's job.
 
+## Surprises & Discoveries
+
+- Observation: a match `.p12` is usually not PKCS#12. fastlane `cert`, which
+  match runs to create a certificate, writes the private key to `<id>.p12` as
+  `OpenSSL::PKey::RSA#to_s`, a PEM text `-----BEGIN RSA PRIVATE KEY-----`. Only
+  `match import` copies a user-supplied file, which can be a real PKCS#12.
+  `security import` accepts both.
+  Evidence: fastlane 2.232.2 `cert/lib/cert/runner.rb` (`create_certificate`,
+  `File.write(private_key_path, pkey)`) and
+  `spaceship/lib/spaceship/connect_api/models/certificate.rb`
+  (`create_certificate_signing_request`); `OpenSSL::PKey::RSA.new(2048).to_s`
+  in Ruby 4.0 starts with `-----BEGIN RSA PRIVATE KEY-----`.
+
+- Observation: `SecPKCS12Import` with an empty passphrase fails with
+  errSecAuthFailed (-25293) for a correct OpenSSL 4.1 export with an empty
+  password (also with `-legacy`), with or without `kSecImportToMemoryOnly`.
+  With a non-empty passphrase the memory-only import works. So the `.p12`
+  content check is structural (the DER outer SEQUENCE spans the whole data),
+  not an import. Whether `security import -P ""` accepts such a file is open
+  until N4's manual check.
+  Evidence: a Swift snippet in the development sandbox, 2026-11-04.
+
+- Observation: `CMSDecoder` decodes an `openssl cms -sign -nodetach` message in
+  the development sandbox without a keychain, and rejects garbage and a DER
+  certificate at `CMSDecoderFinalizeMessage` (-25257).
+  Evidence: the same snippet, and `MatchDecryptionTests`.
+
+- Observation: a wrong v1 password unpadded by chance after 533 tries
+  (`wrong-532` on the app1 profile fixture), about 0.2%, the same order as
+  fastlane's 0.4% estimate. `MatchDecryptionTests` keeps that case.
+  Evidence: `Tests/SwiftCISigningTests/Fixtures/Match/README.md`.
+
 ## Decisions
 
 - **Persistent keychain, unlocked by the caller** (2026-11-03, adopter
@@ -395,6 +433,19 @@ capabilities table, the example, and Known issues).
   Whether the step may fail is the caller's choice (`step(_:failure:)`).
 - **Profiles go to the Xcode 16 and later directory** (2026-11-03). SwiftCI's
   minimum is Xcode 26.
+
+- **The fixtures are encrypted by fastlane's own code** (2026-11-04), run
+  from `make-fixtures.sh` with Homebrew's Ruby and the installed fastlane gem,
+  instead of `openssl enc` and a Swift encoder. They are what fastlane writes,
+  so the manual comparison of a Swift encoder with fastlane is not needed.
+  Ruby and fastlane are needed only to regenerate the fixtures, not to build
+  or test SwiftCI.
+- **A v1 file is tried with MD5, then SHA-256, and each result must pass the
+  content check** (2026-11-04). fastlane accepts any MD5 result that unpads;
+  SwiftCI is stricter, so a wrong password or digest never yields garbage.
+- **A file that is not base64 text, or has no match prefix, fails the
+  decryption** (2026-11-04), with the file name and the reason. The prototype
+  skipped such files as "already decrypted".
 
 ## Open questions
 
