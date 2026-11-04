@@ -17,7 +17,8 @@ generic pieces that replace Danger.
 - [ ] R3, second part: `Xcode.reportBuildIssues`. Waits for the
   `build-results` recording, which `xcodebuild` cannot make inside the agent
   sandbox; `sample/record.sh` is prepared for it.
-- [ ] R5 and R6.
+- [x] (2026-11-04) R5: the HTTP client and `HTTPClientMock`.
+- [ ] R6.
 
 ## Goal
 
@@ -489,6 +490,13 @@ milestone is a separate change with its own tests and README updates
   counts as passed and a disabled test as skipped, as in the JUnit report.
   Any `BuildError` from reading the bundle becomes the "Test results were not
   found" failure.
+
+- **HTTP client details** (2026-11-04). Integrations get the client with
+  `@Use var client: HTTPClient`. Error messages show the URL without user,
+  password, query and fragment. `HTTPClientMock` matches the method and the
+  full URL, serves each queued response once, and fails on an unexpected
+  request. Response header names keep the server's case, so R6 looks up
+  `X-Next-Page` without regard to case.
 
 ## Open questions
 

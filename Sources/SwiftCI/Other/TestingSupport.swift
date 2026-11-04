@@ -3,13 +3,14 @@ import Foundation
 // The test hooks of SwiftCI. They are `@_spi(Testing)`, not ordinary public API, so they are not part of the API that
 // scripts and extensions see. `SwiftCITesting` imports them with `@_spi(Testing) import SwiftCI`.
 
-/// Registers a log and a process runner for a test, after the default dependencies. The mocks replace the console and
-/// the process runner for every command and step that runs afterwards. Use it inside ``isolateGlobalState(environment:artifactsDirectory:)``
-/// so that the registrations are restored after the test.
-@_spi(Testing) public func installTestDependencies(log: Log, runner: ProcessRunner) {
+/// Registers a log, a process runner and an HTTP client for a test, after the default dependencies. The mocks replace the
+/// console, the process runner and the HTTP client for every command and step that runs afterwards. Use it inside
+/// ``isolateGlobalState(environment:artifactsDirectory:)`` so that the registrations are restored after the test.
+@_spi(Testing) public func installTestDependencies(log: Log, runner: ProcessRunner, httpClient: HTTPClient) {
     registerDependencies()
     register(Log.self, log)
     register(ProcessRunner.self, runner)
+    register(HTTPClient.self, httpClient)
 }
 
 /// The global state of SwiftCI that a test changes: the dependency registrations, the secret registry, the environment

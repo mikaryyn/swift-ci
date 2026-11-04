@@ -55,6 +55,7 @@ public enum SwiftCITest {
     /// - Parameters:
     ///   - environment: The variables that `Environment`, `@Env` and `Secret` read inside `body`, and that CI detection reads.
     ///   - runner: The process runner that receives every `Tool` run inside `body`.
+    ///   - httpClient: The HTTP client that receives every request inside `body`, through `@Use var client: HTTPClient`.
     ///   - log: The log that receives every console line inside `body`.
     ///   - artifactsDirectory: The artifacts directory inside `body`. `nil` for a temporary one, removed afterwards.
     ///   - ciAdapters: Adapters for CI systems that the built-in adapters do not cover. They are asked first.
@@ -63,6 +64,7 @@ public enum SwiftCITest {
     public static func withMocks<T>(
         _ environment: [String: String] = [:],
         runner: ProcessRunnerMock = ProcessRunnerMock(),
+        httpClient: HTTPClientMock = HTTPClientMock(),
         log: LogMock = LogMock(),
         artifactsDirectory: URL? = nil,
         ciAdapters: [any CIAdapter] = [],
@@ -78,7 +80,7 @@ public enum SwiftCITest {
             restoreGlobalState(snapshot)
             if artifactsDirectory == nil { removeTemporaryRoot(temporaryRoot) }
         }
-        installTestDependencies(log: log, runner: runner)
+        installTestDependencies(log: log, runner: runner, httpClient: httpClient)
         return try await body()
     }
 
@@ -104,6 +106,7 @@ public enum SwiftCITest {
     ///   - ciAdapters: Adapters for CI systems that the built-in adapters do not cover. They are asked first, as in
     ///     `SwiftCI(ciAdapters:)`.
     ///   - runner: The process runner that receives every `Tool` run during the run. Configure its responses first.
+    ///   - httpClient: The HTTP client that receives every request during the run. Queue its responses first.
     ///   - script: Registers the commands.
     /// - Returns: The exit code, the log and the artifacts directory of the run.
     public static func run(
@@ -112,12 +115,14 @@ public enum SwiftCITest {
         artifactsDirectory: URL? = nil,
         ciAdapters: [any CIAdapter] = [],
         runner: ProcessRunnerMock = ProcessRunnerMock(),
+        httpClient: HTTPClientMock = HTTPClientMock(),
         script: () async throws -> Void
     ) async -> SwiftCITestResult {
         let log = LogMock()
         let (exitCode, directory) = await withMocks(
             environment,
             runner: runner,
+            httpClient: httpClient,
             log: log,
             artifactsDirectory: artifactsDirectory
         ) {

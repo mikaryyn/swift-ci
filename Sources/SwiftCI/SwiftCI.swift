@@ -54,6 +54,7 @@ public func command(_ command: Command) {
 internal func registerDependencies() {
     register(Log.self, LogImpl())
     register(ProcessRunner.self, ProcessRunnerImpl())
+    register(HTTPClient.self, URLSessionHTTPClient())
 //    register(Environment.self, EnvironmentImpl())
 }
 

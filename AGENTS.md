@@ -84,6 +84,9 @@ Sources/SwiftCI/              Core
     ProcessRunner.swift       The runner that starts a Tool's process: spawn, pipes, timeouts
     Git.swift                 Commit hash and tag
     Bitrise.swift             Temporary Bitrise CLI wrapper (`bitrise --ci run`) with its output filter
+  HTTP/
+    HTTPClient.swift          `HTTPRequest`, `HTTPResponse` and the `HTTPClient` protocol
+    URLSessionHTTPClient.swift  The `URLSession` client, registered in `registerDependencies()`
   Other/
     Log.swift, FullLog.swift  Console log protocol, per-command full log file
     Redaction.swift           Secret registry, masking function, RedactingLog
@@ -117,8 +120,9 @@ Sources/SwiftCISlack/         Module: Slack incoming webhooks
   Slack.swift
 Sources/SwiftCITesting/       Module: test support for scripts and extensions. Imports no test framework.
                               Uses `@_spi(Testing) import SwiftCI` only for the hooks in TestingSupport.swift
-  SwiftCITest.swift           run(_:environment:artifactsDirectory:ciAdapters:runner:script:), withMocks(_:runner:log:artifactsDirectory:ciAdapters:_:), SwiftCITestResult
+  SwiftCITest.swift           run(_:environment:artifactsDirectory:ciAdapters:runner:httpClient:script:), withMocks(_:runner:httpClient:log:artifactsDirectory:ciAdapters:_:), SwiftCITestResult
   ProcessRunnerMock.swift     Records each Tool it runs and returns prepared responses
+  HTTPClientMock.swift        Returns queued responses per method and URL, and records the requests with secrets masked
   LogMock.swift               Records console lines and the arguments of each Log method
 Tests/SwiftCITestSupport/     Not a product. Helpers shared by this repository's test targets: GlobalStateTests,
                               registerToolMocks, secretsSetUp (SPI), thrownError, stripANSI, temporaryArtifactsDirectory

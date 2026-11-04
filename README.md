@@ -631,6 +631,7 @@ implemented.
 |---|---|---|
 | Core | Commands, throwing and allowed-failure steps with nesting, integration calls as steps, `cleanup` / `onFailure` handlers | Prototype |
 | Core | Process execution with streamed output and filters; `--verbose` shows the output unfiltered | Prototype |
+| Core | HTTP client: `HTTPRequest`, `HTTPResponse` and `HTTPClient`, with a `URLSession` client registered as `@Use var client: HTTPClient`, and `HTTPClientMock` for tests | Prototype |
 | Core | Console log with colours, per-command full log file (`logs/<command>.log` in the artifacts directory) | Prototype |
 | Core | Artifacts directory: `SWIFTCI_ARTIFACTS_DIR`, `SwiftCI(artifactsDirectory:)`, `Artifacts.directory` and `Artifacts.url(_:)` | Prototype |
 | Core | Environment variables (`@Env`, `@EnvOpt`) | Prototype |
@@ -641,7 +642,7 @@ implemented.
 | Core | Builds and runs on Linux | Planned |
 | Core | Public, versioned extension API | Planned |
 | Core | Split into core and first-party modules (`SwiftCI`, `SwiftCIXcode`, `SwiftCISigning`, `SwiftCISlack`; macOS verified, Linux not yet) | Prototype |
-| Testing | `SwiftCITesting`: `ProcessRunnerMock`, `LogMock`, `SwiftCITest.run` and scoped environment and mocks, for scripts and extensions (macOS verified) | Prototype |
+| Testing | `SwiftCITesting`: `ProcessRunnerMock`, `HTTPClientMock`, `LogMock`, `SwiftCITest.run` and scoped environment and mocks, for scripts and extensions (macOS verified) | Prototype |
 | Core | Step summary at end of run (status and duration per step) | Planned |
 | Core | Run report: `Report` findings and sections, `onReport` handlers that receive the final report, a console and full log summary, and `report-<command>.md` in the artifacts directory; a report failure fails the command. `MarkdownReport` renders a report as Markdown. Posting it to a merge request is planned | Prototype |
 | Core | Repository checks for the run report: uncommitted changes compared with `HEAD` (`Git.reportUncommittedChanges`) and lines of tracked files that match a Swift `Regex` (`Git.reportLines`) | Prototype |

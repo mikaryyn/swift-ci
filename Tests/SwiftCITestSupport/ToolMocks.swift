@@ -7,7 +7,7 @@ import SwiftCITesting
 func registerToolMocks() -> (log: LogMock, runner: ProcessRunnerMock) {
     let log = LogMock()
     let runner = ProcessRunnerMock()
-    installTestDependencies(log: log, runner: runner)
+    installTestDependencies(log: log, runner: runner, httpClient: HTTPClientMock())
     return (log, runner)
 }
 
