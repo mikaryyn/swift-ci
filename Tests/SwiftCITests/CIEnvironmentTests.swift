@@ -264,6 +264,34 @@ import Testing
         #expect(environment.mergeRequest == nil)
     }
 
+    @Test func jenkinsGitLabPluginNoteOnMergeRequestIsAMergeRequest() {
+        let environment = detect([
+            "JENKINS_URL": "https://jenkins.example.com/",
+            "BUILD_NUMBER": "127",
+            "gitlabActionType": "NOTE",
+            "gitlabMergeRequestIid": "9",
+            "gitlabSourceBranch": "feature/g",
+            "gitlabTargetBranch": "main",
+            "gitlabMergeRequestLastCommit": "aa11bb22cc33dd44ee55ff66aa77bb88cc99dd00",
+        ])
+
+        #expect(environment.branch == "feature/g")
+        #expect(environment.commit == "aa11bb22cc33dd44ee55ff66aa77bb88cc99dd00")
+        #expect(environment.mergeRequest == MergeRequest(number: 9, sourceBranch: "feature/g", targetBranch: "main"))
+    }
+
+    @Test func jenkinsGitLabPluginNoteWithoutIIDIsNotAMergeRequest() {
+        let environment = detect([
+            "JENKINS_URL": "https://jenkins.example.com/",
+            "BUILD_NUMBER": "128",
+            "gitlabActionType": "NOTE",
+            "gitlabSourceBranch": "main",
+        ])
+
+        #expect(environment.branch == "main")
+        #expect(environment.mergeRequest == nil)
+    }
+
     @Test func jenkinsTagBuild() {
         let environment = detect(["JENKINS_URL": "https://jenkins.example.com/", "TAG_NAME": "v1.0.0"])
 

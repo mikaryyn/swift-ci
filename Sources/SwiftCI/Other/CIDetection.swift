@@ -210,8 +210,11 @@ struct JenkinsAdapter: CIAdapter {
 
         // A multibranch change request sets CHANGE_ID. BRANCH_NAME is the branch name only for other builds.
         let isChangeRequest = variables["CHANGE_ID"] != nil
-        // A GitLab plugin build is a merge request only with the MERGE action.
-        let gitLabMergeRequest = variables["gitlabActionType"] == "MERGE" ? variables.int("gitlabMergeRequestIid") : nil
+        // A GitLab plugin build is a merge request with the MERGE action. A build started by a comment on a merge request
+        // (such as a "rerun tests" comment) has the NOTE action, and is a merge request when its IID is set.
+        let action = variables["gitlabActionType"]
+        let isGitLabMergeRequest = action == "MERGE" || action == "NOTE"
+        let gitLabMergeRequest = isGitLabMergeRequest ? variables.int("gitlabMergeRequestIid") : nil
         let number = variables.int("CHANGE_ID") ?? gitLabMergeRequest
 
         let mergeRequest = number.map { number in
