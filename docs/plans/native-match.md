@@ -18,8 +18,11 @@ fastlane.
 - [ ] N3: selection.
 - [ ] N4: installation and check.
 - [ ] N1: the API and the fastlane path; `matchUpdateBuiltin` removed.
-- [ ] Manual check on a developer Mac: the fixture repository, and the
-  decryption of the adopter's real repository (N2, "Real repository check").
+- [x] (2026-11-04) Real repository check (N2) by the adopter's maintainer: 62
+  files, 0 failed; 61 v2 and 1 v1; 1 certificate, 1 PEM private key, no
+  PKCS#12, 60 profiles. Recorded in the fixture README.
+- [ ] Manual check on a developer Mac: the end-to-end install of the fixture
+  repository (`SWIFTCI_MANUAL_MATCH_CHECK`, Tests).
 - [ ] Parity run of `.native` and `.fastlane` on the adopter's CI Mac
   (adopter side, `docs/plans/swiftci-native-match.md` in the iOS repository).
 
@@ -407,7 +410,8 @@ capabilities table, the example, and Known issues).
   With a non-empty passphrase the memory-only import works. So the `.p12`
   content check is structural (the DER outer SEQUENCE spans the whole data),
   not an import. Whether `security import -P ""` accepts such a file is open
-  until N4's manual check.
+  until N4's manual check. The adopter's repository has no PKCS#12 (real
+  repository check, 2026-11-04), so it does not block the adopter.
   Evidence: a Swift snippet in the development sandbox, 2026-11-04.
 
 - Observation: `CMSDecoder` decodes an `openssl cms -sign -nodetach` message in

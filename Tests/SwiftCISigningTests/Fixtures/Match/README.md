@@ -60,4 +60,7 @@ try. If the fixtures are regenerated, that password must be found again, because
 `MatchDecryptionManualCheck` decrypts a real match repository in memory and writes nothing. See the command in
 `AGENTS.md`, "Building and testing".
 
-Not run yet.
+Run on 2026-11-04 by the maintainer of the first adopting project, on a developer Mac, against that project's match
+repository: 62 encrypted files, all decrypted, 0 failed. Formats: 61 v2 and 1 v1 (MD5 or SHA-256 was not recorded).
+Content: 1 certificate, 1 private key as PEM (`pemPrivateKey`), no PKCS#12, and 60 profiles (ad hoc, App Store and
+development). The fastlane version that wrote the files was not recorded.
