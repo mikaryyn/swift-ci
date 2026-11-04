@@ -1,6 +1,6 @@
 # Native match install
 
-Status: **in progress** (N2 done). Phase 3 of the
+Status: **in progress** (N2 and N3 done). Phase 3 of the
 [implementation plan](implementation-plan.md#phase-3-replace-fastlane): the
 read-only install of signing assets from a fastlane match repository, without
 fastlane.
@@ -14,8 +14,17 @@ fastlane.
 - [x] (2026-11-04) N2: decryption, with the fixtures. `MatchDecryption.swift`,
   the fixtures (written by fastlane's own encryption code), 19 unit tests and
   `MatchDecryptionManualCheck`, run against the v1 and v2 fixtures. The
-  prototype's `decryptFileInPlace` now calls it. Next: N3.
-- [ ] N3: selection.
+  prototype's `decryptFileInPlace` now calls it.
+- [x] (2026-11-04) N3: selection. `MatchSelection.select` (internal) reads
+  the profile of each identifier, checks team and expiry, picks the
+  certificate by `DeveloperCertificates`, checks its expiry and decrypts its
+  `.p12`, each file once. `withCheckout` clones once, shallow, into a 0700
+  temporary directory that is deleted afterwards. `ProvisioningProfile`
+  (CMS decoding, shared with the N2 content check), `CertificateInfo`
+  (common name, SHA-1, expiry) and `MatchType.development`. The fixtures have
+  a second certificate that no profile uses, an expired certificate, a
+  profile whose certificate is not in the repository, and an App Store
+  profile. Next: N4.
 - [ ] N4: installation and check.
 - [ ] N1: the API and the fastlane path; `matchUpdateBuiltin` removed.
 - [x] (2026-11-04) Real repository check (N2) by the adopter's maintainer: 62
@@ -424,6 +433,12 @@ capabilities table, the example, and Known issues).
   fastlane's 0.4% estimate. `MatchDecryptionTests` keeps that case.
   Evidence: `Tests/SwiftCISigningTests/Fixtures/Match/README.md`.
 
+- Observation: a CMS-signed profile can't be built in a test without a
+  keychain identity (an unsigned `CMSEncoder` message has no content), so the
+  missing-key cases of the profile decoder are tested through an internal
+  `ProvisioningProfile(propertyList:file:)` that the data initializer uses.
+  Evidence: `ProvisioningProfileTests`.
+
 ## Decisions
 
 - **Persistent keychain, unlocked by the caller** (2026-11-03, adopter
@@ -450,6 +465,11 @@ capabilities table, the example, and Known issues).
 - **A file that is not base64 text, or has no match prefix, fails the
   decryption** (2026-11-04), with the file name and the reason. The prototype
   skipped such files as "already decrypted".
+
+- **No check of the profile's `application-identifier` against the bundle
+  identifier** (2026-11-04). The file name already selects the profile, and
+  old App IDs can have a prefix other than the team ID. The value is read and
+  kept for the log.
 
 ## Open questions
 

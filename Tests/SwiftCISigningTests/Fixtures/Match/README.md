@@ -1,14 +1,29 @@
 # fastlane match fixtures
 
-Test fixtures for `MatchDecryption` (`Sources/SwiftCISigning/MatchDecryption.swift`). They are a generic match
-repository for the team `TEAMID1234`, with a certificate and four ad hoc profiles, in the layout that fastlane match
-uses.
+Test fixtures for `MatchDecryption` (`Sources/SwiftCISigning/MatchDecryption.swift`) and for match selection
+(`Sources/SwiftCISigning/MatchSelection.swift`). They are a generic match repository for the team `TEAMID1234`, with
+three certificates and seven profiles (six ad hoc and one App Store), in the layout that fastlane match uses.
 
 ## Layout
 
-- `plain/`: the repository unencrypted: the certificate (`.cer`, DER), its private key (`.p12`, PEM RSA key, as
-  fastlane's `cert` writes it), the signed profiles (`.mobileprovision`, CMS, DER), `README.md` and
-  `match_version.txt`.
+- `plain/`: the repository unencrypted: the certificates (`.cer`, DER), their private keys (`.p12`, PEM RSA keys, as
+  fastlane's `cert` writes them), the signed profiles (`.mobileprovision`, CMS, DER), `README.md` and
+  `match_version.txt`. The files that the selection tests use are:
+  - `certs/distribution/CERTID1234.cer` and `.p12`: the certificate that signs the profiles, and its key. Its common
+    name is `SwiftCI Test Distribution (TEAMID1234)`.
+  - `certs/distribution/CERTID9999.cer` and `.p12`: a second valid certificate and its key, with the common name
+    `SwiftCI Test Distribution 2 (TEAMID1234)`. No profile uses it. It sorts after `CERTID1234`, so a selection that
+    takes the last certificate by name would pick it. Selection must pick the certificate that the profile lists.
+  - `certs/distribution/CERTIDEXPD.cer` and `.p12`: an expired certificate and its key, valid from 2019-01-01 to
+    2020-01-01. Only `AdHoc_com.example.expiredcert` uses it.
+  - `profiles/adhoc/AdHoc_com.example.app1` and `app2`: valid profiles of the team, made with `CERTID1234`.
+  - `profiles/adhoc/AdHoc_com.example.otherteam`: a valid profile of the team `OTHERTEAM1`.
+  - `profiles/adhoc/AdHoc_com.example.expired`: a profile that expired on 2020-01-01.
+  - `profiles/adhoc/AdHoc_com.example.expiredcert`: a valid profile whose certificate is `CERTIDEXPD`.
+  - `profiles/adhoc/AdHoc_com.example.nocert`: a valid profile whose certificate is not in the repository. The
+    certificate is generated for this file and not stored.
+  - `profiles/appstore/AppStore_com.example.app1`: a valid App Store profile, so that the mapping of two types to their
+    folders is tested.
 - `v1/`: the same repository, with every `.cer`, `.p12` and `.mobileprovision` encrypted in fastlane's v1 format (MD5).
 - `v2/`: the same repository, encrypted in fastlane's v2 format.
 - `extra/v1-sha256/`: the certificate encrypted in v1 with SHA-256, the fallback that fastlane uses when MD5 fails.
@@ -41,19 +56,26 @@ content does not.
 ## Keys and passwords
 
 - The password of all encrypted fixtures is `fixture-password`.
-- The private key is a test key that signs nothing real. Its certificate is self-signed, with the subject
-  `CN=SwiftCI Test Distribution (TEAMID1234)`, and it is not trusted by any Apple service.
-- The certificate and the valid profiles were generated on 2026-11-04, and they expire on 2046-10-30, 7300 days later.
-  The expired profile (`AdHoc_com.example.expired`) expired on 2020-01-01 by design. The decryption does not check
-  expiry, so the test still decrypts it.
+- Each certificate has its own test key that signs nothing real. The certificates are self-signed, with the subjects
+  `CN=SwiftCI Test Distribution (TEAMID1234)`, `CN=SwiftCI Test Distribution 2 (TEAMID1234)` and
+  `CN=SwiftCI Test Distribution Expired (TEAMID1234)`, and no Apple service trusts them. All the profiles are signed
+  with the key of `CERTID1234`.
+- The certificates `CERTID1234` and `CERTID9999` and the valid profiles were generated on 2026-11-04, and they expire on
+  2046-10-30, 7300 days later. The expired certificate (`CERTIDEXPD`) and the expired profile
+  (`AdHoc_com.example.expired`) expired on 2020-01-01 by design. The decryption does not check expiry, so the decryption
+  tests still decrypt them. The selection tests check the expiry at a fixed date, 2030-01-01.
 - `AdHoc_com.example.otherteam` has the team `OTHERTEAM1`, for the team mismatch cases.
 
 ## Tests
 
 `MatchDecryptionTests` decrypts every encrypted file of `v1/` and `v2/` and compares it with `plain/`. The unpadding
-password `wrong-532` is a fixed value: its MD5 decrypt of the app1 profile unpads, so only the content check rejects it.
-It was found with fastlane's own `EncryptionV1` by trying `wrong-0`, `wrong-1` and so on, and `wrong-532` was the 533rd
+password `wrong-216` is a fixed value: its MD5 decrypt of the app1 profile unpads, so only the content check rejects it.
+It was found with fastlane's own `EncryptionV1` by trying `wrong-0`, `wrong-1` and so on, and `wrong-216` was the 217th
 try. If the fixtures are regenerated, that password must be found again, because the salts change.
+
+`MatchSelectionTests` runs the selection on `v2/` and `v1/` with the fixture password and a fixed date, so the tests do
+not depend on the clock. `ProvisioningProfileTests` reads the plain profile and certificate, and checks the missing and
+mistyped keys on property list dictionaries, because a CMS message without a signer cannot be made in a test.
 
 ## Real repository check
 

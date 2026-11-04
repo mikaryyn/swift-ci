@@ -4,9 +4,10 @@ import SwiftCI
 import Security
 #endif
 
-/// Distribution methods supported by the builtin `Fastlane.matchUpdateBuiltin`.
+/// Distribution types of fastlane match. The raw value is the type argument of `fastlane match`. The folders of the
+/// certificates and profiles in the match repository are derived from the type.
 public enum MatchType: String {
-    case appstore, adhoc, enterprise
+    case appstore, adhoc, enterprise, development
 }
 
 /// How fastlane is started by the fastlane fallback.
@@ -283,6 +284,7 @@ private extension Fastlane {
         switch type {
         case .appstore, .adhoc: return "distribution"
         case .enterprise: return "enterprise"
+        case .development: return "development"
         }
     }
 
@@ -292,6 +294,7 @@ private extension Fastlane {
         case .appstore: return "appstore"
         case .adhoc: return "adhoc"
         case .enterprise: return "enterprise"
+        case .development: return "development"
         }
     }
 

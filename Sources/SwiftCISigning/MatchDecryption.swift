@@ -311,21 +311,9 @@ enum MatchDecryption {
     /// Whether the data is a CMS message whose content is a property list dictionary. The CMS decoder needs no keychain,
     /// unlike `security cms -D`, which imports the signer's certificate.
     private static func isSignedPropertyList(_ data: Data) -> Bool {
-        #if canImport(Security)
-        var decoder: CMSDecoder?
-        guard CMSDecoderCreate(&decoder) == errSecSuccess, let decoder else { return false }
-        let updated = data.withUnsafeBytes { buffer -> OSStatus in
-            guard let base = buffer.baseAddress else { return errSecParam }
-            return CMSDecoderUpdateMessage(decoder, base, buffer.count)
-        }
-        guard updated == errSecSuccess, CMSDecoderFinalizeMessage(decoder) == errSecSuccess else { return false }
-        var content: CFData?
-        guard CMSDecoderCopyContent(decoder, &content) == errSecSuccess, let content else { return false }
-        let plist = try? PropertyListSerialization.propertyList(from: content as Data, options: [], format: nil)
+        guard let content = ProvisioningProfile.cmsContent(data) else { return false }
+        let plist = try? PropertyListSerialization.propertyList(from: content, options: [], format: nil)
         return plist is [String: Any]
-        #else
-        return false
-        #endif
     }
 
     // MARK: - Errors

@@ -116,6 +116,10 @@ Sources/SwiftCISigning/       Module (macOS): keychains, match-compatible signin
   GitCredentials.swift        Git credentials for the native match install
   Fastlane.swift              fastlane match invocation + native match install
   MatchDecryption.swift       Decryption of fastlane match files (v1, v2) in memory, with a content check
+  ProvisioningProfile.swift   The fields of a provisioning profile, decoded in memory (internal)
+  MatchCertificate.swift      Facts of a certificate of a match repository: common name, SHA-1, expiry (internal)
+  MatchSelection.swift        Selection of the profile and certificate of each bundle identifier from a match checkout,
+                              and the temporary shallow clone of the repository (internal)
 Sources/SwiftCISlack/         Module: Slack incoming webhooks
   Slack.swift
 Sources/SwiftCIGitLab/        Module: GitLab API connection and the merge request of the run

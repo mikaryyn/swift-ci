@@ -31,6 +31,17 @@ extension GlobalStateTests {
             ])
         }
 
+        @Test func matchPassesTheDevelopmentTypeAsItsName() async throws {
+            let (_, runner) = registerToolMocks()
+
+            try await Fastlane.match(type: .development, appIdentifiers: ["com.example.myapp"], teamId: "TEAM123")
+
+            #expect(runner.tools.count == 1)
+            #expect(runner.tools[0].arguments == [
+                "match", "development", "--readonly", "--app_identifier", "com.example.myapp", "--team_id", "TEAM123",
+            ])
+        }
+
         @Test func verbosePassesTheVerboseFlagAfterTheMode() async throws {
             let (_, runner) = registerToolMocks()
 

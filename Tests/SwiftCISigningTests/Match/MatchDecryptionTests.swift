@@ -13,13 +13,13 @@ import Testing
 
     /// A wrong password whose MD5 decrypt of the app1 profile unpads, so the padding check alone accepts it. Found with
     /// fastlane's EncryptionV1 (MD5) on `v1/profiles/adhoc/AdHoc_com.example.app1.mobileprovision`: `wrong-0` to
-    /// `wrong-531` fail the padding, and `wrong-532` is the first that unpads (533 tries, about 0.2%).
-    static let unpaddingPassword = "wrong-532"
+    /// `wrong-215` fail the padding, and `wrong-216` is the first that unpads (217 tries, about 0.4%).
+    static let unpaddingPassword = "wrong-216"
 
     @Test func encryptedFilesDecryptToTheirPlainFiles() throws {
         for (directory, format) in [("v1", MatchFileFormat.v1), ("v2", .v2)] {
             let encryptedFiles = try relativeFiles(in: fixtureURL(directory)).filter(isEncryptedFile)
-            #expect(encryptedFiles.count == 6, "\(directory): \(encryptedFiles)")
+            #expect(encryptedFiles.count == 13, "\(directory): \(encryptedFiles)")
 
             var contents: [MatchFileContent] = []
             for relative in encryptedFiles {
@@ -34,9 +34,9 @@ import Testing
                 #expect(decrypted.content == expectedContent(relative), "\(directory)/\(relative)")
                 contents.append(decrypted.content)
             }
-            #expect(contents.filter { $0 == .certificate }.count == 1)
-            #expect(contents.filter { $0 == .pemPrivateKey }.count == 1)
-            #expect(contents.filter { $0 == .profile }.count == 4)
+            #expect(contents.filter { $0 == .certificate }.count == 3)
+            #expect(contents.filter { $0 == .pemPrivateKey }.count == 3)
+            #expect(contents.filter { $0 == .profile }.count == 7)
         }
     }
 

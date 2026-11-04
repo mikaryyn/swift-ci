@@ -23,6 +23,8 @@ PASSWORD="fixture-password"
 TEAM="TEAMID1234"
 OTHER_TEAM="OTHERTEAM1"
 CERT_ID="CERTID1234"
+SECOND_CERT_ID="CERTID9999"
+EXPIRED_CERT_ID="CERTIDEXPD"
 MATCH_VERSION="2.232.2"
 
 fail() {
@@ -73,24 +75,32 @@ encrypt_tree() {
     done < <(find "$dir" -type f \( -name '*.cer' -o -name '*.p12' -o -name '*.mobileprovision' \) -print0)
 }
 
-# The certificate and its private key. The key is traditional PKCS#1 PEM, as fastlane's OpenSSL::PKey::RSA#to_s writes it.
-"$OPENSSL" genrsa -out "$work/pkcs8.pem" 2048 2>/dev/null
-"$OPENSSL" rsa -in "$work/pkcs8.pem" -traditional -out "$work/key.pem" 2>/dev/null
-[[ "$(head -n 1 "$work/key.pem")" == '-----BEGIN RSA PRIVATE KEY-----' ]] || fail "the private key is not a traditional RSA PEM key"
+# new_certificate <base name> <common name> <validity options of openssl req -x509>
+# Writes, in $work, <base>.key.pem (a traditional PKCS#1 RSA key, as fastlane's OpenSSL::PKey::RSA#to_s writes it),
+# <base>.cert.pem and <base>.cer.der (the DER certificate).
+new_certificate() {
+    local base="$1" common_name="$2"
+    shift 2
+    "$OPENSSL" genrsa -out "$work/$base.pkcs8.pem" 2048 2>/dev/null
+    "$OPENSSL" rsa -in "$work/$base.pkcs8.pem" -traditional -out "$work/$base.key.pem" 2>/dev/null
+    [[ "$(head -n 1 "$work/$base.key.pem")" == '-----BEGIN RSA PRIVATE KEY-----' ]] || fail "the private key of $base is not a traditional RSA PEM key"
 
-"$OPENSSL" req -x509 -new -key "$work/key.pem" -sha256 -days 7300 \
-    -subj "/C=US/O=SwiftCI Test/OU=$TEAM/CN=SwiftCI Test Distribution ($TEAM)" \
-    -addext "keyUsage=critical,digitalSignature" \
-    -addext "extendedKeyUsage=critical,codeSigning" \
-    -addext "basicConstraints=critical,CA:FALSE" \
-    -out "$work/cert.pem" 2>/dev/null
-"$OPENSSL" x509 -in "$work/cert.pem" -outform der -out "$work/cert.der"
-cert_base64="$("$OPENSSL" base64 -A -in "$work/cert.der")"
+    "$OPENSSL" req -x509 -new -key "$work/$base.key.pem" -sha256 \
+        -subj "/C=US/O=SwiftCI Test/OU=$TEAM/CN=$common_name" \
+        -addext "keyUsage=critical,digitalSignature" \
+        -addext "extendedKeyUsage=critical,codeSigning" \
+        -addext "basicConstraints=critical,CA:FALSE" \
+        "$@" -out "$work/$base.cert.pem" 2>/dev/null
+    "$OPENSSL" x509 -in "$work/$base.cert.pem" -outform der -out "$work/$base.cer.der"
+}
 
-# A provisioning profile, signed as Xcode and fastlane store them: CMS, DER, with the content attached.
-# write_profile <file base name> <bundle identifier> <team> <creation date> <expiration date> <UUID>
+# A provisioning profile, signed as Xcode and fastlane store them: CMS, DER, with the content attached. The signer is
+# the main test certificate. The profile lists the DER certificate `cert_der` in DeveloperCertificates.
+# write_profile <file base name> <profile type> <bundle identifier> <team> <creation date> <expiration date> <UUID> <cert_der>
 write_profile() {
-    local base="$1" app_id="$2" team="$3" created="$4" expires="$5" uuid="$6"
+    local base="$1" profile_type="$2" app_id="$3" team="$4" created="$5" expires="$6" uuid="$7" cert_der="$8"
+    local cert_base64
+    cert_base64="$("$OPENSSL" base64 -A -in "$cert_der")"
     cat > "$work/profile.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -128,7 +138,7 @@ write_profile() {
 	<key>ExpirationDate</key>
 	<date>$expires</date>
 	<key>Name</key>
-	<string>match AdHoc $app_id</string>
+	<string>match $profile_type $app_id</string>
 	<key>ProvisionedDevices</key>
 	<array>
 		<string>00000000-0000000000000001</string>
@@ -149,15 +159,27 @@ write_profile() {
 </plist>
 PLIST
     "$OPENSSL" cms -sign -nodetach -binary -outform der \
-        -signer "$work/cert.pem" -inkey "$work/key.pem" \
+        -signer "$work/main.cert.pem" -inkey "$work/main.key.pem" \
         -in "$work/profile.plist" -out "$base.mobileprovision"
 }
 
+# The certificates. The main one signs the profiles. The second one is in the repository, and no profile uses it. The
+# expired one is in the repository, and its validity ended on 2020-01-01. The stranger one is in a profile only, and it
+# is not stored in the repository.
+new_certificate main "SwiftCI Test Distribution ($TEAM)" -days 7300
+new_certificate second "SwiftCI Test Distribution 2 ($TEAM)" -days 7300
+new_certificate expired "SwiftCI Test Distribution Expired ($TEAM)" -not_before 20190101000000Z -not_after 20200101000000Z
+new_certificate stranger "SwiftCI Test Distribution Stranger ($TEAM)" -days 7300
+
 # plain/: the repository as fastlane match lays it out, unencrypted.
 plain="$work/plain"
-mkdir -p "$plain/certs/distribution" "$plain/profiles/adhoc"
-cp "$work/cert.der" "$plain/certs/distribution/$CERT_ID.cer"
-cp "$work/key.pem" "$plain/certs/distribution/$CERT_ID.p12"
+mkdir -p "$plain/certs/distribution" "$plain/profiles/adhoc" "$plain/profiles/appstore"
+cp "$work/main.cer.der" "$plain/certs/distribution/$CERT_ID.cer"
+cp "$work/main.key.pem" "$plain/certs/distribution/$CERT_ID.p12"
+cp "$work/second.cer.der" "$plain/certs/distribution/$SECOND_CERT_ID.cer"
+cp "$work/second.key.pem" "$plain/certs/distribution/$SECOND_CERT_ID.p12"
+cp "$work/expired.cer.der" "$plain/certs/distribution/$EXPIRED_CERT_ID.cer"
+cp "$work/expired.key.pem" "$plain/certs/distribution/$EXPIRED_CERT_ID.p12"
 printf '%s\n' "$MATCH_VERSION" > "$plain/match_version.txt"
 cat > "$plain/README.md" <<README
 # Certificates
@@ -165,14 +187,20 @@ cat > "$plain/README.md" <<README
 This is a test fixture of SwiftCI for fastlane match. It is not a real match repository, and its key signs nothing real.
 README
 
-write_profile "$plain/profiles/adhoc/AdHoc_com.example.app1" "com.example.app1" "$TEAM" \
-    "$creation_date" "$expiration_date" "11111111-1111-4111-8111-111111111111"
-write_profile "$plain/profiles/adhoc/AdHoc_com.example.app2" "com.example.app2" "$TEAM" \
-    "$creation_date" "$expiration_date" "22222222-2222-4222-8222-222222222222"
-write_profile "$plain/profiles/adhoc/AdHoc_com.example.otherteam" "com.example.otherteam" "$OTHER_TEAM" \
-    "$creation_date" "$expiration_date" "33333333-3333-4333-8333-333333333333"
-write_profile "$plain/profiles/adhoc/AdHoc_com.example.expired" "com.example.expired" "$TEAM" \
-    "2019-01-01T00:00:00Z" "2020-01-01T00:00:00Z" "44444444-4444-4444-8444-444444444444"
+write_profile "$plain/profiles/adhoc/AdHoc_com.example.app1" AdHoc "com.example.app1" "$TEAM" \
+    "$creation_date" "$expiration_date" "11111111-1111-4111-8111-111111111111" "$work/main.cer.der"
+write_profile "$plain/profiles/adhoc/AdHoc_com.example.app2" AdHoc "com.example.app2" "$TEAM" \
+    "$creation_date" "$expiration_date" "22222222-2222-4222-8222-222222222222" "$work/main.cer.der"
+write_profile "$plain/profiles/adhoc/AdHoc_com.example.otherteam" AdHoc "com.example.otherteam" "$OTHER_TEAM" \
+    "$creation_date" "$expiration_date" "33333333-3333-4333-8333-333333333333" "$work/main.cer.der"
+write_profile "$plain/profiles/adhoc/AdHoc_com.example.expired" AdHoc "com.example.expired" "$TEAM" \
+    "2019-01-01T00:00:00Z" "2020-01-01T00:00:00Z" "44444444-4444-4444-8444-444444444444" "$work/main.cer.der"
+write_profile "$plain/profiles/adhoc/AdHoc_com.example.expiredcert" AdHoc "com.example.expiredcert" "$TEAM" \
+    "$creation_date" "$expiration_date" "66666666-6666-4666-8666-666666666666" "$work/expired.cer.der"
+write_profile "$plain/profiles/adhoc/AdHoc_com.example.nocert" AdHoc "com.example.nocert" "$TEAM" \
+    "$creation_date" "$expiration_date" "77777777-7777-4777-8777-777777777777" "$work/stranger.cer.der"
+write_profile "$plain/profiles/appstore/AppStore_com.example.app1" AppStore "com.example.app1" "$TEAM" \
+    "$creation_date" "$expiration_date" "55555555-5555-4555-8555-555555555555" "$work/main.cer.der"
 
 # v1 and v2: the same repository, with every .cer, .p12 and .mobileprovision file encrypted.
 cp -R "$plain" "$work/v1"
@@ -183,11 +211,11 @@ encrypt_tree "$work/v2" 2 MD5
 # extra/: the SHA-256 fallback of v1, and PKCS#12 keys as `match import` can store them.
 extra="$work/extra"
 mkdir -p "$extra/v1-sha256/certs/distribution" "$extra/pkcs12/plain/certs/distribution" "$extra/pkcs12/v2/certs/distribution"
-cp "$work/cert.der" "$extra/v1-sha256/certs/distribution/$CERT_ID.cer"
+cp "$work/main.cer.der" "$extra/v1-sha256/certs/distribution/$CERT_ID.cer"
 encrypt "$extra/v1-sha256/certs/distribution/$CERT_ID.cer" "$work/sha256.enc" 1 SHA256
 mv "$work/sha256.enc" "$extra/v1-sha256/certs/distribution/$CERT_ID.cer"
 
-"$OPENSSL" pkcs12 -export -legacy -passout pass: -inkey "$work/key.pem" -in "$work/cert.pem" \
+"$OPENSSL" pkcs12 -export -legacy -passout pass: -inkey "$work/main.key.pem" -in "$work/main.cert.pem" \
     -out "$extra/pkcs12/plain/certs/distribution/$CERT_ID.p12" 2>/dev/null
 cp "$extra/pkcs12/plain/certs/distribution/$CERT_ID.p12" "$extra/pkcs12/v2/certs/distribution/$CERT_ID.p12"
 encrypt "$extra/pkcs12/v2/certs/distribution/$CERT_ID.p12" "$work/pkcs12.enc" 2 MD5
