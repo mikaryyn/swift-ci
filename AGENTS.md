@@ -120,6 +120,10 @@ Sources/SwiftCISlack/         Module: Slack incoming webhooks
 Sources/SwiftCIGitLab/        Module: GitLab API connection and the merge request of the run
   GitLab.swift                Connection, requests, error messages, JSON decoding and pagination (internal)
   GitLabMergeRequest.swift    `GitLabMergeRequest` and its lookup from the CI variables
+  GitLabDiscussions.swift     Wire types of users, discussions and notes, the lookup of the comment and its writes (internal)
+  MergeRequestComment.swift   `CleanRunBehavior`, `CommentMode` and `updateComment`: the body, the footer and the dry run
+  MergeRequestCommentPlan.swift  The changes that a run makes to the comment, as one pure decision (internal)
+  ReportToMergeRequest.swift  `postReportToMergeRequest`, the convenience of a command's report handler
 Sources/SwiftCITesting/       Module: test support for scripts and extensions. Imports no test framework.
                               Uses `@_spi(Testing) import SwiftCI` only for the hooks in TestingSupport.swift
   SwiftCITest.swift           run(_:environment:artifactsDirectory:ciAdapters:runner:httpClient:script:), withMocks(_:runner:httpClient:log:artifactsDirectory:ciAdapters:_:), SwiftCITestResult
@@ -133,7 +137,7 @@ Tests/SwiftCITests/           Core tests (Swift Testing)
 Tests/SwiftCIXcodeTests/      Xcode tests
 Tests/SwiftCISigningTests/    Keychain, match, Git credential and `security -i` tests
 Tests/SwiftCISlackTests/      Slack tests
-Tests/SwiftCIGitLabTests/     GitLab connection and merge request tests
+Tests/SwiftCIGitLabTests/     GitLab connection, merge request and merge request comment tests
 Tests/SwiftCITestingTests/    Tests of SwiftCITesting as an extension author sees it: `import SwiftCI`,
                               `import SwiftCITesting` and `import Testing` only (no `@testable`, no SPI)
 docs/prior-art.md             Research on fastlane, Bitrise and alternatives

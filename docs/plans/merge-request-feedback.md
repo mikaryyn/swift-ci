@@ -20,8 +20,9 @@ generic pieces that replace Danger.
 - [x] (2026-11-04) R5: the HTTP client and `HTTPClientMock`.
 - [x] (2026-11-04) R6, first part: the `SwiftCIGitLab` module with the
   connection and the merge request lookup, and the Jenkins `NOTE` fix.
-- [ ] R6, second part: one comment per report ID, `postReportToMergeRequest`,
-  and the `log` mode.
+- [x] (2026-11-04) R6, second part: one comment per report ID,
+  `postReportToMergeRequest`, and the `log` mode.
+- [ ] Dry run on the adopter's merge requests (adopter side).
 
 ## Goal
 
@@ -507,6 +508,16 @@ milestone is a separate change with its own tests and README updates
   `mergeRequest(from:)` reads the IID from the variables directly and does
   not check the Jenkins action. The request helpers of `GitLab` (send,
   decode, pagination) stay internal to the module for now.
+
+- **Merge request comment details** (2026-11-04). The changes are planned
+  first and shared by `post` and `log`, so the dry run shows the real
+  decisions. A thread counts as resolved when all its resolvable notes are.
+  Reopening and resolving send `{"resolved": …}` as a JSON body. With
+  `deleteComment` or `updateComment` a failing run posts a plain note. The
+  footer links the CI build and names the full commit when the CI
+  environment knows them. Called from `postReportToMergeRequest`, the work
+  is logged inside the handler's "Report" step, because `step(default:)`
+  opens no nested step there; a failed post fails the command.
 
 ## Open questions
 

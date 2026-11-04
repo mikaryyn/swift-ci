@@ -644,7 +644,7 @@ implemented.
 | Core | Split into core and first-party modules (`SwiftCI`, `SwiftCIXcode`, `SwiftCISigning`, `SwiftCISlack`; macOS verified, Linux not yet) | Prototype |
 | Testing | `SwiftCITesting`: `ProcessRunnerMock`, `HTTPClientMock`, `LogMock`, `SwiftCITest.run` and scoped environment and mocks, for scripts and extensions (macOS verified) | Prototype |
 | Core | Step summary at end of run (status and duration per step) | Planned |
-| Core | Run report: `Report` findings and sections, `onReport` handlers that receive the final report, a console and full log summary, and `report-<command>.md` in the artifacts directory; a report failure fails the command. `MarkdownReport` renders a report as Markdown. Posting it to a merge request is planned | Prototype |
+| Core | Run report: `Report` findings and sections, `onReport` handlers that receive the final report, a console and full log summary, and `report-<command>.md` in the artifacts directory; a report failure fails the command. `MarkdownReport` renders a report as Markdown. It is posted to a merge request by `SwiftCIGitLab` | Prototype |
 | Core | Repository checks for the run report: uncommitted changes compared with `HEAD` (`Git.reportUncommittedChanges`) and lines of tracked files that match a Swift `Regex` (`Git.reportLines`) | Prototype |
 | Xcode | Test failures from the `.xcresult` bundle for the run report: `Xcode.reportTestFailures`, with the totals (build issues from the result bundle are planned) | Prototype |
 | Core | CI environment detection (`CI.environment`: Jenkins, GitLab CI, GitHub Actions, Bitrise, generic CI, local) | Prototype |
@@ -671,7 +671,7 @@ implemented.
 | App Store Connect | Upload via fastlane `pilot` / `deliver` (fallback) | Planned |
 | macOS | Notarization via `notarytool`, stapling | Planned |
 | Notifications | Slack incoming webhooks, as Block Kit (`Slack.send`) or legacy attachment (`Slack.sendAttachment`) messages, with optional sender name and icon; the webhook URL is a `Secret` | Prototype |
-| Merge requests | `SwiftCIGitLab`: GitLab connection (`GitLab`, with the token sent as a secret header) and the merge request of the run from the CI variables (`GitLabMergeRequest.mergeRequest()`). The GitLab merge request comment from the run report is planned | Prototype |
+| Merge requests | `SwiftCIGitLab`: GitLab connection (`GitLab`, with the token sent as a secret header) and the merge request of the run from the CI variables (`GitLabMergeRequest.mergeRequest()`). The run report as one merge request comment per report ID (`postReportToMergeRequest`, `GitLab.updateComment`): created, updated, resolved or deleted, with a `log` mode that only shows what it would do | Prototype |
 | Git | Commit hash, tag | Prototype |
 | Misc | App icon text overlay (e.g. build number or environment badge) | Prototype |
 | Generic | Arbitrary shell commands and scripts | Prototype |
@@ -791,6 +791,23 @@ let lint = Command("lint") {
     try await step("Check files") {
         Report.failure("Force unwrap.", file: "Sources/App/View.swift", line: 12)
     }
+}
+```
+
+`postReportToMergeRequest` (`SwiftCIGitLab`) posts the report as one comment on
+the merge request of a merge request build, and skips the step elsewhere. The
+comment is found by its report ID, so a command that runs again updates its
+comment instead of adding one. The `whenClean:` argument says what a clean run
+does with it: delete (the default), update, or resolve the thread.
+
+```swift
+let tests = Command("tests") {
+    postReportToMergeRequest(
+        gitLab: GitLab(apiURL: URL(string: "https://gitlab.example.com/api/v4")!, token: Secret("GITLAB_TOKEN")),
+        id: "tests",
+        title: "Unit tests"
+    )
+    // The checks of the command add their findings to the report.
 }
 ```
 

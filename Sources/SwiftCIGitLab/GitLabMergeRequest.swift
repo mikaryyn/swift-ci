@@ -18,6 +18,11 @@ public struct GitLabMergeRequest: Equatable, Sendable {
         self.project = project
         self.iid = iid
     }
+
+    /// The path of the merge request under the API base, such as `/projects/group%2Fproject/merge_requests/5`.
+    var apiPath: String {
+        "/projects/\(project)/merge_requests/\(iid)"
+    }
 }
 
 extension GitLabMergeRequest {
