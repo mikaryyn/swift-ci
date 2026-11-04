@@ -120,6 +120,8 @@ Sources/SwiftCISigning/       Module (macOS): keychains, match-compatible signin
   MatchCertificate.swift      Facts of a certificate of a match repository: common name, SHA-1, expiry (internal)
   MatchSelection.swift        Selection of the profile and certificate of each bundle identifier from a match checkout,
                               and the temporary shallow clone of the repository (internal)
+  MatchInstallation.swift     Keychain path, install of the selected assets (imports, partition list, profiles, identity check) (internal)
+  MatchNativeInstall.swift    The native match install end to end: keychain, clone, selection, install (internal)
 Sources/SwiftCISlack/         Module: Slack incoming webhooks
   Slack.swift
 Sources/SwiftCIGitLab/        Module: GitLab API connection and the merge request of the run
@@ -194,6 +196,13 @@ SWIFTCI_MANUAL_MATCH_REPOSITORY=<path to a local clone> MATCH_PASSWORD=<password
     swift test --disable-sandbox --filter MatchDecryptionManualCheck
 ```
 
+The manual match install check runs the native install against a local Git repository
+of the match fixture, with a throwaway keychain. It is skipped by default. Run it with:
+
+```sh
+SWIFTCI_MANUAL_MATCH_CHECK=1 swift test --disable-sandbox --filter MatchInstallManualCheck
+```
+
 If SwiftPM fails with `sandbox-exec: sandbox_apply: Operation not permitted`
 (for example when the agent itself runs sandboxed), add `--disable-sandbox`.
 
@@ -209,7 +218,8 @@ temporary artifacts directory. A test that calls `runSwiftCI` directly passes `a
 Tests must not touch the real keychain, network, developer portal, App Store
 Connect, simulators or `~/Library`. The exceptions are the manual checks, which run
 only when their variable is set (see below): `KeychainManualCheck` uses a throwaway
-keychain, and `MatchDecryptionManualCheck` reads a local clone. Replace the process runner with
+keychain, `MatchDecryptionManualCheck` reads a local clone, and `MatchInstallManualCheck` uses a throwaway
+keychain and a temporary local repository. Replace the process runner with
 `SwiftCITest.run` or `SwiftCITest.withMocks` from `SwiftCITesting`. The repository's
 tests that keep their own scope use `registerToolMocks()` from `SwiftCITestSupport`.
 See `Tests/SwiftCISigningTests/Tools/KeychainTest.swift` for an example. For

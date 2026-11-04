@@ -194,7 +194,7 @@ public struct Fastlane {
             // imported. An invalid password (for example one with a line feed) stops the install here.
             let keychainURL = resolveKeychainURL(from: keychainName)
             let partitionTool = try Secret.optional("MATCH_KEYCHAIN_PASSWORD").map {
-                try partitionListTool(keychainURL: keychainURL, password: $0)
+                try MatchInstallation.partitionListTool(keychainURL: keychainURL, password: $0)
             }
             let wantedCertId = Environment.optional("MATCH_CERTIFICATE_ID")
             let git = try GitCredentialHelper.resolve(
@@ -214,7 +214,7 @@ public struct Fastlane {
             ]
             try await Tool(command: "/usr/bin/git", arguments: cloneArgs, environment: git.environment).run()
             // Checkout branch. A failure is logged as a warning, and the install continues with the default branch.
-            try await runTolerated(
+            try await MatchInstallation.runTolerated(
                 Tool(command: "/usr/bin/git", arguments: ["-C", tempDir.filePath, "checkout", branch], environment: git.environment),
                 what: "checking out branch '\(branch)'"
             )
@@ -351,11 +351,11 @@ private extension Fastlane {
     /// `partitionList` is built before the install starts, so that an invalid keychain password is found first. It is
     /// `nil` when no keychain password is given.
     func importIntoKeychain(itemURL: URL, keychainURL: URL, itemPassword: String, partitionList: Tool?) async throws {
-        try await runImport(item: itemURL, keychainURL: keychainURL, itemPassword: itemPassword)
+        try await MatchInstallation.runImport(item: itemURL, keychainURL: keychainURL, itemPassword: itemPassword)
 
         // Set the partition list if a keychain password is given. A failure is logged as a warning.
         if let partitionList {
-            try await runTolerated(partitionList, what: "setting the key partition list")
+            try await MatchInstallation.runTolerated(partitionList, what: "setting the key partition list")
         }
     }
 
@@ -455,57 +455,5 @@ private extension Fastlane {
     func decryptFileInPlace(url: URL, file: String, password: String) throws {
         let decrypted = try MatchDecryption.decrypt(Data(contentsOf: url), file: file, password: password)
         try decrypted.data.write(to: url)
-    }
-}
-
-extension Fastlane {
-    /// The message `security import` prints when the item is already in the keychain. Re-running an install is
-    /// expected, so this is success. The line is hidden on the console, and it stays in the full log.
-    static let duplicateItemMessage = "The specified item already exists in the keychain."
-
-    /// Imports `item` into the keychain. Exit code 1 with the duplicate-item message is success, without a warning.
-    /// Any other non-zero exit code is logged as a warning, and a program that cannot be started still throws.
-    func runImport(item: URL, keychainURL: URL, itemPassword: String) async throws {
-        @Use var log: Log
-
-        let args = ["import", item.filePath, "-k", keychainURL.filePath, "-P", itemPassword,
-                    "-T", "/usr/bin/codesign", "-T", "/usr/bin/security", "-T", "/usr/bin/productbuild", "-T", "/usr/bin/productsign"]
-        let tool = Tool(command: "/usr/bin/security", arguments: args, filters: [filter(Self.duplicateItemMessage)])
-        let result = try await tool.result()
-        guard result.exitCode != 0 else { return }
-
-        let isDuplicate = result.exitCode == 1
-            && result.stderr.components(separatedBy: "\n").contains { $0.hasSuffix(Self.duplicateItemMessage) }
-        if !isDuplicate {
-            let name = item.lastPathComponent
-            log.warning("\(tool.displayName) exited with code \(result.exitCode) while importing '\(name)'. The install continues.")
-        }
-    }
-
-    /// Runs a tool whose failure the install tolerates. A non-zero exit code is logged as a warning that names the tool
-    /// and the code, and the caller continues. Other failures, such as a program that cannot be started, still throw.
-    func runTolerated(_ tool: Tool, what: String) async throws {
-        @Use var log: Log
-
-        let result = try await tool.result()
-        if result.exitCode != 0 {
-            log.warning("\(tool.displayName) exited with code \(result.exitCode) while \(what). The install continues.")
-        }
-    }
-}
-
-extension Fastlane {
-    /// The `set-key-partition-list` call of the native install, as a `security -i` tool. The password is revealed here
-    /// and sent on standard input only. Tests build the tool and check it without running it.
-    func partitionListTool(keychainURL: URL, password: Secret) throws -> Tool {
-        try SecurityInteractive.tool(for: [
-            SecurityArgument(kind: "command", value: "set-key-partition-list"),
-            SecurityArgument(kind: "option", value: "-S"),
-            SecurityArgument(kind: "option", value: "apple-tool:,apple:,codesign:"),
-            SecurityArgument(kind: "option", value: "-s"),
-            SecurityArgument(kind: "option", value: "-k"),
-            SecurityArgument(kind: "keychain password", value: try password.revealedValue()),
-            SecurityArgument(kind: "keychain path", value: keychainURL.filePath),
-        ])
     }
 }

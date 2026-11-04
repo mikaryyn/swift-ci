@@ -114,7 +114,7 @@ enum MatchSelection {
     }
 
     /// The date as ISO 8601 in UTC, without the time.
-    fileprivate static func isoDate(_ date: Date) -> String {
+    static func isoDate(_ date: Date) -> String {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withFullDate]
         formatter.timeZone = TimeZone(identifier: "UTC") ?? .current

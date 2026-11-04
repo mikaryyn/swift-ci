@@ -1,6 +1,6 @@
 # Native match install
 
-Status: **in progress** (N2 and N3 done). Phase 3 of the
+Status: **in progress** (N2 to N4 done). Phase 3 of the
 [implementation plan](implementation-plan.md#phase-3-replace-fastlane): the
 read-only install of signing assets from a fastlane match repository, without
 fastlane.
@@ -24,14 +24,24 @@ fastlane.
   (common name, SHA-1, expiry) and `MatchType.development`. The fixtures have
   a second certificate that no profile uses, an expired certificate, a
   profile whose certificate is not in the repository, and an App Store
-  profile. Next: N4.
-- [ ] N4: installation and check.
+  profile.
+- [x] (2026-11-04) N4: installation and check. `MatchKeychainPath` (`<name>-db`
+  first), `MatchInstallation.install` (imports through a 0700 directory that
+  is deleted right after the imports; a failed import throws; the partition
+  list once, a warning on failure; profiles as `<UUID>.mobileprovision` in the
+  Xcode 16 folder; the `find-identity -v` check; one log line per profile),
+  and `MatchNativeInstall.install`, the whole flow without a step, which N1
+  wraps. Unit tests with mocks; `MatchInstallManualCheck` compiles and is
+  skipped (not run yet). Next: N1.
 - [ ] N1: the API and the fastlane path; `matchUpdateBuiltin` removed.
 - [x] (2026-11-04) Real repository check (N2) by the adopter's maintainer: 62
   files, 0 failed; 61 v2 and 1 v1; 1 certificate, 1 PEM private key, no
   PKCS#12, 60 profiles. Recorded in the fixture README.
 - [ ] Manual check on a developer Mac: the end-to-end install of the fixture
-  repository (`SWIFTCI_MANUAL_MATCH_CHECK`, Tests).
+  repository (`SWIFTCI_MANUAL_MATCH_CHECK=1 swift test --disable-sandbox
+  --filter MatchInstallManualCheck`). With the self-signed fixture certificate
+  the `find-identity -v` check must fail; the check asserts that, and that the
+  identity and the profiles were installed.
 - [ ] Parity run of `.native` and `.fastlane` on the adopter's CI Mac
   (adopter side, `docs/plans/swiftci-native-match.md` in the iOS repository).
 
@@ -439,6 +449,18 @@ capabilities table, the example, and Known issues).
   `ProvisioningProfile(propertyList:file:)` that the data initializer uses.
   Evidence: `ProvisioningProfileTests`.
 
+- Observation: fastlane sets the partition list only after an import that
+  succeeds, so on a persistent keychain where the items already exist it
+  never sets it again. SwiftCI sets it once per call, always; it is
+  idempotent.
+  Evidence: `fastlane_core/lib/fastlane_core/keychain_importer.rb`.
+
+- Observation: the fixture certificate is self-signed, so `find-identity -v`
+  never lists it as valid, and the manual install check cannot reach a
+  passing check. Making it trusted would change the user's trust settings,
+  which needs a password prompt. The parity run with the real certificate
+  proves the passing case.
+
 ## Decisions
 
 - **Persistent keychain, unlocked by the caller** (2026-11-03, adopter
@@ -470,6 +492,10 @@ capabilities table, the example, and Known issues).
   identifier** (2026-11-04). The file name already selects the profile, and
   old App IDs can have a prefix other than the team ID. The value is read and
   kept for the log.
+
+- **The profiles are written before the identity check** (2026-11-04). A
+  failed check leaves them in the folder; they are harmless, and profiles
+  from earlier runs stay there anyway.
 
 ## Open questions
 

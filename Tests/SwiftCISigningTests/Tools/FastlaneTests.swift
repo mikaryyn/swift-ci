@@ -208,7 +208,7 @@ extension GlobalStateTests {
             let (log, runner) = registerToolMocks()
             runner.responses = [response(exitCode: 1)]
 
-            try await Fastlane().runTolerated(
+            try await MatchInstallation.runTolerated(
                 Tool(command: "/usr/bin/security", arguments: ["import"]),
                 what: "importing 'cert.cer'"
             )
@@ -223,7 +223,7 @@ extension GlobalStateTests {
             let (log, runner) = registerToolMocks()
             runner.responses = [response(stdout: "ok")]
 
-            try await Fastlane().runTolerated(Tool(command: "/usr/bin/security"), what: "importing")
+            try await MatchInstallation.runTolerated(Tool(command: "/usr/bin/security"), what: "importing")
 
             #expect(log.loggedLines == ["ok"])
         }
@@ -235,7 +235,7 @@ extension GlobalStateTests {
             runner.responses = [.init(error: TestError.boom)]
 
             await #expect(throws: TestError.boom) {
-                try await Fastlane().runTolerated(Tool(command: "/usr/bin/security"), what: "importing")
+                try await MatchInstallation.runTolerated(Tool(command: "/usr/bin/security"), what: "importing")
             }
 
             #expect(runner.tools.count == 1)
@@ -253,7 +253,7 @@ extension GlobalStateTests {
                 result: ToolResult(stdout: "", stderr: Self.duplicateStderr, exitCode: 1)
             )]
 
-            try await Fastlane().runImport(
+            try await MatchInstallation.runImport(
                 item: URL(fileURLWithPath: "/tmp/cert.cer"),
                 keychainURL: URL(fileURLWithPath: "/tmp/login.keychain-db"),
                 itemPassword: ""
@@ -265,8 +265,8 @@ extension GlobalStateTests {
             #expect(log.loggedLines.isEmpty)
         }
 
-        /// Any other failure of the import still warns, and its stderr line is shown as before.
-        @Test func importFailureWithAnotherCauseStillWarns() async throws {
+        /// Any other failure of the import throws. It names the file and the keychain, and shows the stderr line.
+        @Test func importFailureWithAnotherCauseThrows() async throws {
             let (log, runner) = registerToolMocks()
             let other = "security: SecKeychainItemImport: Unknown format."
             runner.responses = [.init(
@@ -274,16 +274,16 @@ extension GlobalStateTests {
                 result: ToolResult(stdout: "", stderr: other, exitCode: 1)
             )]
 
-            try await Fastlane().runImport(
-                item: URL(fileURLWithPath: "/tmp/cert.cer"),
-                keychainURL: URL(fileURLWithPath: "/tmp/login.keychain-db"),
-                itemPassword: ""
-            )
+            let error = await thrownError {
+                try await MatchInstallation.runImport(
+                    item: URL(fileURLWithPath: "/tmp/cert.cer"),
+                    keychainURL: URL(fileURLWithPath: "/tmp/login.keychain-db"),
+                    itemPassword: ""
+                )
+            }
 
-            #expect(log.loggedLines.map(stripANSI) == [
-                other,
-                "<Warning> security exited with code 1 while importing 'cert.cer'. The install continues.",
-            ])
+            #expect(error?.message == "security couldn't import cert.cer into /tmp/login.keychain-db (exit code 1). \(other)")
+            #expect(log.warnings.isEmpty)
         }
 
         /// A successful import logs its output and no warning.
@@ -291,7 +291,7 @@ extension GlobalStateTests {
             let (log, runner) = registerToolMocks()
             runner.responses = [.init(result: ToolResult(stdout: "", stderr: "", exitCode: 0))]
 
-            try await Fastlane().runImport(
+            try await MatchInstallation.runImport(
                 item: URL(fileURLWithPath: "/tmp/cert.cer"),
                 keychainURL: URL(fileURLWithPath: "/tmp/login.keychain-db"),
                 itemPassword: ""
@@ -306,7 +306,7 @@ extension GlobalStateTests {
             let restore = secretsSetUp()
             defer { restore() }
 
-            let tool = try Fastlane().partitionListTool(
+            let tool = try MatchInstallation.partitionListTool(
                 keychainURL: URL(fileURLWithPath: "/tmp/keychains/login.keychain-db"),
                 password: Secret(value: "kc-VALUE pass")
             )
@@ -325,7 +325,7 @@ extension GlobalStateTests {
             let restore = secretsSetUp()
             defer { restore() }
 
-            let tool = try Fastlane().partitionListTool(
+            let tool = try MatchInstallation.partitionListTool(
                 keychainURL: URL(fileURLWithPath: "/tmp/My Dir/Äpp ✓/login.keychain-db"),
                 password: Secret(value: "kc-VALUE")
             )
@@ -338,7 +338,7 @@ extension GlobalStateTests {
             let (_, runner) = registerToolMocks()
             runner.responses = [.init(result: ToolResult(stdout: "", stderr: "", exitCode: 0))]
 
-            try await Fastlane().runImport(
+            try await MatchInstallation.runImport(
                 item: URL(fileURLWithPath: "/tmp/My Dir/Äpp ✓/cert.cer"),
                 keychainURL: URL(fileURLWithPath: "/tmp/My Dir/Äpp ✓/login.keychain-db"),
                 itemPassword: ""
@@ -354,7 +354,7 @@ extension GlobalStateTests {
             defer { restore() }
 
             do {
-                _ = try Fastlane().partitionListTool(keychainURL: URL(fileURLWithPath: "/tmp/x.keychain-db"), password: Secret("SWIFTCI_TEST_MISSING_KC"))
+                _ = try MatchInstallation.partitionListTool(keychainURL: URL(fileURLWithPath: "/tmp/x.keychain-db"), password: Secret("SWIFTCI_TEST_MISSING_KC"))
                 Issue.record("Expected a usage error")
             } catch let error as BuildError {
                 #expect(error.code == .usage)

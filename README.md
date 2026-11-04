@@ -1190,7 +1190,11 @@ The order of work follows from adopting SwiftCI in a real project. See the
 - The native match install's decryption reads fastlane's v1 and v2 files. It is
   tested with fixtures that fastlane 2.232's own encryption code wrote, but it has
   not yet been run against a real match repository. `MatchDecryptionManualCheck`
-  does that.
+  does that. The native install (import, partition list, profiles and the
+  `find-identity` check) is tested with mocks and a throwaway keychain
+  (`MatchInstallManualCheck`), but it has not yet run against a real certificate.
+  Profiles are written to `~/Library/Developer/Xcode/UserData/Provisioning Profiles`,
+  which Xcode 16 and later read.
 
 ## Open questions
 

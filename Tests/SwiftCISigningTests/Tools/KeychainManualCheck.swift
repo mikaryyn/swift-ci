@@ -160,7 +160,7 @@ extension GlobalStateTests {
 
             let partitionSecret = Secret(value: password)
             let partition = await thrownError {
-                try await Fastlane().partitionListTool(keychainURL: URL(fileURLWithPath: keychain), password: partitionSecret).run()
+                try await MatchInstallation.partitionListTool(keychainURL: URL(fileURLWithPath: keychain), password: partitionSecret).run()
             }
             if let partition {
                 #expect(partition.message.contains("could not be found in the keychain"), "The partition list failed for another reason.")
