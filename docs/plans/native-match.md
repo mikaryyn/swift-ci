@@ -5,6 +5,21 @@ Status: **planned**. Phase 3 of the
 read-only install of signing assets from a fastlane match repository, without
 fastlane.
 
+## Progress
+
+- [x] (2026-11-03) Plan written.
+- [x] (2026-11-04) Prototype reviewed against this plan and fastlane 2.232.2's
+  source (see Starting point). It cannot have worked on a real repository:
+  fastlane's base64 has line breaks, which the prototype's decoder rejects.
+- [ ] N2: decryption, with the fixtures. Start here (see Order).
+- [ ] N3: selection.
+- [ ] N4: installation and check.
+- [ ] N1: the API and the fastlane path; `matchUpdateBuiltin` removed.
+- [ ] Manual check on a developer Mac: the fixture repository, and the
+  decryption of the adopter's real repository (N2, "Real repository check").
+- [ ] Parity run of `.native` and `.fastlane` on the adopter's CI Mac
+  (adopter side, `docs/plans/swiftci-native-match.md` in the iOS repository).
+
 ## Goal
 
 A script installs the certificates and provisioning profiles that a fastlane
@@ -41,7 +56,10 @@ by the script before the install.
   runs `fastlane match <type> --readonly`. It is the one in use. The repository
   URL and the keychain come from the project's `Matchfile`.
 - `Fastlane().matchUpdateBuiltin(type:appIdentifier:teamId:step:)` is a native
-  prototype. It clones the repository, decrypts v1 and v2 files, imports the
+  prototype, added in 7f6335e (2026-10-27, "feat: add native fastlane match
+  workflow") and since then only moved by the module split (eeac7e6) and the
+  inputs rework (92555af). Nothing calls it, and nothing shows that it ever ran
+  against a real match repository. It It clones the repository, decrypts v1 and v2 files, imports the
   certificate and key with `security import`, sets the partition list, and
   copies the profile. Its gaps decide this plan:
   - `Fastlane` has no public initializer, so another module cannot call it.
@@ -63,8 +81,49 @@ by the script before the install.
   - Decryption reads binary files as UTF-8, slices without length checks, and a
     wrong password can produce garbage in v1 without an error.
   - It sets `sigh_*` environment variables in the process, which nothing reads.
-  - There are no encrypted fixtures and no tests of decryption, selection or
-    installation.
+  - **It cannot decrypt a real repository.** fastlane writes each file with
+    Ruby's `Base64.encode64`, which breaks the text into lines of 60
+    characters (`match/lib/match/encryption/encryption.rb`,
+    `MatchDataEncryption#encrypt`). The prototype decodes with
+    `Data(base64Encoded:)` without options, which returns `nil` for text with
+    line breaks (checked with a Swift snippet on 2026-11-04), and it treats
+    `nil` as "already decrypted". Every file stays encrypted, `security
+    import` fails, and that failure is only a warning.
+  - If the checkout of the branch fails, it logs a warning and goes on with the
+    default branch.
+  - The `.p12` path replaces every `.cer` in the full path
+    (`replacingOccurrences(of: ".cer")`), not only the extension.
+  - The partition list runs once per import, so twice per call.
+  - The `sigh_*` variables that it sets with `setenv` are inherited by every
+    later child process.
+  - `-P` (the `.p12` passphrase) is an argument, which the tool log shows. It
+    is empty for match files, but must stay so.
+  - There are no encrypted fixtures, and no tests of decryption, selection or
+    installation. Its only test (`FastlaneTests.swift`, a line feed in
+    `MATCH_KEYCHAIN_PASSWORD`) stops before any tool runs.
+
+What to keep from `Fastlane.swift` (by function name; the line numbers move):
+
+- Decryption, as the base of N2: `decryptV2` and `pbkdf2sha256`, and
+  `decryptV1`, `evpBytesToKey`, `digest` and `aes256cbcDecrypt`. They follow
+  fastlane's layout (checked against the source, see Reference). They need
+  length checks, the base64 fix and the content check of N2.
+- Keychain: `partitionListTool` with `SecurityInteractive` (the password goes
+  on standard input), the "already exists" handling of `runImport` (but a
+  failure throws, N4.2), and `Keychain.unlock` and `GitCredentialHelper`,
+  which have their own tests.
+- Names: `mapCertType`, `mapProvType` and `profileFileBaseName`, and the field
+  parsing of `decodeProvisioningProfile` as the model for N3.3 (with
+  `CMSDecoder` instead of `security cms -D`).
+
+To rewrite: the body of `matchUpdateBuiltin`, `decryptMatchRepository` and
+`decryptFileInPlace` (decrypt only the selected files, in memory),
+`selectCertURL`, `resolveKeychainURL`, `installProvisioningProfile`, the
+`setenv` calls and `envVarName`, and the cleanup of the temporary directories.
+
+The README already documents the N1 API (`Signing.installMatchAssets(using:
+.native)`) and marks the native match row "Prototype"; its example does not
+compile until N1.
 
 ## Non-goals
 
@@ -142,13 +201,21 @@ changelog.
 
 Move decryption into `MatchDecryption.swift`, internal, working on `Data`:
 
+- The file is base64 text with line breaks (Ruby's `Base64.encode64`, 60
+  characters per line). Decode with `.ignoreUnknownCharacters`, or remove the
+  line breaks first. fastlane reads it with `Base64.decode64`, which ignores
+  them.
 - v2 (`match_encrypted_v2__` prefix after base64 decoding): salt 8 bytes, GCM
-  tag 16 bytes, ciphertext. Key, IV and AAD from PBKDF2-HMAC-SHA256 with 10,000
+  tag 16 bytes, ciphertext; that is, salt at bytes 20..<28, tag at 28..<44,
+  ciphertext from 44. Key, IV and AAD from PBKDF2-HMAC-SHA256 with 10,000
   rounds, 68 bytes (32 + 12 + 24). AES-256-GCM with CryptoKit. A wrong password
   fails the tag check.
 - v1 (`Salted__` prefix): salt 8 bytes, ciphertext. Key and IV with
-  EVP_BytesToKey, MD5 first, SHA-256 if MD5 fails. AES-256-CBC with PKCS#7.
-  Padding errors mean a wrong password.
+  EVP_BytesToKey (one iteration), MD5 first, SHA-256 if MD5 fails, as fastlane
+  does. AES-256-CBC with PKCS#7. Padding errors mean a wrong password. v1 has
+  no integrity check: a wrong password unpads without an error in about 0.4%
+  of cases, in either digest (fastlane's own comment, issue 21663), so the
+  content check below is what catches it.
 - Every length is checked before slicing. A file that is not base64 text is
   an error, not "already decrypted": match repositories hold only encrypted
   files besides `README.md` and `match_version.txt`.
@@ -159,6 +226,20 @@ Move decryption into `MatchDecryption.swift`, internal, working on `Data`:
 - A failure names the file and says "Couldn't decrypt <file>. Check the match
   password.", as fastlane does. The password is never logged.
 - A profile is checked by decoding it as in N3.
+
+**Real repository check.** The fixtures prove the format only as far as the
+plan's reading of fastlane goes. Add a manual check, gated like
+`KeychainManualCheck.swift`, that decrypts a real match repository in memory:
+
+    SWIFTCI_MANUAL_MATCH_REPOSITORY=<path to a local clone> MATCH_PASSWORD=<password> \
+        swift test --disable-sandbox --filter MatchDecryptionManualCheck
+
+It decrypts every `.cer`, `.p12` and `.mobileprovision` under the path, runs
+the content check of each, writes nothing, and prints only the relative path,
+the format (v1 or v2) and the type of each file. A maintainer with access to
+the repository runs it on a developer Mac, then deletes the clone. Note the
+result (date, fastlane version that wrote the files, counts per format) in the
+fixture README.
 
 Decrypted data stays in memory where possible. Files that `security import`
 needs are written to a directory with mode 0700 that is deleted when the
@@ -259,10 +340,37 @@ compares `.native` and `.fastlane` on its CI Mac. Each milestone is a separate
 change with its own tests and README updates (the signing rows of the
 capabilities table, the example, and Known issues).
 
+## Reference and working notes
+
+- **fastlane's source.** fastlane 2.232.2, the version the adopter pins, is
+  installed on the development Mac as a gem:
+  `/opt/homebrew/lib/ruby/gems/4.0.0/gems/fastlane-2.232.2` (or `gem contents
+  fastlane`). The files that matter: `match/lib/match/encryption/encryption.rb`
+  (both formats, the key derivation, the base64), `match/lib/match/encryption/openssl.rb`
+  (which files are encrypted: `*.cer`, `*.p12`, `*.mobileprovision`,
+  `*.provisionprofile`), `match/lib/match/runner.rb` and `match/lib/match/utils.rb`
+  (selection, import, profile install),
+  `fastlane_core/lib/fastlane_core/keychain_importer.rb` (the `security
+  import` arguments and the partition list), and
+  `fastlane_core/lib/fastlane_core/provisioning_profile.rb` (the profile
+  directory: `UserData` for Xcode 16 and later, `MobileDevice` before).
+- **Build and test.** From the repository root: `swift build --disable-sandbox
+  --scratch-path "$HOME/Library/Caches/swiftci-lib-build"`, and `swift test`
+  with the same flags. Use that scratch path; the default `.build` has had
+  stale locks that hang a build. The test suites that use global state are
+  nested in `GlobalStateTests`, so filter by suite name, such as `--filter
+  MergeRequestCommentTests`, not by target name.
+- **What an agent cannot do here.** The development sandbox has no access to
+  the adopter's certificates repository or its match password, cannot change
+  keychains, and `security cms -D` fails in it. The fixture tests and the
+  mocked `security` and `git` calls work; the manual checks and the parity
+  run need the maintainer.
+
 ## Risks
 
-- fastlane's v2 format is not documented. The prototype follows fastlane's
-  source; the manual check against a fastlane-encrypted file is the proof.
+- fastlane's v2 format is not documented. Reading fastlane 2.232.2's source
+  (see Reference) confirms the prototype's layout and key derivation; the
+  real repository check of N2 is the proof.
 - The CI Mac's search list or intermediate certificates may differ from a
   developer Mac. The post-install check makes that a clear failure instead of a
   `codesign` error later.
