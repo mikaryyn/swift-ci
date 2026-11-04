@@ -22,20 +22,6 @@ enum MatchKeychainPath {
     }
 }
 
-/// One profile that the install wrote.
-struct InstalledProfile: Equatable, Sendable {
-    var bundleIdentifier: String
-    var name: String
-    var uuid: String
-    /// The team ID that was asked for. It is also in the profile's `TeamIdentifier`.
-    var teamIdentifier: String
-    /// The common name of the profile's certificate.
-    var certificateName: String
-    var expirationDate: Date
-    /// Where the profile was written.
-    var url: URL
-}
-
 /// Installs the signing assets of a selection: the certificates and keys into a keychain, and the profiles into the
 /// Xcode profiles folder. The install checks that codesign can use each certificate.
 enum MatchInstallation {
@@ -54,27 +40,33 @@ enum MatchInstallation {
     /// Imports the certificates and keys of `assets` into `keychain`, sets the key partition list once, writes the
     /// profiles, checks that codesign can use every certificate, and logs one line per profile.
     ///
-    /// The keychain password is sent to `security -i` on standard input only. The partition list is built before any
-    /// import, so an invalid password stops the install first. Throws a ``BuildError`` at the first failed import or
-    /// check. A failed partition list is a warning, and the check decides.
+    /// `partitionTool` is the `set-key-partition-list` call from ``partitionListTool(keychainURL:password:)``. The caller
+    /// builds it before any process runs, so an invalid keychain password stops the install before the clone.
+    ///
+    /// The keychain password is sent to `security -i` on standard input only. Throws a ``BuildError`` at the first failed
+    /// import or check. A failed partition list is a warning, and the check decides.
     static func install(
         _ assets: MatchAssets,
         teamId: String,
         keychain: URL,
-        keychainPassword: Secret,
+        partitionTool: Tool,
         profilesDirectory: URL
     ) async throws -> [InstalledProfile] {
         @Use var log: Log
 
-        let partitionTool = try partitionListTool(keychainURL: keychain, password: keychainPassword)
         try await importCertificates(assets.certificates, keychain: keychain)
         try await runTolerated(partitionTool, what: "setting the key partition list")
         let installed = try writeProfiles(assets, teamId: teamId, profilesDirectory: profilesDirectory)
         try await checkIdentities(assets.certificates, keychain: keychain)
         for profile in installed {
-            log("\(profile.name), \(profile.uuid), expires \(MatchSelection.isoDate(profile.expirationDate)), \(profile.certificateName)")
+            log(profileLine(profile))
         }
         return installed
+    }
+
+    /// The line that logs an installed profile: its name, UUID, expiry date and certificate.
+    static func profileLine(_ profile: InstalledProfile) -> String {
+        "\(profile.name), \(profile.uuid), expires \(MatchSelection.isoDate(profile.expirationDate)), \(profile.certificateName)"
     }
 
     /// Writes the files of the certificates into a new import directory, and imports each certificate, then its key. The

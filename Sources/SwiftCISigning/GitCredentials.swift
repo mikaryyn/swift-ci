@@ -10,18 +10,14 @@ struct GitCredentials {
 }
 
 enum GitCredentialHelper {
-    static let urlVariable = "MATCH_GIT_URL"
-    static let basicVariable = "MATCH_GIT_BASIC_AUTHORIZATION"
-    static let bearerVariable = "MATCH_GIT_BEARER_AUTHORIZATION"
-
     /// Resolves the credentials of `url`. Credentials come from the user information of an http or https URL, or from
     /// `basicAuthorization` (base64 of `user:token`) or `bearerAuthorization`. Only one source may be given.
     ///
     /// - The user information is percent-decoded. With a password, the password is registered as a secret and the header
     ///   is `Authorization: Basic base64(user:password)`. Without one, the user is the token: the header is
     ///   `Authorization: Basic base64(user:)`, and the user is registered.
-    /// - `MATCH_GIT_BASIC_AUTHORIZATION` gives `Authorization: Basic <value>`, and `MATCH_GIT_BEARER_AUTHORIZATION`
-    ///   gives `Authorization: Bearer <value>`. Git sends the stored line as it is, so the header name is part of it.
+    /// - `basicAuthorization` gives `Authorization: Basic <value>`, and `bearerAuthorization` gives
+    ///   `Authorization: Bearer <value>`. Git sends the stored line as it is, so the header name is part of it.
     /// - The header is sent as `http.<url>.extraHeader` through `GIT_CONFIG_COUNT`, `GIT_CONFIG_KEY_<n>` and
     ///   `GIT_CONFIG_VALUE_<n>`. If the inherited environment already has `GIT_CONFIG_COUNT`, the new entry is appended.
     /// - A URL with a password for a scheme other than http or https (for example `ssh://user:password@host/repo`, or
@@ -30,9 +26,10 @@ enum GitCredentialHelper {
     /// - A URL that starts with `http://` or `https://` but cannot be parsed, or has no host, is refused too. It is not
     ///   sent unchecked.
     ///
-    /// Errors name the variables, never the URL or a value, because the URL may hold a password. Throws a usage error if
-    /// credentials come from more than one source, or if a credential source is given for a URL that is not http or
-    /// https. It also throws if `GIT_CONFIG_COUNT` is not a non-negative number that leaves room for one more entry.
+    /// Errors name the parameters and the match repository URL, never a value, because the URL may hold a password.
+    /// Throws a usage error if credentials come from more than one source, or if a credential source is given for a URL
+    /// that is not http or https. It also throws if `GIT_CONFIG_COUNT` is not a non-negative number that leaves room for
+    /// one more entry.
     static func resolve(
         url: String,
         basicAuthorization: Secret?,
@@ -49,13 +46,13 @@ enum GitCredentialHelper {
         let hasWhitespace = url.contains { $0.isWhitespace || $0.isNewline }
         if looksWeb && (!isWebURL || components?.host?.isEmpty != false || hasWhitespace) {
             throw BuildError(
-                message: "\(urlVariable) starts with http:// or https://, but it cannot be parsed safely. Check it for typos and stray characters. Its value is not shown, because it may hold a password.",
+                message: "The match repository URL starts with http:// or https://, but it cannot be parsed safely. Check it for typos and stray characters. Its value is not shown, because it may hold a password.",
                 code: .usage
             )
         }
         if !isWebURL && hasPassword(url, components: components) {
             throw BuildError(
-                message: "\(urlVariable) has a password, and it is not an http or https URL. Git would receive the password as an argument. Use an SSH key, or remove the password from the URL. Its value is not shown.",
+                message: "The match repository URL has a password, and it is not an http or https URL. Git would receive the password as an argument. Use an SSH key, or remove the password from the URL. Its value is not shown.",
                 code: .usage
             )
         }
@@ -65,18 +62,18 @@ enum GitCredentialHelper {
         let urlHasCredentials = !user.isEmpty || !password.isEmpty
 
         var sources: [String] = []
-        if urlHasCredentials { sources.append(urlVariable) }
-        if basicAuthorization != nil { sources.append(basicVariable) }
-        if bearerAuthorization != nil { sources.append(bearerVariable) }
+        if urlHasCredentials { sources.append("the user information of the match repository URL") }
+        if basicAuthorization != nil { sources.append("basicAuthorization") }
+        if bearerAuthorization != nil { sources.append("bearerAuthorization") }
         guard sources.count <= 1 else {
             throw BuildError(
                 message: "Git credentials are given more than once: \(sources.joined(separator: ", ")). Give one source only.",
                 code: .usage
             )
         }
-        if !isWebURL, let name = basicAuthorization != nil ? basicVariable : (bearerAuthorization != nil ? bearerVariable : nil) {
+        if !isWebURL, let name = basicAuthorization != nil ? "basicAuthorization" : (bearerAuthorization != nil ? "bearerAuthorization" : nil) {
             throw BuildError(
-                message: "\(name) needs an http or https \(urlVariable). Git sends the credential header only over HTTP(S).",
+                message: "\(name) needs an http or https match repository URL. Git sends the credential header only over HTTP(S).",
                 code: .usage
             )
         }
@@ -90,7 +87,7 @@ enum GitCredentialHelper {
             stripped.percentEncodedUser = nil
             stripped.percentEncodedPassword = nil
             guard let text = stripped.string else {
-                throw BuildError(message: "Failed to remove the credentials from \(urlVariable).", code: .usage)
+                throw BuildError(message: "Failed to remove the credentials from the match repository URL.", code: .usage)
             }
             cleanURL = text
         } else if let basicAuthorization {
@@ -134,7 +131,7 @@ enum GitCredentialHelper {
     private static func decoded(_ encoded: String?) throws -> String {
         guard let encoded else { return "" }
         guard let text = encoded.removingPercentEncoding else {
-            throw BuildError(message: "\(urlVariable) has an invalid percent-encoding in its user information.", code: .usage)
+            throw BuildError(message: "The match repository URL has an invalid percent-encoding in its user information.", code: .usage)
         }
         return text
     }

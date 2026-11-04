@@ -395,100 +395,6 @@ extension GlobalStateTests {
     }
 }
 
-/// The native install of the signing assets from a match repository, with the clone and `security` answered by the mock.
-extension GlobalStateTests {
-    @Suite(.serialized) struct MatchNativeInstallTests {
-        static let repositoryURL = "https://git.example.com/certs.git"
-
-        /// The git handler copies the v2 fixture into the clone destination, which is the last argument. The `security`
-        /// runs are answered as in ``installHandler(identities:partition:importResponse:)``.
-        static func cloneHandler(identities: String) -> ProcessRunnerMock.Handler {
-            let security = installHandler(identities: identities)
-            return { tool in
-                guard tool.command == "/usr/bin/git" else {
-                    return try security(tool)
-                }
-                guard let destination = tool.arguments.last else { throw TestError.boom }
-                try FileManager.default.copyItem(at: matchFixtureURL("v2"), to: URL(filePath: destination))
-                return .init()
-            }
-        }
-
-        static func installNative(
-            keychains: URL,
-            profiles: URL,
-            keychainName: String = "login"
-        ) async throws -> [InstalledProfile] {
-            try await MatchNativeInstall.install(
-                type: .adhoc,
-                bundleIdentifiers: ["com.example.app1", "com.example.app2"],
-                teamId: MatchSelectionTests.teamId,
-                repositoryURL: repositoryURL,
-                branch: "main",
-                basicAuthorization: nil,
-                bearerAuthorization: nil,
-                password: Secret(value: MatchSelectionTests.password),
-                keychainName: keychainName,
-                keychainPassword: Secret(value: GlobalStateTests.MatchInstallationTests.keychainPassword),
-                keychainsDirectory: keychains,
-                profilesDirectory: profiles,
-                now: MatchSelectionTests.now
-            )
-        }
-
-        @Test func adhocProfilesAreInstalledFromTheCloneAndTheCloneIsDeleted() async throws {
-            let restore = secretsSetUp()
-            defer { restore() }
-            let (log, runner) = registerToolMocks()
-            let assets = try fixtureInstallAssets()
-            runner.handler = Self.cloneHandler(identities: identityOutput(assets))
-            let workspace = try InstallWorkspace()
-            // The keychain name "login" resolves to "login-db" in the keychains directory.
-            try Data().write(to: workspace.root.appending(path: "login-db"))
-
-            let installed = try await Self.installNative(keychains: workspace.root, profiles: workspace.profiles)
-
-            let clone = try #require(runner.tools.first { $0.command == "/usr/bin/git" })
-            let destination = try #require(clone.arguments.last)
-            #expect(clone.arguments == ["clone", "--depth", "1", "--branch", "main", Self.repositoryURL, destination])
-            #expect(!FileManager.default.fileExists(atPath: URL(filePath: destination).deletingLastPathComponent().filePath))
-
-            #expect(installed.map(\.bundleIdentifier) == ["com.example.app1", "com.example.app2"])
-            #expect(installed.map(\.uuid) == [GlobalStateTests.MatchInstallationTests.app1UUID, GlobalStateTests.MatchInstallationTests.app2UUID])
-            #expect(installed.map(\.name) == ["match AdHoc com.example.app1", "match AdHoc com.example.app2"])
-            #expect(installed.map(\.teamIdentifier) == [MatchSelectionTests.teamId, MatchSelectionTests.teamId])
-            #expect(installed.map(\.certificateName) == [
-                "SwiftCI Test Distribution (TEAMID1234)", "SwiftCI Test Distribution (TEAMID1234)",
-            ])
-            #expect(installed.map(\.expirationDate) == assets.profiles.map(\.profile.expirationDate))
-            #expect(installed.map { $0.url.filePath } == [
-                workspace.profiles.appending(path: "\(GlobalStateTests.MatchInstallationTests.app1UUID).mobileprovision").filePath,
-                workspace.profiles.appending(path: "\(GlobalStateTests.MatchInstallationTests.app2UUID).mobileprovision").filePath,
-            ])
-            #expect(try installed.map { try Data(contentsOf: $0.url) } == assets.profiles.map(\.data))
-
-            #expect(log.loggedLines.contains("Cloning \(Self.repositoryURL) (main)"))
-            #expect(log.loggedLines.contains("Selected 2 profiles, 1 certificates"))
-            let allLines = log.loggedLines.joined(separator: "\n")
-            #expect(!allLines.contains(MatchSelectionTests.password))
-            #expect(!allLines.contains(GlobalStateTests.MatchInstallationTests.keychainPassword))
-        }
-
-        /// A missing keychain fails before the clone, so no tool runs.
-        @Test func missingKeychainFailsBeforeGitRuns() async throws {
-            let restore = secretsSetUp()
-            defer { restore() }
-            let (_, runner) = registerToolMocks()
-            let workspace = try InstallWorkspace()
-
-            let error = await thrownError { _ = try await Self.installNative(keychains: workspace.root, profiles: workspace.profiles) }
-
-            #expect(error?.message == "Keychain login not found in \(workspace.root.filePath). Create it, or pass the name of an existing keychain, such as login.keychain.")
-            #expect(runner.tools.isEmpty)
-        }
-    }
-}
-
 // MARK: - Helpers
 
 /// What the import handler saw of a file: its name, its content, its mode and the mode of its directory.
@@ -500,7 +406,7 @@ private struct ImportFileCheck {
 }
 
 /// The two ad hoc profiles of the v2 fixture, with their certificate.
-private func fixtureInstallAssets() throws -> MatchAssets {
+func fixtureInstallAssets() throws -> MatchAssets {
     try MatchSelection.select(
         type: .adhoc,
         bundleIdentifiers: ["com.example.app1", "com.example.app2"],
@@ -512,7 +418,7 @@ private func fixtureInstallAssets() throws -> MatchAssets {
 }
 
 /// The fixture assets with a second certificate, CERTID9999, which no profile uses.
-private func twoCertificateAssets() throws -> MatchAssets {
+func twoCertificateAssets() throws -> MatchAssets {
     var assets = try fixtureInstallAssets()
     let file = "certs/distribution/CERTID9999.cer"
     let der = try matchPlainData(file)
@@ -526,7 +432,7 @@ private func twoCertificateAssets() throws -> MatchAssets {
 }
 
 /// The output of `security find-identity -v -p codesigning` that lists each certificate of `assets`.
-private func identityOutput(_ assets: MatchAssets) -> String {
+func identityOutput(_ assets: MatchAssets) -> String {
     let lines = assets.certificates.enumerated().map { index, certificate in
         "  \(index + 1)) \(certificate.info.sha1) \"\(certificate.info.commonName)\""
     }
@@ -535,7 +441,7 @@ private func identityOutput(_ assets: MatchAssets) -> String {
 
 /// Answers the `security` runs of an install: `security -i` with `partition`, `security import` with `importResponse`
 /// (called with the tool), and `find-identity` with `identities`. Other tools get an empty success.
-private func installHandler(
+func installHandler(
     identities: String,
     partition: ProcessRunnerMock.Response = .init(),
     importResponse: @escaping (Tool) -> ProcessRunnerMock.Response = { _ in .init() }
@@ -568,7 +474,10 @@ private func install(_ assets: MatchAssets, workspace: InstallWorkspace) async t
         assets,
         teamId: MatchSelectionTests.teamId,
         keychain: workspace.keychain,
-        keychainPassword: Secret(value: GlobalStateTests.MatchInstallationTests.keychainPassword),
+        partitionTool: MatchInstallation.partitionListTool(
+            keychainURL: workspace.keychain,
+            password: Secret(value: GlobalStateTests.MatchInstallationTests.keychainPassword)
+        ),
         profilesDirectory: workspace.profiles
     )
 }
@@ -580,7 +489,7 @@ private func posixMode(of path: String) -> Int? {
 }
 
 /// A new temporary directory, which the caller removes.
-private func makeTemporaryDirectory() throws -> URL {
+func makeTemporaryDirectory() throws -> URL {
     let url = FileManager.default.temporaryDirectory.appending(
         path: "swiftci-match-install-\(UUID().uuidString)", directoryHint: .isDirectory
     )
@@ -588,12 +497,12 @@ private func makeTemporaryDirectory() throws -> URL {
     return url
 }
 
-private func makeEmptyFile(in directory: URL, named name: String) throws {
+func makeEmptyFile(in directory: URL, named name: String) throws {
     try Data().write(to: directory.appending(path: name))
 }
 
 /// A temporary root with a keychain path and a profiles folder in it. The root is removed when the value goes away.
-private final class InstallWorkspace {
+final class InstallWorkspace {
     let root: URL
     let keychain: URL
     let profiles: URL

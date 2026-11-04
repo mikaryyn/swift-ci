@@ -12,6 +12,8 @@ struct ProvisioningProfile: Equatable, Sendable {
     var teamName: String?
     /// `Entitlements["application-identifier"]`.
     var applicationIdentifier: String?
+    /// `CreationDate`, if the profile has one. A missing or mistyped date is `nil`, not an error.
+    var creationDate: Date?
     var expirationDate: Date
     /// The DER certificates that the profile was made for.
     var developerCertificates: [Data]
@@ -42,6 +44,7 @@ struct ProvisioningProfile: Equatable, Sendable {
         teamName = dictionary["TeamName"] as? String
         let entitlements = dictionary["Entitlements"] as? [String: Any]
         applicationIdentifier = entitlements?["application-identifier"] as? String
+        creationDate = dictionary["CreationDate"] as? Date
         expirationDate = try Self.value(dictionary, key: "ExpirationDate", file: file, as: Date.self)
         developerCertificates = try Self.value(dictionary, key: "DeveloperCertificates", file: file, as: [Data].self)
     }

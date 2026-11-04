@@ -102,7 +102,8 @@ enum MatchSelection {
     }
 
     /// The identifiers without repeats, in the order of their first appearance. Throws a usage error if there are none.
-    private static func uniqueBundleIdentifiers(_ identifiers: [String]) throws -> [String] {
+    /// Both implementations call it before any process runs.
+    static func uniqueBundleIdentifiers(_ identifiers: [String]) throws -> [String] {
         guard !identifiers.isEmpty else {
             throw BuildError(
                 message: "Pass at least one bundle identifier. Its provisioning profile is read from the match repository.",
@@ -250,9 +251,9 @@ private struct Selection {
 }
 
 /// The folders and names of a match type in the repository.
-private extension MatchType {
+extension MatchType {
     /// The folder of the certificates, under `certs/`.
-    var certificatesFolder: String {
+    fileprivate var certificatesFolder: String {
         switch self {
         case .appstore, .adhoc: return "distribution"
         case .enterprise: return "enterprise"

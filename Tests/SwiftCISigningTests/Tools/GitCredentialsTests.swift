@@ -102,7 +102,7 @@ extension GlobalStateTests {
             #expect(try header(credentials) == "Authorization: Bearer bearer-VALUE-9")
         }
 
-        @Test func twoSourcesAreAUsageErrorNamingBothVariables() async {
+        @Test func twoSourcesAreAUsageErrorNamingBothSources() async {
             let restore = secretsSetUp()
             defer { restore() }
 
@@ -110,15 +110,15 @@ extension GlobalStateTests {
                 _ = try resolve("https://ci-user:ci-token-VALUE@git.example.com/org/match.git", basic: Secret(value: "b64-VALUE-1"))
             }
             #expect(urlAndBasic?.code == .usage)
-            #expect(urlAndBasic?.message.contains("MATCH_GIT_URL") == true)
-            #expect(urlAndBasic?.message.contains("MATCH_GIT_BASIC_AUTHORIZATION") == true)
+            #expect(urlAndBasic?.message.contains("match repository URL") == true)
+            #expect(urlAndBasic?.message.contains("basicAuthorization") == true)
 
             let basicAndBearer = await thrownError {
                 _ = try resolve(Self.host, basic: Secret(value: "b64-VALUE-1"), bearer: Secret(value: "bearer-VALUE-2"))
             }
             #expect(basicAndBearer?.code == .usage)
-            #expect(basicAndBearer?.message.contains("MATCH_GIT_BASIC_AUTHORIZATION") == true)
-            #expect(basicAndBearer?.message.contains("MATCH_GIT_BEARER_AUTHORIZATION") == true)
+            #expect(basicAndBearer?.message.contains("basicAuthorization") == true)
+            #expect(basicAndBearer?.message.contains("bearerAuthorization") == true)
             #expect(basicAndBearer?.message.contains("VALUE") == false)
         }
 
@@ -195,7 +195,7 @@ extension GlobalStateTests {
             }
 
             #expect(error?.code == .usage)
-            #expect(error?.message.contains("MATCH_GIT_BASIC_AUTHORIZATION") == true)
+            #expect(error?.message.contains("basicAuthorization") == true)
         }
 
         /// A missing secret is a usage error at first use, and the name of the variable is shown.
@@ -234,7 +234,7 @@ extension GlobalStateTests {
             }
 
             #expect(error?.code == .usage)
-            #expect(error?.message.contains("MATCH_GIT_URL") == true)
+            #expect(error?.message.contains("match repository URL") == true)
             #expect(error?.message.contains("ssh-password-VALUE") == false)
             #expect(error?.message.contains("user") == false)
         }

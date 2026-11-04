@@ -291,9 +291,9 @@ exec swift run --package-path CI -c release ci "$@"
 
 *Illustrative. Commands, throwing steps, allowed failures, inline `cleanup` /
 `onFailure` handlers and inputs are implemented. Integration calls as steps are
-implemented for `Xcode`, `Keychain`, `Slack`, `Fastlane`, `Icon` and
-`Simulator` (shutdown only). The other integration calls (`Signing`,
-`AppStoreConnect`) are planned; see the [roadmap](#roadmap) and the
+implemented for `Xcode`, `Keychain`, `Signing` (match install, prototype), `Slack`,
+`Fastlane`, `Icon` and `Simulator` (shutdown only). The other integration calls
+(`AppStoreConnect`) are planned; see the [roadmap](#roadmap) and the
 [capabilities](#capabilities).*
 
 ```swift
@@ -324,11 +324,15 @@ let release = Command("release", description: "Build and upload to TestFlight") 
         try await Slack(webhookURL: slackWebhook).send(text: "Release build failed")
     }
 
+    // The keychain must exist and be unlocked first, for example with Keychain.unlock(name:password:).
     try await Signing.installMatchAssets(
-        type: .appStore,
+        type: .appstore,
         bundleIdentifiers: ["com.example.myapp"],
+        teamId: "TEAMID1234",
+        repository: MatchRepository(url: "git@git.example.com:ios/certificates.git"),
         password: matchPassword,
-        using: .native            // or .fastlane
+        keychain: .existing(name: "ci.keychain", password: Secret("KEYCHAIN_PASSWORD")),
+        using: .native                          // or .fastlane(invocation: .bundler())
     )
     // Copies the IPA and the dSYM zip to the artifacts directory: artifacts/MyApp.ipa and artifacts/MyApp.dSYM.zip.
     try await xcode.archiveAndExport(ipaFileName: "MyApp")
@@ -664,8 +668,8 @@ implemented.
 | SwiftPM | `swift build`, `swift test`, with output formatting | Planned |
 | Signing | Keychain unlock; the password goes to `security -i` on standard input, never as an argument | Prototype |
 | Signing | Temporary keychain create / import / partition list / delete | Planned |
-| Signing | Install signing assets from a fastlane `match` Git repository (read-only, native); Git credentials and keychain passwords are not arguments | Prototype |
-| Signing | Same via fastlane `match` (fallback) | Prototype |
+| Signing | `Signing.installMatchAssets(using: .native)`: install signing assets from a fastlane `match` Git repository (read-only, native). The certificate of each profile is chosen by the profiles. The imported identity is checked with `security find-identity`. Profiles go to the Xcode 16+ folder. Git credentials and keychain passwords are not arguments | Prototype |
+| Signing | `Signing.installMatchAssets(using: .fastlane(…))`: the same install through `fastlane match --readonly` (fallback), then the profiles are read back. The explicit values (`--git_url`, `--git_branch`, `--team_id`, `--keychain_name`) override a `Matchfile`; the secrets go in the environment | Prototype |
 | App Store Connect | API key auth (ES256 JWT with CryptoKit) | Planned |
 | App Store Connect | Upload builds (Build Upload API; `iTMSTransporter` interim) | Planned |
 | App Store Connect | Upload via fastlane `pilot` / `deliver` (fallback) | Planned |
@@ -1187,14 +1191,18 @@ The order of work follows from adopting SwiftCI in a real project. See the
   `SwiftCISigning` imports `Security`, `CryptoKit` and `CommonCrypto` (match). The
   `ProcessRunner` Linux branches are also unverified. Paths are Foundation `URL`s,
   so `System` is not imported and no `swift-system` package is needed.
-- The native match install's decryption reads fastlane's v1 and v2 files. It is
-  tested with fixtures that fastlane 2.232's own encryption code wrote, but it has
-  not yet been run against a real match repository. `MatchDecryptionManualCheck`
-  does that. The native install (import, partition list, profiles and the
-  `find-identity` check) is tested with mocks and a throwaway keychain
-  (`MatchInstallManualCheck`), but it has not yet run against a real certificate.
-  Profiles are written to `~/Library/Developer/Xcode/UserData/Provisioning Profiles`,
-  which Xcode 16 and later read.
+- The native match install is tested with fixtures that fastlane 2.232's own
+  encryption code wrote. Its decryption was verified against a real match
+  repository (`MatchDecryptionManualCheck`), and its install (import, partition
+  list, profiles and the `find-identity` check) was verified with a throwaway
+  keychain (`MatchInstallManualCheck`). It is not yet used in CI, and it has not
+  yet run against a real certificate. Profiles are written to
+  `~/Library/Developer/Xcode/UserData/Provisioning Profiles`, which Xcode 16 and
+  later read.
+- The fastlane path takes `keychain_password` from a `Matchfile` before
+  `MATCH_KEYCHAIN_PASSWORD`. A project that sets it there should set the same value,
+  or leave it out. The fastlane path finds the profiles only under fastlane's
+  default names (`match <Type> <identifier>`). A custom `profile_name` is not supported.
 
 ## Open questions
 

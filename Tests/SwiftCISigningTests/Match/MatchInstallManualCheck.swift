@@ -66,19 +66,18 @@ extension GlobalStateTests {
 
                 // The install must fail at the check, after the import and the profiles.
                 let error = await thrownError {
-                    _ = try await MatchNativeInstall.install(
+                    _ = try await Signing.installMatchAssets(
                         type: .adhoc,
                         bundleIdentifiers: ["com.example.app1", "com.example.app2"],
                         teamId: "TEAMID1234",
-                        repositoryURL: "file://" + repository.filePath,
-                        branch: "main",
-                        basicAuthorization: nil,
-                        bearerAuthorization: nil,
+                        repository: MatchRepository(url: "file://" + repository.filePath, branch: "main"),
                         password: Secret(value: "fixture-password"),
-                        keychainName: Self.keychainName,
-                        keychainPassword: Secret(value: Self.keychainPassword),
+                        keychain: .existing(name: Self.keychainName, password: Secret(value: Self.keychainPassword)),
+                        using: .native,
+                        step: nil,
                         keychainsDirectory: keychains,
-                        profilesDirectory: profiles
+                        profilesDirectory: profiles,
+                        now: Date()
                     )
                 }
                 #expect(error?.message.hasPrefix("The signing identity \(certificate.commonName) (\(certificate.sha1)) was imported into \(keychain.filePath), but codesign can't use it.") == true)

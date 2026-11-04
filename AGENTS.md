@@ -112,16 +112,19 @@ Sources/SwiftCIXcode/         Module (macOS): xcodebuild wrappers, app icon over
   Xcode/                      xcodebuild wrappers (build, archive/export, settings, docbuild)
 Sources/SwiftCISigning/       Module (macOS): keychains, match-compatible signing install, fastlane fallback
   Keychain.swift              Keychain unlock: a plain type with static methods
+  Signing.swift               Public match API: `Signing.installMatchAssets`, `MatchRepository`, `MatchKeychain`,
+                              `MatchImplementation`, `InstalledProfile`; the step and the internal test seams
   SecurityInteractive.swift   Builds the one-line input of `security -i`
-  GitCredentials.swift        Git credentials for the native match install
-  Fastlane.swift              fastlane match invocation + native match install
+  GitCredentials.swift        Git credentials for the match install
+  Fastlane.swift              fastlane match invocation (`Fastlane.match`, `matchUpdate`) and its console filter
   MatchDecryption.swift       Decryption of fastlane match files (v1, v2) in memory, with a content check
   ProvisioningProfile.swift   The fields of a provisioning profile, decoded in memory (internal)
   MatchCertificate.swift      Facts of a certificate of a match repository: common name, SHA-1, expiry (internal)
   MatchSelection.swift        Selection of the profile and certificate of each bundle identifier from a match checkout,
                               and the temporary shallow clone of the repository (internal)
   MatchInstallation.swift     Keychain path, install of the selected assets (imports, partition list, profiles, identity check) (internal)
-  MatchNativeInstall.swift    The native match install end to end: keychain, clone, selection, install (internal)
+  MatchNativeInstall.swift    The native match install after the caller resolves the keychain and credentials: clone, selection, install (internal)
+  MatchFastlaneInstall.swift  The fastlane match install: runs `fastlane match --readonly`, reads the profiles back (internal)
 Sources/SwiftCISlack/         Module: Slack incoming webhooks
   Slack.swift
 Sources/SwiftCIGitLab/        Module: GitLab API connection and the merge request of the run

@@ -18,6 +18,8 @@ import Testing
         #expect(profile.teamIdentifiers == ["TEAMID1234"])
         #expect(profile.teamName == "SwiftCI Test")
         #expect(profile.applicationIdentifier == "TEAMID1234.com.example.app1")
+        // 2026-11-04T00:00:00Z, the date the fixture was generated.
+        #expect(profile.creationDate == Date(timeIntervalSince1970: 1_793_750_400))
         // The fixture expires 7300 days after it was generated, in 2046. The bounds keep the test independent of that day.
         #expect(profile.expirationDate > Date(timeIntervalSince1970: 2_208_988_800))
         #expect(profile.expirationDate < Date(timeIntervalSince1970: 2_524_608_000))
@@ -38,6 +40,7 @@ import Testing
         #expect(profile.uuid == "11111111-1111-4111-8111-111111111111")
         #expect(profile.applicationIdentifier == nil)
         #expect(profile.teamName == nil)
+        #expect(profile.creationDate == nil)
         #expect(profile.developerCertificates == [Data([0x30, 0x00])])
     }
 

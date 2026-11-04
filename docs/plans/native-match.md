@@ -1,6 +1,6 @@
 # Native match install
 
-Status: **in progress** (N2 to N4 done). Phase 3 of the
+Status: **implemented** (N1 to N4 done); the adopter's parity run is next. Phase 3 of the
 [implementation plan](implementation-plan.md#phase-3-replace-fastlane): the
 read-only install of signing assets from a fastlane match repository, without
 fastlane.
@@ -32,8 +32,18 @@ fastlane.
   Xcode 16 folder; the `find-identity -v` check; one log line per profile),
   and `MatchNativeInstall.install`, the whole flow without a step, which N1
   wraps. Unit tests with mocks; `MatchInstallManualCheck` compiles and is
-  skipped (not run yet). Next: N1.
-- [ ] N1: the API and the fastlane path; `matchUpdateBuiltin` removed.
+  skipped (not run yet).
+- [x] (2026-11-04) N1: the API and the fastlane path; `matchUpdateBuiltin`
+  removed. `Signing.installMatchAssets(…, using: .native | .fastlane(…))`
+  with `MatchRepository`, `MatchKeychain.existing` and `InstalledProfile`.
+  The step "Install match <type> signing assets" logs the implementation and
+  fastlane's version. The fastlane path passes `--git_url`, `--git_branch`,
+  `--keychain_name` and `--team_id` as arguments and the secrets in the
+  environment, then reads the installed profiles back by fastlane's default
+  names. The Git credential errors no longer name `MATCH_*` variables. A
+  consumer package built against the public API as the README example uses
+  it. Breaking: `Fastlane().matchUpdateBuiltin` and its `MATCH_*`
+  configuration are gone (there is no changelog file; the commit says so).
 - [x] (2026-11-04) Real repository check (N2) by the adopter's maintainer: 62
   files, 0 failed; 61 v2 and 1 v1; 1 certificate, 1 PEM private key, no
   PKCS#12, 60 profiles. Recorded in the fixture README.
@@ -463,6 +473,14 @@ capabilities table, the example, and Known issues).
   which needs a password prompt. The parity run with the real certificate
   proves the passing case.
 
+- Observation: fastlane's configuration takes a value from the command line,
+  then from the `Matchfile`, and only then from the option's environment
+  variable. So the fastlane path passes the non-secret values as arguments,
+  and a `Matchfile` `keychain_password` wins over `MATCH_KEYCHAIN_PASSWORD`
+  (the README's Known issues say so).
+  Evidence: `fastlane_core/lib/fastlane_core/configuration/configuration.rb`,
+  `fetch`.
+
 ## Decisions
 
 - **Persistent keychain, unlocked by the caller** (2026-11-03, adopter
@@ -498,6 +516,11 @@ capabilities table, the example, and Known issues).
 - **The profiles are written before the identity check** (2026-11-04). A
   failed check leaves them in the folder; they are harmless, and profiles
   from earlier runs stay there anyway.
+
+- **The fastlane path returns the profiles it finds afterwards by name**
+  (2026-11-04): the newest `match <Type> <identifier>` profile of the team in
+  the profiles folder, so both implementations return the same value. A custom
+  `profile_name` is not supported.
 
 ## Open questions
 

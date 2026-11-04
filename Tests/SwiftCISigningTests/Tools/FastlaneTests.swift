@@ -363,27 +363,5 @@ extension GlobalStateTests {
                 Issue.record("Expected a BuildError, got \(error)")
             }
         }
-
-        /// An invalid keychain password (here one with a line feed) stops the native install before anything runs: no
-        /// clone, no import and no tool is started. The message names the kind of the argument, not its value.
-        @Test func invalidPartitionPasswordStopsTheNativeInstallBeforeAnyTool() async {
-            let restore = secretsSetUp([
-                "MATCH_GIT_URL": "https://example.invalid/match.git",
-                "MATCH_KEYCHAIN_PASSWORD": "kc-first\nkc-second-VALUE",
-                "MATCH_PASSWORD": "match-password-VALUE",
-            ])
-            defer { restore() }
-            let (log, runner) = registerToolMocks()
-
-            let error = await thrownError {
-                try await Fastlane().matchUpdateBuiltin(type: .appstore, appIdentifier: "com.example.myapp", teamId: "TEAM123")
-            }
-
-            #expect(error?.code == .usage)
-            #expect(error?.message.contains("keychain password") == true)
-            #expect(error?.message.contains("kc-second-VALUE") == false)
-            #expect(runner.tools.isEmpty)
-            #expect(log.loggedLines.isEmpty)
-        }
     }
 }
