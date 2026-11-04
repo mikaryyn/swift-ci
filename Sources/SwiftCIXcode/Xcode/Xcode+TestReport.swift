@@ -25,6 +25,14 @@ extension Xcode {
     ///
     /// - Throws: ``BuildError`` that names the bundle if `xcresulttool` fails or its output cannot be read.
     public static func testReport(resultBundleURL: URL) async throws -> TestReport {
+        try await testResults(resultBundleURL: resultBundleURL).report
+    }
+
+    /// Reads the test results of a result bundle, as ``testReport(resultBundleURL:)`` does, and keeps the failed cases
+    /// with the location of each message. A query, so it does not open a step.
+    ///
+    /// - Throws: ``BuildError`` that names the bundle, as ``testReport(resultBundleURL:)`` does.
+    static func testResults(resultBundleURL: URL) async throws -> TestResults {
         let path = resultBundleURL.filePath
         let tool = Tool(
             command: xcrunPath,
@@ -48,7 +56,7 @@ extension Xcode {
                 message: "Failed to decode the test results of the result bundle at '\(path)'. Details: \(error)"
             )
         }
-        return makeReport(from: results.testNodes)
+        return makeResults(from: results.testNodes)
     }
 
     /// Writes the test report of a result bundle as JUnit XML to `url`, with ``testReport(resultBundleURL:)`` and
@@ -86,6 +94,43 @@ private struct TestNode: Decodable {
     }
 }
 
+/// The results of a result bundle: the ``TestReport`` of the mapping, and the failed cases with their messages.
+struct TestResults {
+    var report: TestReport
+    var failures: [FailedTest]
+}
+
+/// A failed test case, with the identifier that the report uses and each of its failure messages.
+struct FailedTest {
+    /// The suite name, as the report's `className` is.
+    var className: String
+    /// The name of the test, as the report's `name` is, such as `testLogin()`.
+    var name: String
+    /// The failure messages of all runs, in the order of the tree. Empty if the result has none.
+    var messages: [FailureMessage]
+}
+
+/// One failure message of a test case. `text` is the message as the result bundle names it, which may have several
+/// lines. The first line is the short message.
+struct FailureMessage {
+    var text: String
+    var location: FailureLocation?
+
+    /// The message as the report keeps it: the text, and the location on a second line when there is one.
+    var reportText: String {
+        guard let location else {
+            return text
+        }
+        return "\(text)\n\(location.filePath):\(location.lineNumber)"
+    }
+}
+
+/// The source location of a failure message, as the result bundle gives it.
+struct FailureLocation {
+    var filePath: String
+    var lineNumber: Int
+}
+
 /// Where a node is in the tree: the bundle, the suites above it and the device.
 private struct TestContext {
     var bundle: String?
@@ -102,38 +147,48 @@ private struct TestContext {
     }
 }
 
-/// Maps the test tree to a report. Each case is paired with its suite name, and the cases are grouped by that name in
-/// the order of the tree.
-private func makeReport(from nodes: [TestNode]) -> TestReport {
+/// Maps the test tree to the results. Each case is paired with its suite name, and the cases are grouped by that name
+/// in the order of the tree.
+private func makeResults(from nodes: [TestNode]) -> TestResults {
     let showDevice = Set(descendants(of: nodes, type: "Device").map(\.name)).count > 1
-    var entries: [(suite: String, testCase: TestCase)] = []
+    var entries: [(suite: String, node: TestNode)] = []
     collectCases(in: nodes, context: TestContext(), showDevice: showDevice, into: &entries)
 
     var suiteNames: [String] = []
     var casesBySuite: [String: [TestCase]] = [:]
+    var failures: [FailedTest] = []
     for entry in entries {
         if casesBySuite[entry.suite] == nil {
             suiteNames.append(entry.suite)
         }
-        casesBySuite[entry.suite, default: []].append(entry.testCase)
+        let mapped = testCase(entry.node, className: entry.suite)
+        casesBySuite[entry.suite, default: []].append(mapped)
+        if case .failed = mapped.result {
+            failures.append(FailedTest(
+                className: entry.suite,
+                name: entry.node.name,
+                messages: failureMessages(of: entry.node)
+            ))
+        }
     }
-    return TestReport(
+    let report = TestReport(
         suites: suiteNames.map { TestSuite(name: $0, cases: casesBySuite[$0] ?? []) }
     )
+    return TestResults(report: report, failures: failures)
 }
 
 private func collectCases(
     in nodes: [TestNode],
     context: TestContext,
     showDevice: Bool,
-    into entries: inout [(suite: String, testCase: TestCase)]
+    into entries: inout [(suite: String, node: TestNode)]
 ) {
     for node in nodes {
         var child = context
         switch node.nodeType {
         case "Test Case":
             let suite = context.suiteName(showDevice: showDevice)
-            entries.append((suite, testCase(node, className: suite)))
+            entries.append((suite, node))
             continue
         case "Unit test bundle", "UI test bundle":
             child = TestContext(bundle: node.name, device: context.device)
@@ -150,7 +205,7 @@ private func collectCases(
 
 private func testCase(_ node: TestNode, className: String) -> TestCase {
     let children = node.children ?? []
-    let messages = descendants(of: children, type: "Failure Message").map(failureText)
+    let messages = failureMessages(of: node).map(\.reportText)
     let skipMessage = descendants(of: children, type: "Skip Message").first?.name
 
     let result: TestResult
@@ -179,12 +234,14 @@ private func testCase(_ node: TestNode, className: String) -> TestCase {
     )
 }
 
-/// A failure message, with its source location on a second line when the node gives one.
-private func failureText(_ node: TestNode) -> String {
-    guard let location = node.sourceLocation else {
-        return node.name
+/// The failure messages below a case, in the order of the tree.
+private func failureMessages(of node: TestNode) -> [FailureMessage] {
+    descendants(of: node.children ?? [], type: "Failure Message").map { message in
+        FailureMessage(
+            text: message.name,
+            location: message.sourceLocation.map { FailureLocation(filePath: $0.filePath, lineNumber: $0.lineNumber) }
+        )
     }
-    return "\(node.name)\n\(location.filePath):\(location.lineNumber)"
 }
 
 /// The nodes of `type` in `nodes` and below them, in the order of the tree.

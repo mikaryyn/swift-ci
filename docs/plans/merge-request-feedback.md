@@ -13,7 +13,11 @@ generic pieces that replace Danger.
 - [x] (2026-11-03) R2, first part: the Markdown renderer `MarkdownReport`.
 - [x] (2026-11-03) R2, second part: the console summary and `report-<command>.md`.
 - [x] (2026-11-03) R4: `Git.reportUncommittedChanges` and `Git.reportLines`.
-- [ ] R3, R5 and R6.
+- [x] (2026-11-04) R3, first part: `Xcode.reportTestFailures`.
+- [ ] R3, second part: `Xcode.reportBuildIssues`. Waits for the
+  `build-results` recording, which `xcodebuild` cannot make inside the agent
+  sandbox; `sample/record.sh` is prepared for it.
+- [ ] R5 and R6.
 
 ## Goal
 
@@ -476,6 +480,15 @@ milestone is a separate change with its own tests and README updates
   the working directory of `git` and the base of the files that
   `reportLines` reads, so tests use a temporary directory. A file that cannot
   be read as UTF-8 is skipped with a warning in the log, not a finding.
+
+- **Test failure findings** (2026-11-04). A failure is named with the JUnit
+  suite and test name, such as `` `MyAppTests.LoginTests.testLogin()` ``; a
+  parameterized Swift Testing test is one case, so the failing argument is
+  not shown. Each further message adds its first line to the same finding,
+  whose location is that of the first message with one. An expected failure
+  counts as passed and a disabled test as skipped, as in the JUnit report.
+  Any `BuildError` from reading the bundle becomes the "Test results were not
+  found" failure.
 
 ## Open questions
 
