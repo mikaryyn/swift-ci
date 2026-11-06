@@ -564,8 +564,6 @@ rules: generic, minimal dependencies, default filters, secret safety.
   or annotation reports.
 - **Compiler warning gate.** Fail a build on new compiler warnings. An allowlist
   file records accepted warnings, and each entry needs a reason.
-- **SonarQube.** Produce Sonar's generic test execution and coverage formats,
-  and run the scanner.
 - **GitHub pull request feedback.** Render the run report as a pull request
   comment, step summary and annotations. This mirrors the first-party
   `SwiftCIGitLab` module and is a lightweight alternative to parts of Danger.
@@ -833,8 +831,8 @@ between Xcode versions, so the converter needs fixtures from each supported
 Xcode version.
 
 **Coverage reports (planned, later).** The converter writes Cobertura XML from
-the `.xcresult` bundle (`xcrun xccov`). GitLab's coverage visualisation,
-SonarQube and similar tools read that file.
+the `.xcresult` bundle (`xcrun xccov`). GitLab's coverage visualisation
+and similar tools read that file.
 
 **Annotations (planned, optional, later).** Annotations attach compiler
 warnings, errors and lint findings to the changed lines in a merge or pull

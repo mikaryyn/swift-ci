@@ -46,7 +46,6 @@ The reference project's workflows fall into these groups:
 | Internal ad-hoc deploy (one per app) | Jenkinsfile on merge, nightly and on request | Set build number in Info.plist, stamp version on app icon, `match adhoc`, archive and ad-hoc export, IPA naming from version, tag and commit, OTA `manifest.plist` and install page, Slack |
 | App Store deploy | Parameterised Jenkinsfile | Deployment name selects one or more build configurations; for each: `match appstore`, archive, App Store export, upload with `deliver`, Slack |
 | UI tests (full and smoke test plan) | Nightly Jenkins job | Simulator preparation (hardware keyboard off), UI tests, JUnit and HTML report, Slack |
-| Static analysis | Disabled | Tests with coverage, Cobertura XML, SwiftLint report, `sonar-scanner`; not migrated (see [Decisions](#decisions)) |
 | Documentation | Nightly | Already migrated to a SwiftCI command (DocC); the old Jazzy workflow is unused |
 
 Two quality gates are already Swift scripts. One runs SwiftLint with a pinned
@@ -190,9 +189,8 @@ Workflows are ported in this order:
    - JUnit published with the CI system's own test report support (for
      example the Jenkins `junit` step) instead of generating HTML.
 
-Finally, delete `bitrise.yml` (including the disabled static analysis
-workflow), the Bitrise secrets template and the unused Jazzy workflow, and
-update the project's documentation.
+Finally, delete `bitrise.yml`, the Bitrise secrets template and the unused
+Jazzy workflow, and update the project's documentation.
 
 **Exit criteria.** No Jenkinsfile or job calls `bitrise`, and the Bitrise CLI
 is uninstalled from the CI machine.
@@ -309,10 +307,6 @@ commit and compare:
   lives in this repository (see [module layout](../../README.md#module-layout)).
   It is versioned together with the run report API it renders. GitHub support
   later follows the same shape, as a sibling module or extension.
-
-- **Static analysis.** The disabled SonarQube workflow is not migrated.
-  SonarQube support stays an [extension idea](../../README.md#extension-ideas),
-  built on the core's coverage export (a "later" capability) if needed.
 
 - **Xcode versions.** The minimum is Xcode 26, matching the Swift 6.2
   toolchain requirement. SwiftCI supports the two latest major Xcode versions,
