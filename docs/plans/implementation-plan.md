@@ -327,8 +327,8 @@ commit and compare:
 The upload is done with Apple's Build Upload API by `AppStoreConnect.uploadBuild` in the
 `SwiftCIAppStoreConnect` module, not with `xcodebuild -exportArchive` as proposed in Phase 1.
 The maintainer wants Apple's latest official API, a pure Swift implementation without an extra tool,
-and the uploaded binary to be the archived artifact. Precheck (fastlane's metadata check) moves into
-the App Store Connect module later. The rest of this section is the parity analysis of the earlier
+and the uploaded binary to be the archived artifact. Precheck (fastlane's metadata check) is ported to
+`AppStoreConnect.precheck` in the App Store Connect module. The rest of this section is the parity analysis of the earlier
 `xcodebuild` proposal.
 
 The current Bitrise `deploy-to-itunesconnect-deliver` step (with an app ID,
@@ -349,7 +349,7 @@ fastlane deliver --api_key_path <key.json> --app <app ID> --team_id <team> \
 | Build number set by CI | Set `manageAppVersionAndBuildNumber` to false, otherwise Xcode may change the build number on upload. |
 | IPA kept as a CI artifact | Upload writes no local IPA: export separately with the `export` destination. |
 | Signing | Manual signing with the installed profiles; do not pass `-allowProvisioningUpdates`, so CI never creates or changes certificates and profiles. |
-| fastlane precheck (metadata guideline check) | Runs after upload, but its result only gates review submission, which is off; it does not affect the upload. Not replaced. If wanted later, it belongs to a full App Store Connect extension. |
+| fastlane precheck (metadata guideline check) | Ported to `AppStoreConnect.precheck`, so the deploy can show its warnings. Its result only gates review submission, which is off, so it does not affect the upload. The check needs only read access and the same key and client as the upload. Findings are warnings and never fail the step. |
 | API key permissions | Same key and role (Developer or higher can upload). |
 
 To verify during the parity run, check two things. First, confirm the export

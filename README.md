@@ -184,10 +184,11 @@ and [Is this a good idea?](#is-this-a-good-idea).
   every ecosystem. Non-Swift work is done with plain shell commands. Anything
   else can be an independent [extension](#extensions).
 - **Not a drop-in fastlane replacement.** SwiftCI covers the common CI path:
-  build, test, archive, install signing assets and upload. Long-tail features
-  such as App Store metadata and screenshot management, or creating and renewing
-  certificates in the developer portal, are out of scope initially. They remain
-  available through the fastlane fallback.
+  build, test, archive, install signing assets, upload and check the App Store
+  metadata. Long-tail features such as editing App Store metadata and
+  screenshots, or creating and renewing certificates in the developer portal,
+  are out of scope initially. They remain available through the fastlane
+  fallback.
 
 ## Why a library and not a scripting tool
 
@@ -295,7 +296,7 @@ exec swift run --quiet --package-path CI -c release ci "$@"
 `onFailure` handlers and inputs are implemented. Integration calls as steps are
 implemented for `Xcode`, `Keychain`, `Signing` (match install, prototype), `Slack`,
 `Fastlane`, `Icon` and `Simulator` (shutdown only), and the App Store Connect build upload
-(`AppStoreConnect`, prototype). The other integration calls are planned; see the
+(`AppStoreConnect`, prototype; the build upload and the metadata check). The other integration calls are planned; see the
 [roadmap](#roadmap) and the [capabilities](#capabilities).*
 
 ```swift
@@ -505,7 +506,7 @@ own release pace.
 | `SwiftCI` | macOS, Linux | Core: commands, steps, processes, logging, filters, secrets, environment, artifacts, reports, Git, SwiftPM (`swift build` / `swift test`) |
 | `SwiftCIXcode` | macOS | `xcodebuild`, xcresult test reports (`Xcode.testReport`, `Xcode.writeJUnitReport`), simulators, Xcode selection, version and build numbers, app icon overlay |
 | `SwiftCISigning` | macOS | Keychains, match-compatible signing asset install, provisioning profiles, fastlane `match` fallback |
-| `SwiftCIAppStoreConnect` | macOS (core of the client may later run on Linux) | Minimal native App Store Connect client: API key auth, build upload, build processing status; notarization; fastlane fallbacks |
+| `SwiftCIAppStoreConnect` | macOS (core of the client may later run on Linux) | Minimal native App Store Connect client: API key auth, build upload, App Store metadata check, build processing status; notarization; fastlane fallbacks |
 | `SwiftCISlack` | macOS, Linux | Slack incoming webhooks |
 | `SwiftCIGitLab` | macOS, Linux | GitLab merge request feedback: find the merge request from CI variables, render the run report as one comment per report ID (create, update, resolve) |
 | `SwiftCITesting` | macOS, Linux | Test support for CI scripts and extensions: process runner and log mocks, and scoped setup of the environment and the mocks (prototype, see [Testing CI scripts and extensions](#testing-ci-scripts-and-extensions)) |
@@ -528,8 +529,8 @@ Linux verification is tracked separately in the
 ### App Store Connect client
 
 `SwiftCIAppStoreConnect` contains a minimal native client that covers only what
-CI needs: ES256 API key tokens (CryptoKit), the Build Upload API, build
-processing status and, if needed, TestFlight group assignment. A full client
+CI needs: ES256 API key tokens (CryptoKit), the Build Upload API, the App Store
+metadata check, build processing status and, if needed, TestFlight group assignment. A full client
 such as [AppStoreConnect-Swift-SDK](https://github.com/AvdLee/appstoreconnect-swift-sdk)
 is generated from Apple's complete OpenAPI specification. It would add a
 third-party dependency and noticeable compile time to every CI package, and CI
@@ -541,16 +542,24 @@ sends any bytes, it checks that the app has the IPA's bundle identifier and that
 build upload of the same version and build number that has not failed. It ends when App Store Connect has
 accepted the file, as `altool` does; processing continues in App Store Connect after the step.
 The parts of the file are sent in parallel, `parallelUploads` at a time (default 6).
-Precheck (fastlane's metadata check) is not implemented yet.
+The App Store metadata check (`AppStoreConnect(apiKey:).precheck(appID:)`) is a
+prototype port of fastlane precheck. It reads the app info localizations, the copyright and the
+localizations of the newest App Store version, and checks them for text and links that App Review
+often rejects: placeholder text, mentions of other platforms, promises of future features, test
+wording, curse words, the copyright year and unreachable URLs. Its step logs each rule as passed or
+failed, lists the findings and adds them to the run report as warnings. It only reads from App Store
+Connect, so it needs read access only. A finding never fails the step; an App Store Connect error
+throws.
 
 ```swift
 let apiKey = try AppStoreConnectAPIKey.environment(
     keyID: "ABC123DEFG", keyFileVariable: "ASC_KEY_PATH", issuerVariable: "ASC_ISSUER_ID"
 )
 try await AppStoreConnect(apiKey: apiKey).uploadBuild(ipa: ipaURL, appID: "1234567890")
+try await AppStoreConnect(apiKey: apiKey).precheck(appID: "1234567890")
 ```
 
-Projects that need more of the API (metadata, testers and groups, users,
+Projects that need more of the API (editing metadata, testers and groups, users,
 reviews) can use an independent extension built on that SDK. See
 [Extension ideas](#extension-ideas).
 
@@ -567,7 +576,7 @@ rules: generic, minimal dependencies, default filters, secret safety.
 **Apple distribution**
 
 - **Full App Store Connect API.** An extension that wraps
-  AppStoreConnect-Swift-SDK for metadata, TestFlight testers and groups, users
+  AppStoreConnect-Swift-SDK for editing metadata, TestFlight testers and groups, users
   and review submission. It suits projects that need more than the minimal
   first-party client.
 - **Publishing over-the-air install files.** Upload the IPA, `manifest.plist`
@@ -690,6 +699,7 @@ implemented.
 | Signing | `Signing.installMatchAssets(using: .fastlane(…))`: the same install through `fastlane match --readonly` (fallback), then the profiles are read back. The explicit values (`--git_url`, `--git_branch`, `--team_id`, `--keychain_name`) override a `Matchfile`; the secrets go in the environment | Prototype |
 | App Store Connect | API key auth (ES256 JWT with CryptoKit) | Prototype |
 | App Store Connect | Upload builds (Build Upload API, `AppStoreConnect.uploadBuild`; iOS IPAs) | Prototype |
+| App Store Connect | Metadata check (port of fastlane precheck) | Prototype |
 | App Store Connect | Upload via fastlane `pilot` / `deliver` (fallback) | Planned |
 | macOS | Notarization via `notarytool`, stapling | Planned |
 | Notifications | Slack incoming webhooks, as Block Kit (`Slack.send`) or legacy attachment (`Slack.sendAttachment`) messages, with optional sender name and icon; the webhook URL is a `Secret`. A message Slack does not accept fails the step; run it as an allowed failure to make it optional | Prototype |
@@ -726,7 +736,8 @@ For now, the external one is always fastlane. These are the rules:
 | Install signing assets from a match repository | Swift: Git clone, decrypt v1/v2 match files, `security import`, install profiles | `fastlane match --readonly` |
 | Create or renew certificates and profiles | Not planned initially | `fastlane match` (non-readonly) |
 | Upload to TestFlight / App Store | App Store Connect Build Upload API | `fastlane pilot` / `deliver` |
-| App Store metadata and screenshots | Out of scope | `fastlane deliver` |
+| Editing App Store metadata and screenshots | Out of scope | `fastlane deliver` |
+| App Store metadata check | App Store Connect API, `AppStoreConnect.precheck` | None |
 | JUnit test reports | Swift, from `xcrun xcresulttool` output | `fastlane trainer` |
 | Coverage reports | Swift, from `xcrun xccov` output | None planned |
 

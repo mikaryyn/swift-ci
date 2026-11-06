@@ -133,15 +133,24 @@ Sources/SwiftCIGitLab/        Module: GitLab API connection and the merge reques
   MergeRequestComment.swift   `CleanRunBehavior`, `CommentMode` and `updateComment`: the body, the footer and the dry run
   MergeRequestCommentPlan.swift  The changes that a run makes to the comment, as one pure decision (internal)
   ReportToMergeRequest.swift  `postReportToMergeRequest`, the convenience of a command's report handler
-Sources/SwiftCIAppStoreConnect/  Module (macOS): App Store Connect API key, client and build upload
+Sources/SwiftCIAppStoreConnect/  Module (macOS): App Store Connect API key, client, build upload and metadata check
   AppStoreConnectAPIKey.swift  `AppStoreConnectAPIKey`: key ID, issuer ID and private key, from a `.p8` file or the environment
   AppStoreConnectToken.swift  ES256 JSON Web Token of an API key, cached until it nearly expires (internal)
   AppStoreConnect.swift       `AppStoreConnect`: the client, its requests, retries, error messages and pagination (internal)
   AppStoreConnect+BuildUpload.swift  `AppStoreConnect.uploadBuild`: the step that checks and uploads an IPA
+  AppStoreConnect+Precheck.swift  `AppStoreConnect.precheck`: the step that checks the App Store metadata and logs and reports its findings
+  PrecheckResult.swift        `PrecheckResult` and `PrecheckFinding`, the findings of the metadata check
   BuildUpload.swift           `BuildUpload` and `BuildUploadState`, the result of an upload
   BuildUploadParts.swift      Sends the parts of the IPA to their pre-signed URLs and computes the MD5 (internal)
   BuildUploadResources.swift  JSON:API request and response types of the Build Upload API (internal)
   IPAInfo.swift               Reads the bundle identifier, version, build and platform from an IPA (internal)
+  Precheck/                   The metadata check (internal)
+    PrecheckMetadata.swift    Reads the items to check from App Store Connect, with the newest version and the pages of each list
+    PrecheckItem.swift        One value to check: its field, its friendly name as fastlane prints it, and whether it is optional
+    PrecheckRule.swift        One rule: its name, description, the items it handles and its check
+    PrecheckRules.swift       The eight rules in fastlane's order, with their word lists and the URL check
+    PrecheckTextMatch.swift   The phrase matcher of the word rules
+    CurseWordHashes.swift     The SHA-256 hashes of the curse words, ported from fastlane precheck (MIT notice in the file)
 Sources/SwiftCITesting/       Module: test support for scripts and extensions. Imports no test framework.
                               Uses `@_spi(Testing) import SwiftCI` only for the hooks in TestingSupport.swift
   SwiftCITest.swift           run(_:environment:artifactsDirectory:ciAdapters:runner:httpClient:script:), withMocks(_:runner:httpClient:log:artifactsDirectory:ciAdapters:_:), SwiftCITestResult
@@ -156,8 +165,8 @@ Tests/SwiftCIXcodeTests/      Xcode tests
 Tests/SwiftCISigningTests/    Keychain, match, Git credential and `security -i` tests
 Tests/SwiftCISlackTests/      Slack tests
 Tests/SwiftCIGitLabTests/     GitLab connection, merge request and merge request comment tests
-Tests/SwiftCIAppStoreConnectTests/  API key, token, client, IPA reading and build upload tests
-  Fixtures/                   Tiny IPAs for the IPA reading tests: a valid app, and ones with no app, two apps, a missing build version, a Mac platform and an app name with glob characters
+Tests/SwiftCIAppStoreConnectTests/  API key, token, client, IPA reading, build upload and metadata check tests, and the manual metadata check
+  Fixtures/                   Tiny IPAs for the IPA reading tests: a valid app, and ones with no app, two apps, a missing build version, a Mac platform and an app name with glob characters; `precheck/` holds the JSON responses of the metadata check
 Tests/SwiftCITestingTests/    Tests of SwiftCITesting as an extension author sees it: `import SwiftCI`,
                               `import SwiftCITesting` and `import Testing` only (no `@testable`, no SPI)
 docs/prior-art.md             Research on fastlane, Bitrise and alternatives
@@ -216,6 +225,15 @@ of the match fixture, with a throwaway keychain. It is skipped by default. Run i
 SWIFTCI_MANUAL_MATCH_CHECK=1 swift test --disable-sandbox --filter MatchInstallManualCheck
 ```
 
+The manual precheck check runs the App Store metadata check against the real App Store Connect
+API for one app. It only reads from App Store Connect and sends HEAD requests to the app's URLs.
+It is skipped by default. Run it with:
+
+```sh
+SWIFTCI_MANUAL_PRECHECK_APP_ID=<app id> ASC_KEY_ID=<key id> ASC_ISSUER_ID=<issuer> ASC_KEY_FILE=<path to .p8> \
+    swift test --disable-sandbox --filter PrecheckManualCheck
+```
+
 If SwiftPM fails with `sandbox-exec: sandbox_apply: Operation not permitted`
 (for example when the agent itself runs sandboxed), add `--disable-sandbox`.
 
@@ -231,8 +249,8 @@ temporary artifacts directory. A test that calls `runSwiftCI` directly passes `a
 Tests must not touch the real keychain, network, developer portal, App Store
 Connect, simulators or `~/Library`. The exceptions are the manual checks, which run
 only when their variable is set (see below): `KeychainManualCheck` uses a throwaway
-keychain, `MatchDecryptionManualCheck` reads a local clone, and `MatchInstallManualCheck` uses a throwaway
-keychain and a temporary local repository. Replace the process runner with
+keychain, `MatchDecryptionManualCheck` reads a local clone, `MatchInstallManualCheck` uses a throwaway
+keychain and a temporary local repository, and `PrecheckManualCheck` reads the metadata of the app named in its variable from App Store Connect. Replace the process runner with
 `SwiftCITest.run` or `SwiftCITest.withMocks` from `SwiftCITesting`. The repository's
 tests that keep their own scope use `registerToolMocks()` from `SwiftCITestSupport`.
 See `Tests/SwiftCISigningTests/Tools/KeychainTest.swift` for an example. For
