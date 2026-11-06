@@ -26,6 +26,9 @@ public struct AppStoreConnect {
     /// Waits between retries. Tests replace it, so that they never wait.
     var sleep: (Duration) async throws -> Void = { try await Task.sleep(for: $0) }
 
+    /// The clock that deadlines and expiry times are compared with. Tests replace it, so that they can move time.
+    var now: () -> Date = Date.init
+
     /// Retries of a 429 response: waits 1, 2, 4, 8 and 16 seconds.
     static let rateLimitRetries = 5
     /// Retries of a 500, 502, 503 or 504 response, or of a transport error: waits 2, 4 and 8 seconds.
@@ -39,8 +42,11 @@ public struct AppStoreConnect {
     ///   - path: The path under the base URL, such as `/v1/apps/1234567890`.
     ///   - query: The query items of the request.
     ///   - body: The JSON body, or `nil` for a request without one.
-    func send(_ method: String, _ path: String, query: [URLQueryItem] = [], body: Data? = nil) async throws -> HTTPResponse {
-        try await send(method, path, url: try url(for: path, query: query), body: body)
+    ///   - accepting: A status that is returned as a response instead of thrown, so that the caller can read its body.
+    func send(
+        _ method: String, _ path: String, query: [URLQueryItem] = [], body: Data? = nil, accepting: Int? = nil
+    ) async throws -> HTTPResponse {
+        try await send(method, path, url: try url(for: path, query: query), body: body, accepting: accepting)
     }
 
     /// Sends a request to the absolute `url`, such as the `links.next` URL of a list. The URL must be on the host of the
@@ -51,7 +57,8 @@ public struct AppStoreConnect {
     ///   - path: The path of the request, as it names the request in messages.
     ///   - url: The full URL, including the query.
     ///   - body: The JSON body, or `nil` for a request without one.
-    func send(_ method: String, _ path: String, url: URL, body: Data?) async throws -> HTTPResponse {
+    ///   - accepting: A status that is returned as a response instead of thrown.
+    func send(_ method: String, _ path: String, url: URL, body: Data?, accepting: Int? = nil) async throws -> HTTPResponse {
         guard url.scheme == baseURL.scheme, url.host == baseURL.host, url.port == baseURL.port else {
             throw BuildError(
                 message: "The App Store Connect link of \(method) \(path) points to another server, so the request was not sent. Check that the response came from App Store Connect."
@@ -69,7 +76,7 @@ public struct AppStoreConnect {
             secretHeaders: ["Authorization": bearer],
             body: body
         )
-        return try await perform(request, method, path)
+        return try await perform(request, method, path, accepting: accepting)
     }
 
     /// Reads a JSON response of `path`.
@@ -147,19 +154,24 @@ public struct AppStoreConnect {
     }
 
     private func write<T: Decodable>(_ method: String, _ path: String, body: some Encodable, as type: T.Type) async throws -> T {
-        let data: Data
+        let data = try Self.encode(body, method, path)
+        return try decode(type, from: try await send(method, path, body: data), method, path)
+    }
+
+    /// The JSON body of a request to `method` `path`. Throws a ``BuildError`` that names the request if the value cannot be encoded.
+    static func encode(_ value: some Encodable, _ method: String, _ path: String) throws -> Data {
         do {
-            data = try JSONEncoder().encode(body)
+            return try JSONEncoder().encode(value)
         } catch {
             throw BuildError(message: "The request body of \(method) \(path) cannot be encoded as JSON. Report this with the log.")
         }
-        return try decode(type, from: try await send(method, path, body: data), method, path)
     }
 
     /// Sends `request` and retries as the policy says. A 429 response is retried up to ``rateLimitRetries`` times, and a
     /// 500, 502, 503 or 504 response, or a transport error, up to ``serverRetries`` times. Any other status outside 2xx
-    /// fails at once. Each attempt is logged with its status, never with the query.
-    private func perform(_ request: HTTPRequest, _ method: String, _ path: String) async throws -> HTTPResponse {
+    /// fails at once, unless it is `accepting`, which is returned as a response. Each attempt is logged with its status,
+    /// never with the query.
+    private func perform(_ request: HTTPRequest, _ method: String, _ path: String, accepting: Int?) async throws -> HTTPResponse {
         var rateLimitAttempts = 0
         var serverAttempts = 0
         while true {
@@ -174,6 +186,9 @@ public struct AppStoreConnect {
                 continue
             }
             log("App Store Connect: \(method) \(path) -> \(response.statusCode)")
+            if response.statusCode == accepting {
+                return response
+            }
             switch response.statusCode {
             case 200..<300:
                 return response
@@ -201,9 +216,7 @@ public struct AppStoreConnect {
     /// the statuses that have a known cause. Apple's details are added where the response has them.
     static func statusError(_ method: String, _ path: String, _ response: HTTPResponse) -> BuildError {
         let request = "\(method) \(path)"
-        let details = appleDetails(in: response.body).map { text in
-            " Apple says: \(text)" + (text.hasSuffix(".") ? "" : ".")
-        } ?? ""
+        let details = appleSays(in: response.body)
         switch response.statusCode {
         case 401:
             return BuildError(
@@ -220,6 +233,13 @@ public struct AppStoreConnect {
                 message: "App Store Connect request \(request) failed with status \(response.statusCode).\(details)"
             )
         }
+    }
+
+    /// Apple's details of `body` as the end of an error message: ` Apple says: <details>.`, or an empty string when the body
+    /// has none.
+    static func appleSays(in body: Data) -> String {
+        guard let details = appleDetails(in: body) else { return "" }
+        return " Apple says: \(details)" + (details.hasSuffix(".") ? "" : ".")
     }
 
     /// Apple's error entries of `body` as `code: title — detail`, with each part only when it is present. `nil` when the
@@ -249,7 +269,7 @@ public struct AppStoreConnect {
 
     /// Decodes the JSON body of `response`, the response to `method` `path`. A body that does not match `type` throws a
     /// ``BuildError`` that names the field. The body itself is not in the error.
-    private func decode<T: Decodable>(_ type: T.Type, from response: HTTPResponse, _ method: String, _ path: String) throws -> T {
+    func decode<T: Decodable>(_ type: T.Type, from response: HTTPResponse, _ method: String, _ path: String) throws -> T {
         do {
             return try JSONDecoder().decode(type, from: response.body)
         } catch {
