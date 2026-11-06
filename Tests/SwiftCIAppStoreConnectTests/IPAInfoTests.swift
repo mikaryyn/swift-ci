@@ -120,6 +120,30 @@ extension GlobalStateTests {
             #expect(error?.message.contains("is not a readable zip archive") == true)
         }
 
+        /// The full log explains the reading before the `unzip` command, and the console gets no part of it.
+        @Test func readingIsExplainedInTheFullLogBeforeUnzip() async throws {
+            let restore = secretsSetUp()
+            defer { restore() }
+            var fullLog = ""
+            var consoleLines: [String] = []
+
+            try await SwiftCITest.withMocks(artifactsDirectory: temporaryArtifactsDirectory()) {
+                try FullLog.open(name: "read")
+                let log = useRealRunner()
+                _ = try await IPAInfo.read(Self.fixture("MyApp"))
+                fullLog = try String(contentsOfFile: #require(FullLog.path).filePath, encoding: .utf8)
+                consoleLines = log.loggedLines
+                try FullLog.close()
+            }
+
+            let lines = fullLog.components(separatedBy: "\n")
+            let explanation = try #require(lines.firstIndex { $0.hasPrefix("Reading the bundle identifier, version, build number and platform from the Info.plist of the app in ") })
+            let unzip = try #require(lines.firstIndex { $0 == "➤ Command /usr/bin/unzip" })
+            #expect(explanation < unzip)
+            #expect(lines[explanation].hasSuffix(": listing the archive, then extracting only the Info.plist."))
+            #expect(!consoleLines.contains { $0.contains("Reading the bundle identifier") })
+        }
+
         /// The escaped pattern is the name with each wildcard character as a class that matches only itself.
         @Test func unzipPatternEscapesWildcardCharacters() {
             #expect(IPAInfo.unzipPattern(for: "My*[1]?.app") == "My[*][[]1][?].app")

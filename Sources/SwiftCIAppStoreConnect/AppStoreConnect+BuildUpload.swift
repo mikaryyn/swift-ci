@@ -49,7 +49,7 @@ extension AppStoreConnect {
         @Use var log: Log
         let info = try await IPAInfo.read(ipa)
         let fileSize = try Self.fileSize(of: ipa)
-        log("Uploading \(ipa.lastPathComponent) (\(BuildUploadParts.size(fileSize))) as \(info.bundleIdentifier) \(info.shortVersion) (\(info.buildVersion)) to app \(appID).")
+        log.recorded("Uploading \(ipa.lastPathComponent) (\(BuildUploadParts.size(fileSize))) as \(info.bundleIdentifier) \(info.shortVersion) (\(info.buildVersion)) to app \(appID).")
 
         try await verifyApp(appID, bundleIdentifier: info.bundleIdentifier)
         try await verifyNoUploadOfSameBuild(appID, info)
@@ -57,14 +57,14 @@ extension AppStoreConnect {
         let file = try await reserveFile(ipa, fileSize: fileSize, uploadID: uploadID)
         let operations = file.operations.sorted { $0.partNumber < $1.partNumber }
         let headerNames = (operations.first?.requestHeaders ?? []).map(\.name)
-        log("Created build upload \(uploadID) and file \(file.id). App Store Connect returned \(operations.count) upload operations; the first sends the headers: \(headerNames.isEmpty ? "none" : headerNames.joined(separator: ", ")).")
+        log.recorded("Created build upload \(uploadID) and file \(file.id). App Store Connect returned \(operations.count) upload operations; the first sends the headers: \(headerNames.isEmpty ? "none" : headerNames.joined(separator: ", ")).")
 
         let parts = BuildUploadParts(ipa: ipa, fileSize: fileSize, parallelUploads: parallelUploads, now: now, sleep: sleep)
         let md5 = try await parts.send(operations)
         try await commit(fileID: file.id, md5: md5)
         let state = try await waitForAcceptance(uploadID: uploadID, fileID: file.id, info: info, timeout: processingTimeout)
 
-        log.success("Uploaded \(info.bundleIdentifier) \(info.shortVersion) (\(info.buildVersion)) to App Store Connect. Processing continues in App Store Connect.")
+        log.recordedSuccess("Uploaded \(info.bundleIdentifier) \(info.shortVersion) (\(info.buildVersion)) to App Store Connect. Processing continues in App Store Connect.")
         return BuildUpload(
             id: uploadID,
             appID: appID,
@@ -181,7 +181,7 @@ extension AppStoreConnect {
             let fileState = file.assetDeliveryState?.state ?? "UNKNOWN"
             let states = "build upload \(buildState), file \(fileState)"
             if states != lastStates {
-                log("App Store Connect: \(states)")
+                log.recorded("App Store Connect: \(states)")
                 lastStates = states
             }
 
@@ -229,11 +229,11 @@ extension AppStoreConnect {
         @Use var log: Log
         for warning in (upload.state?.warnings ?? []) + (file.assetDeliveryState?.warnings ?? []) {
             let text = Self.describe([warning])
-            log.warning(text)
+            log.recordedWarning(text)
             Report.warning(text)
         }
         for info in upload.state?.infos ?? [] {
-            log(Self.describe([info]))
+            log.recorded(Self.describe([info]))
         }
     }
 

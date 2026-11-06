@@ -5,7 +5,7 @@ import SwiftCI
 /// The facts of an iOS app that an upload needs, read from the `Info.plist` of the app in an IPA.
 ///
 /// Only the `Info.plist` is extracted from the archive, so a large IPA is not unpacked. Reading is a query: it opens no
-/// step and logs only errors and warnings of `unzip`.
+/// step. The console shows only errors and warnings of `unzip`, and the full log also gets one line that says what is read.
 struct IPAInfo: Equatable {
     /// `CFBundleIdentifier`.
     let bundleIdentifier: String
@@ -29,6 +29,7 @@ struct IPAInfo: Equatable {
         guard FileManager.default.fileExists(atPath: ipa.filePath) else {
             throw BuildError(message: "The IPA \(ipa.filePath) does not exist. Check the path of the IPA.")
         }
+        try FullLog.write("Reading the bundle identifier, version, build number and platform from the Info.plist of the app in \(ipa.filePath): listing the archive, then extracting only the Info.plist.")
         let entries = try await archiveEntries(of: ipa)
         let entry = try appInfoEntry(in: entries, ipa: ipa)
 

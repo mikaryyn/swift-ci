@@ -62,7 +62,7 @@ struct BuildUploadParts {
     /// that fails for good cancels the others, and its error is thrown.
     func send(_ operations: [UploadOperation]) async throws -> String {
         let parts = try checkedParts(operations)
-        log("Uploading \(parts.count) parts (\(Self.size(fileSize))) to \(Self.hostList(parts)), \(min(parallelUploads, parts.count)) at a time.")
+        log.recorded("Uploading \(parts.count) parts (\(Self.size(fileSize))) to \(Self.hostList(parts)), \(min(parallelUploads, parts.count)) at a time.")
 
         let started = now()
         var uploaded = 0
@@ -86,7 +86,7 @@ struct BuildUploadParts {
 
         let checksum = try md5OfFile()
         let seconds = now().timeIntervalSince(started)
-        log("Uploaded \(Self.size(fileSize)) in \(Self.seconds(seconds)) s (\(Self.rate(fileSize, seconds: seconds))/s).")
+        log.recorded("Uploaded \(Self.size(fileSize)) in \(Self.seconds(seconds)) s (\(Self.rate(fileSize, seconds: seconds))/s).")
         return checksum
     }
 
@@ -129,7 +129,7 @@ struct BuildUploadParts {
         if let date = fractional.date(from: text) ?? ISO8601DateFormatter().date(from: text) {
             return date
         }
-        log.warning("App Store Connect sent an expiration for part \(operation.partNumber) that is not an ISO 8601 date, so it is not checked.")
+        log.recordedWarning("App Store Connect sent an expiration for part \(operation.partNumber) that is not an ISO 8601 date, so it is not checked.")
         return nil
     }
 
@@ -203,7 +203,7 @@ struct BuildUploadParts {
                 throw BuildError(message: "Uploading part \(part.number) of the IPA failed \(reason) after \(retries) retries. Run the deploy again to start a new upload.")
             }
             let delay = Self.retryDelays[retries]
-            log("Uploading part \(part.number) of the IPA failed \(reason); retrying in \(delay) seconds.")
+            log.recorded("Uploading part \(part.number) of the IPA failed \(reason); retrying in \(delay) seconds.")
             try await sleep(.seconds(delay))
             retries += 1
         }
@@ -218,7 +218,7 @@ struct BuildUploadParts {
         case 1: " after 1 retry"
         default: " after \(sent.retries) retries"
         }
-        log("Part \(sent.number)/\(total) (\(Self.size(sent.size))) uploaded in \(Self.seconds(sent.seconds)) s (\(Self.rate(sent.size, seconds: sent.seconds))/s)\(retries). \(finished) of \(total) parts done, \(Self.size(uploaded)) of \(Self.size(fileSize)).")
+        log.recorded("Part \(sent.number)/\(total) (\(Self.size(sent.size))) uploaded in \(Self.seconds(sent.seconds)) s (\(Self.rate(sent.size, seconds: sent.seconds))/s)\(retries). \(finished) of \(total) parts done, \(Self.size(uploaded)) of \(Self.size(fileSize)).")
     }
 
     /// The MD5 of the file as lowercase hexadecimal. The file is read once more, in chunks, after every part was sent.

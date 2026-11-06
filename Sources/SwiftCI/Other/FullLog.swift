@@ -56,7 +56,13 @@ public struct FullLog {
         closedPath.map { log("Saved full log to file://\($0.filePath)") }
     }
 
-    static func write(_ line: String) throws {
+    /// Writes `line` into the full log, as a line of its own. The line is masked for secrets, as every full-log write is.
+    /// Extensions use it to record lines that are not tool output, such as the status of an API call. Nothing is written
+    /// when no full log is open.
+    ///
+    /// - Parameter line: The text of the line, without the line break.
+    /// - Throws: A ``BuildError`` when the write fails.
+    public static func write(_ line: String) throws {
         guard let file else { return }
         do {
             try file.write(contentsOf: Data(SecretRegistry.redact(line).utf8))

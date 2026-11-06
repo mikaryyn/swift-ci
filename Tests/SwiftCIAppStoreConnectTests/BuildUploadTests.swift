@@ -367,6 +367,35 @@ extension GlobalStateTests {
             }
         }
 
+        /// The status lines of the upload are in the full log as plain text, and the reading of the IPA is explained before
+        /// its `unzip` command.
+        @Test func statusLinesAreWrittenToTheFullLogAsPlainText() async throws {
+            let harness = Harness()
+            let data = try Self.fixtureData()
+            try Self.queueLookup(harness.http)
+            try Self.queueList(harness.http)
+            try Self.queueUpload(harness.http, size: data.count)
+            var fullLog = ""
+
+            let result = await SwiftCITest.run(["upload"]) {
+                command(Command("upload") {
+                    _ = try await harness.upload()
+                    fullLog = try String(contentsOfFile: #require(FullLog.path).filePath, encoding: .utf8)
+                })
+            }
+
+            let lines = fullLog.components(separatedBy: "\n")
+            let explanation = try #require(lines.firstIndex { $0.hasPrefix("Reading the bundle identifier") })
+            let unzip = try #require(lines.firstIndex { $0 == "➤ Command /usr/bin/unzip" })
+            #expect(result.exitCode == 0)
+            #expect(!fullLog.contains("\u{1B}"))
+            #expect(explanation < unzip)
+            #expect(lines.contains { $0.hasPrefix("Uploading MyApp.ipa (") && $0.hasSuffix(" as com.example.myapp 1.2.3 (42) to app 1234567890.") })
+            #expect(lines.contains("App Store Connect: POST /v1/buildUploads -> 201"))
+            #expect(lines.contains { $0.hasPrefix("Part 1/2 (") })
+            #expect(lines.contains("✔︎ Uploaded com.example.myapp 1.2.3 (42) to App Store Connect. Processing continues in App Store Connect."))
+        }
+
         /// A successful upload reads the app, lists the uploads of the build, sends two parts, commits and reads the
         /// upload until it is processing. It sends each part with exactly its own headers and the right bytes, and no
         /// `Authorization`. The commit carries the MD5 of the file. No logged line shows the token or the pre-signed URLs.

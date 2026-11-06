@@ -179,13 +179,13 @@ public struct AppStoreConnect {
             do {
                 response = try await client.send(request)
             } catch {
-                log("App Store Connect: \(method) \(path) -> no response")
+                log.recorded("App Store Connect: \(method) \(path) -> no response")
                 guard serverAttempts < Self.serverRetries else { throw error }
                 try await self.sleep(.seconds(2 << serverAttempts))
                 serverAttempts += 1
                 continue
             }
-            log("App Store Connect: \(method) \(path) -> \(response.statusCode)")
+            log.recorded("App Store Connect: \(method) \(path) -> \(response.statusCode)")
             if response.statusCode == accepting {
                 return response
             }

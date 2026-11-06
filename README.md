@@ -738,9 +738,11 @@ SwiftCI writes each tool's output to two places:
   reaches the console; secrets are still masked. Colours follow
   terminal detection and the `NO_COLOR` convention **(planned)**.
 - **Full log.** The complete output of every tool, unfiltered but with secrets
-  redacted. It has one file per command, with step headers. The log is saved as
-  `logs/<command>.log` in the artifacts directory, so that CI can archive it. A
-  second run of the same command overwrites it. See
+  redacted. It has one file per command, with step headers. Integrations also
+  write their status lines there, as plain text, with the public `FullLog.write`;
+  the App Store Connect build upload records its requests, parts and result this
+  way. The log is saved as `logs/<command>.log` in the artifacts directory, so
+  that CI can archive it. A second run of the same command overwrites it. See
   [Running in CI and locally](#running-in-ci-and-locally).
 
 A `Tool` can also copy its unfiltered output to a file of its own with
