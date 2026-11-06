@@ -157,7 +157,8 @@ Workflows are ported in this order:
    Artifact names are composed in the project's script from existing
    queries; there is no naming helper.
 2. **App Store deploy.**
-   - Archive, then upload with `xcodebuild -exportArchive` using method
+   - Superseded: the upload uses the Build Upload API, see
+     [App Store upload](#app-store-upload). Originally proposed: archive, then upload with `xcodebuild -exportArchive` using method
      `app-store-connect`, the `upload` destination and App Store Connect API
      key authentication (`-authenticationKeyPath`, `-authenticationKeyID`,
      `-authenticationKeyIssuerID`). This uses Apple's own tool, replaces
@@ -297,7 +298,8 @@ commit and compare:
   Phases 2 and 3. Each switch then changes one thing at a time, which keeps
   parity checks meaningful.
 
-- **App Store upload.** Phase 1 uploads with `xcodebuild -exportArchive`
+- **App Store upload.** Superseded by the Build Upload API upload, see
+  [App Store upload](#app-store-upload). Originally: Phase 1 uploads with `xcodebuild -exportArchive`
   (`upload` destination), provided that no functionality of the current
   workflow is lost. The native App Store Connect client is added later, only
   for what `xcodebuild` cannot do (processing status, TestFlight groups).
@@ -321,6 +323,13 @@ commit and compare:
   items or issues.
 
 ### App Store upload
+
+The upload is done with Apple's Build Upload API by `AppStoreConnect.uploadBuild` in the
+`SwiftCIAppStoreConnect` module, not with `xcodebuild -exportArchive` as proposed in Phase 1.
+The maintainer wants Apple's latest official API, a pure Swift implementation without an extra tool,
+and the uploaded binary to be the archived artifact. Precheck (fastlane's metadata check) moves into
+the App Store Connect module later. The rest of this section is the parity analysis of the earlier
+`xcodebuild` proposal.
 
 The current Bitrise `deploy-to-itunesconnect-deliver` step (with an app ID,
 `skip_app_version_update` and an API key) effectively runs:

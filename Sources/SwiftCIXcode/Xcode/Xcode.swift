@@ -142,7 +142,7 @@ public struct Xcode {
     ///
     /// `method` is the export method. The default, ``ExportMethod/adhoc``, exports for ad-hoc distribution.
     /// ``ExportMethod/appstore`` exports for App Store Connect. An App Store export only writes the IPA: it is not
-    /// uploaded, so uploading it is the caller's job, for example with fastlane `deliver`.
+    /// uploaded, so uploading it is the caller's job, for example with `AppStoreConnect.uploadBuild` from `SwiftCIAppStoreConnect`.
     ///
     /// `provisioningProfile` names the provisioning profile of the export. It is called with the bundle identifier of
     /// the archive, and its result is the profile name. Use it when the profile is not the one of the build settings, for

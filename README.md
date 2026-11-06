@@ -292,9 +292,9 @@ exec swift run --package-path CI -c release ci "$@"
 *Illustrative. Commands, throwing steps, allowed failures, inline `cleanup` /
 `onFailure` handlers and inputs are implemented. Integration calls as steps are
 implemented for `Xcode`, `Keychain`, `Signing` (match install, prototype), `Slack`,
-`Fastlane`, `Icon` and `Simulator` (shutdown only). The other integration calls
-(`AppStoreConnect`) are planned; see the [roadmap](#roadmap) and the
-[capabilities](#capabilities).*
+`Fastlane`, `Icon` and `Simulator` (shutdown only), and the App Store Connect build upload
+(`AppStoreConnect`, prototype). The other integration calls are planned; see the
+[roadmap](#roadmap) and the [capabilities](#capabilities).*
 
 ```swift
 import SwiftCI
@@ -336,7 +336,10 @@ let release = Command("release", description: "Build and upload to TestFlight") 
     )
     // Copies the IPA and the dSYM zip to the artifacts directory: artifacts/MyApp.ipa and artifacts/MyApp.dSYM.zip.
     try await xcode.archiveAndExport(ipaFileName: "MyApp")
-    try await AppStoreConnect(apiKey: .fromEnvironment()).upload(ipa: Artifacts.url("MyApp.ipa"))
+    let apiKey = try AppStoreConnectAPIKey.environment(
+        keyID: "ABC123DEFG", keyFileVariable: "ASC_KEY_PATH", issuerVariable: "ASC_ISSUER_ID"
+    )
+    try await AppStoreConnect(apiKey: apiKey).uploadBuild(ipa: Artifacts.url("MyApp.ipa"), appID: "1234567890")
 }
 
 await SwiftCI {
@@ -506,8 +509,8 @@ own release pace.
 | `SwiftCITesting` | macOS, Linux | Test support for CI scripts and extensions: process runner and log mocks, and scoped setup of the environment and the mocks (prototype, see [Testing CI scripts and extensions](#testing-ci-scripts-and-extensions)) |
 
 Today the package has the products `SwiftCI`, `SwiftCIXcode`, `SwiftCISigning`,
-`SwiftCISlack`, `SwiftCIGitLab` and `SwiftCITesting`. `SwiftCIAppStoreConnect` has no code yet, so it
-becomes a product when its first code lands. The modules are built and tested on macOS.
+`SwiftCISlack`, `SwiftCIGitLab`, `SwiftCIAppStoreConnect` and `SwiftCITesting`. The modules are built and
+tested on macOS.
 Linux verification is tracked separately in the
 [Linux verification plan](docs/plans/linux-verification.md).
 
@@ -529,6 +532,20 @@ such as [AppStoreConnect-Swift-SDK](https://github.com/AvdLee/appstoreconnect-sw
 is generated from Apple's complete OpenAPI specification. It would add a
 third-party dependency and noticeable compile time to every CI package, and CI
 would use only a small part of it.
+
+The build upload (`AppStoreConnect(apiKey:).uploadBuild(ipa:appID:)`) is a prototype and
+supports iOS IPAs only. Its step reads the version and build number from the IPA. Before it
+sends any bytes, it checks that the app has the IPA's bundle identifier and that the app has no
+build upload of the same version and build number that has not failed. It ends when App Store Connect has
+accepted the file, as `altool` does; processing continues in App Store Connect after the step.
+Precheck (fastlane's metadata check) is not implemented yet.
+
+```swift
+let apiKey = try AppStoreConnectAPIKey.environment(
+    keyID: "ABC123DEFG", keyFileVariable: "ASC_KEY_PATH", issuerVariable: "ASC_ISSUER_ID"
+)
+try await AppStoreConnect(apiKey: apiKey).uploadBuild(ipa: ipaURL, appID: "1234567890")
+```
 
 Projects that need more of the API (metadata, testers and groups, users,
 reviews) can use an independent extension built on that SDK. See
@@ -668,8 +685,8 @@ implemented.
 | Signing | Temporary keychain create / import / partition list / delete | Planned |
 | Signing | `Signing.installMatchAssets(using: .native)`: install signing assets from a fastlane `match` Git repository (read-only, native). The certificate of each profile is chosen by the profiles. The imported identity is checked with `security find-identity`. Profiles go to the Xcode 16+ folder. Git credentials and keychain passwords are not arguments | Prototype |
 | Signing | `Signing.installMatchAssets(using: .fastlane(…))`: the same install through `fastlane match --readonly` (fallback), then the profiles are read back. The explicit values (`--git_url`, `--git_branch`, `--team_id`, `--keychain_name`) override a `Matchfile`; the secrets go in the environment | Prototype |
-| App Store Connect | API key auth (ES256 JWT with CryptoKit) | Planned |
-| App Store Connect | Upload builds (Build Upload API; `iTMSTransporter` interim) | Planned |
+| App Store Connect | API key auth (ES256 JWT with CryptoKit) | Prototype |
+| App Store Connect | Upload builds (Build Upload API, `AppStoreConnect.uploadBuild`; iOS IPAs) | Prototype |
 | App Store Connect | Upload via fastlane `pilot` / `deliver` (fallback) | Planned |
 | macOS | Notarization via `notarytool`, stapling | Planned |
 | Notifications | Slack incoming webhooks, as Block Kit (`Slack.send`) or legacy attachment (`Slack.sendAttachment`) messages, with optional sender name and icon; the webhook URL is a `Secret` | Prototype |
@@ -705,7 +722,7 @@ For now, the external one is always fastlane. These are the rules:
 |---|---|---|
 | Install signing assets from a match repository | Swift: Git clone, decrypt v1/v2 match files, `security import`, install profiles | `fastlane match --readonly` |
 | Create or renew certificates and profiles | Not planned initially | `fastlane match` (non-readonly) |
-| Upload to TestFlight / App Store | App Store Connect Build Upload API; `xcrun iTMSTransporter` first | `fastlane pilot` / `deliver` |
+| Upload to TestFlight / App Store | App Store Connect Build Upload API | `fastlane pilot` / `deliver` |
 | App Store metadata and screenshots | Out of scope | `fastlane deliver` |
 | JUnit test reports | Swift, from `xcrun xcresulttool` output | `fastlane trainer` |
 | Coverage reports | Swift, from `xcrun xccov` output | None planned |
@@ -1051,7 +1068,7 @@ Typical Bitrise steps and fastlane actions, and their SwiftCI counterparts:
 | `xcode-project-info` | `Xcode.getBuildSettings(target:)` and `Xcode.getVersion` |
 | `set-xcode-build-number` / `increment_build_number` | `Xcode.setBuildNumber`; read the current value with `Xcode.getVersion` |
 | `fastlane match` (readonly) | `Signing.installMatchAssets(using: .native)` |
-| `deploy-to-itunesconnect-deliver` / `pilot` | `AppStoreConnect.upload` **(planned)**, or the fastlane fallback |
+| `deploy-to-itunesconnect-deliver` / `pilot` | `AppStoreConnect(apiKey:).uploadBuild(ipa:appID:)`, or the fastlane fallback **(planned)** |
 | `slack` | `Slack.sendAttachment` for the same attachment format with a colored bar, or `Slack.send` for Block Kit; both are steps themselves |
 | `trainer` | `Xcode.writeJUnitReport` from the result bundle |
 | `before_run` / `after_run` workflows | Reusable `async throws` functions, and `cleanup { }` / `onFailure { }` handlers |
@@ -1167,8 +1184,8 @@ The order of work follows from adopting SwiftCI in a real project. See the
    support.
 5. **Signing.** Add temporary keychains, a native match install with v1 and v2
    fixtures, and the fastlane fallback.
-6. **Distribution.** Add the App Store Connect JWT. Upload through Transporter
-   first, then through the Build Upload API. Add notarization for macOS.
+6. **Distribution.** Add the App Store Connect JWT and upload through the Build
+   Upload API. Add notarization for macOS.
 7. **More reports.** Add coverage reports, then optional annotations for GitLab
    and GitHub.
 8. **Stabilise.** Publish semantically versioned releases, complete the

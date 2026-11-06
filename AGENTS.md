@@ -62,12 +62,11 @@ that design, raise the conflict instead of diverging from it silently.
 
 ## Repository layout
 
-The package has six library products, `SwiftCI` (core), `SwiftCIXcode`,
-`SwiftCISigning`, `SwiftCISlack`, `SwiftCIGitLab` and `SwiftCITesting`, one target each. Each module
+The package has seven library products, `SwiftCI` (core), `SwiftCIXcode`,
+`SwiftCISigning`, `SwiftCISlack`, `SwiftCIGitLab`, `SwiftCIAppStoreConnect` and `SwiftCITesting`, one target each. Each module
 depends only on `SwiftCI` and uses its public API. The core depends on no module.
 README.md ("Module layout") describes the planned products. `SwiftCITesting` is
 the test support for scripts and extensions.
-`SwiftCIAppStoreConnect` becomes a product when its first code lands.
 
 ```text
 Package.swift                 Swift tools 6.2, macOS 13+, no dependencies,
@@ -134,6 +133,15 @@ Sources/SwiftCIGitLab/        Module: GitLab API connection and the merge reques
   MergeRequestComment.swift   `CleanRunBehavior`, `CommentMode` and `updateComment`: the body, the footer and the dry run
   MergeRequestCommentPlan.swift  The changes that a run makes to the comment, as one pure decision (internal)
   ReportToMergeRequest.swift  `postReportToMergeRequest`, the convenience of a command's report handler
+Sources/SwiftCIAppStoreConnect/  Module (macOS): App Store Connect API key, client and build upload
+  AppStoreConnectAPIKey.swift  `AppStoreConnectAPIKey`: key ID, issuer ID and private key, from a `.p8` file or the environment
+  AppStoreConnectToken.swift  ES256 JSON Web Token of an API key, cached until it nearly expires (internal)
+  AppStoreConnect.swift       `AppStoreConnect`: the client, its requests, retries, error messages and pagination (internal)
+  AppStoreConnect+BuildUpload.swift  `AppStoreConnect.uploadBuild`: the step that checks and uploads an IPA
+  BuildUpload.swift           `BuildUpload` and `BuildUploadState`, the result of an upload
+  BuildUploadParts.swift      Sends the parts of the IPA to their pre-signed URLs and computes the MD5 (internal)
+  BuildUploadResources.swift  JSON:API request and response types of the Build Upload API (internal)
+  IPAInfo.swift               Reads the bundle identifier, version, build and platform from an IPA (internal)
 Sources/SwiftCITesting/       Module: test support for scripts and extensions. Imports no test framework.
                               Uses `@_spi(Testing) import SwiftCI` only for the hooks in TestingSupport.swift
   SwiftCITest.swift           run(_:environment:artifactsDirectory:ciAdapters:runner:httpClient:script:), withMocks(_:runner:httpClient:log:artifactsDirectory:ciAdapters:_:), SwiftCITestResult
@@ -148,6 +156,8 @@ Tests/SwiftCIXcodeTests/      Xcode tests
 Tests/SwiftCISigningTests/    Keychain, match, Git credential and `security -i` tests
 Tests/SwiftCISlackTests/      Slack tests
 Tests/SwiftCIGitLabTests/     GitLab connection, merge request and merge request comment tests
+Tests/SwiftCIAppStoreConnectTests/  API key, token, client, IPA reading and build upload tests
+  Fixtures/                   Tiny IPAs for the IPA reading tests: a valid app, and ones with no app, two apps, a missing build version, a Mac platform and an app name with glob characters
 Tests/SwiftCITestingTests/    Tests of SwiftCITesting as an extension author sees it: `import SwiftCI`,
                               `import SwiftCITesting` and `import Testing` only (no `@testable`, no SPI)
 docs/prior-art.md             Research on fastlane, Bitrise and alternatives
@@ -171,7 +181,7 @@ The release check builds the products without `-enable-testing`, so a module
 that uses internal core API fails:
 
 ```sh
-swift build -c release --product SwiftCI --product SwiftCIXcode --product SwiftCISigning --product SwiftCISlack --product SwiftCIGitLab --product SwiftCITesting
+swift build -c release --product SwiftCI --product SwiftCIXcode --product SwiftCISigning --product SwiftCISlack --product SwiftCIGitLab --product SwiftCIAppStoreConnect --product SwiftCITesting
 ```
 
 Plain `swift build -c release` builds every non-test target, including
@@ -237,8 +247,8 @@ marks its suite `.serialized` itself, because it may not import `SwiftCITestSupp
 
 - Use Swift 6.2 language mode with `MainActor` default isolation. Steps run
   sequentially. Do not introduce concurrency without a reason.
-- Module sources (`Sources/SwiftCIXcode`, `SwiftCISigning`, `SwiftCISlack`, `SwiftCIGitLab`)
-  use `import SwiftCI` only. No `@testable import` and no internal core API. If a
+- Module sources (`Sources/SwiftCIXcode`, `SwiftCISigning`, `SwiftCISlack`, `SwiftCIGitLab`,
+  `SwiftCIAppStoreConnect`) use `import SwiftCI` only. No `@testable import` and no internal core API. If a
   module needs core internals, stop and make a deliberate public API decision.
 - `SwiftCITesting` may use the core's test hooks, but only as `@_spi(Testing)`
   declarations in `Other/TestingSupport.swift` and `SwiftCI.swift`. Do not make a
