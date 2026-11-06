@@ -12,8 +12,12 @@ import SwiftCI
 ///
 /// `username` and `iconEmoji` override the sender of every message. A legacy "Incoming WebHooks" integration honors
 /// them. A webhook of a Slack app ignores them and always uses the app's name and icon.
+///
+/// A message that Slack does not accept fails the step. A transport error, an invalid webhook URL and a status outside 2xx
+/// all throw a ``BuildError``. A script that wants Slack to be optional runs the step as an allowed failure.
 public struct Slack {
     @Use private var log: Log
+    @Use private var client: HTTPClient
 
     /// - Parameters:
     ///   - webhookURL: The webhook URL. It is revealed only to make the request.
@@ -26,8 +30,9 @@ public struct Slack {
     }
 
     /// Sends a Block Kit message: an optional header, a section with the text and the fields, and the buttons. A failed
-    /// request is logged as a warning and does not throw. An invalid webhook secret throws a usage error before any
-    /// request is made. The actions block is left out when there are no buttons, because Slack rejects an empty one.
+    /// request throws, as ``sendAttachment(pretext:text:color:fields:buttons:step:)`` does. An invalid webhook secret throws
+    /// a usage error before any request is made. The actions block is left out when there are no buttons, because Slack
+    /// rejects an empty one.
     ///
     /// Opens a step named "Send Slack message" when called at the top level of a command. `step` renames it.
     public func send(
@@ -43,8 +48,9 @@ public struct Slack {
     }
 
     /// Sends a legacy attachment message: the pretext above the attachment, and an attachment with a colored bar, the
-    /// text, the fields in two columns and the link buttons. A failed request is logged as a warning and does not
-    /// throw. An invalid webhook secret throws a usage error before any request is made.
+    /// text, the fields in two columns and the link buttons. A failed request throws a ``BuildError`` that names the status
+    /// or the transport failure, and the webhook URL is not in it. An invalid webhook secret throws a usage error before any
+    /// request is made.
     ///
     /// Opens a step named "Send Slack message" when called at the top level of a command. `step` renames it.
     public func sendAttachment(
@@ -145,24 +151,40 @@ public struct Slack {
         }
     }
 
+    /// Posts `message` to the webhook. The status is logged as `Slack: POST webhook -> status`, or as `no response` when no
+    /// response arrives, and the response body is logged. A transport error is thrown as the client throws it. A status
+    /// outside 2xx throws a ``BuildError`` with the status.
     private func sendMessage(_ message: [String: Any]) async throws {
         // The webhook URL is revealed only here, to build the request.
         let webhook = try webhookURL.revealedValue()
         guard let url = URL(string: webhook) else {
-            log.warning("Invalid Slack webhook URL")
-            return
+            throw BuildError(
+                message: "The Slack webhook URL is not a valid URL. Check the webhook secret, which must be the full URL that Slack gives for an incoming webhook.",
+                code: .usage
+            )
         }
-        var req = URLRequest(url: url)
-        req.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpMethod = "POST"
-        req.httpBody = Self.requestBody(for: message)
         log.lines(title: "Slack webhook request", lines: Self.logRepresentation(of: message))
 
-        guard let (data, _) = try? await URLSession.shared.data(for: req) else {
-            log.warning("Failed to call Slack webhook.")
-            return
+        let request = HTTPRequest(
+            method: "POST",
+            url: url,
+            headers: ["Content-Type": "application/json"],
+            body: Self.requestBody(for: message)
+        )
+        let response: HTTPResponse
+        do {
+            response = try await client.send(request)
+        } catch {
+            log("Slack: POST webhook -> no response")
+            throw error
         }
-        log.completion("Slack webhook response: \(String(data: data, encoding: .utf8) ?? "unknown")")
+        log("Slack: POST webhook -> \(response.statusCode)")
+        log.completion("Slack webhook response: \(String(data: response.body, encoding: .utf8) ?? "unknown")")
+        guard (200..<300).contains(response.statusCode) else {
+            throw BuildError(
+                message: "Slack rejected the webhook message with status \(response.statusCode). Check that the webhook secret is still valid. Slack's response is in the log."
+            )
+        }
     }
 
     /// `message` with the sender overrides that are set.

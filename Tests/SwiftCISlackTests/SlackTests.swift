@@ -197,5 +197,89 @@ extension GlobalStateTests {
             #expect(!logged.contains("plain-token-1"))
             #expect(logged.contains(SecretRegistry.mask))
         }
+
+        static let webhook = "https://hooks.example.com/services/T000/B000/WEBHOOKTOKEN"
+
+        /// A 2xx status is a success. The request is a POST with the JSON body, and the status and the response body are
+        /// logged.
+        @Test func successfulPostLogsTheStatusAndTheBody() async throws {
+            let restore = secretsSetUp()
+            defer { restore() }
+            let client = HTTPClientMock()
+            let log = LogMock()
+            client.respond("POST", URL(string: Self.webhook)!, body: Data("ok".utf8))
+
+            try await SwiftCITest.withMocks(httpClient: client, log: log) {
+                try await Slack(webhookURL: Secret(value: Self.webhook)).send(text: "hello")
+            }
+
+            let request = try #require(client.requests.first)
+            #expect(client.requests.count == 1)
+            #expect(request.method == "POST")
+            #expect(request.headers["Content-Type"] == "application/json")
+            #expect(String(decoding: request.body ?? Data(), as: UTF8.self).contains("hello"))
+            #expect(log.loggedLines.contains("Slack: POST webhook -> 200"))
+            #expect(log.completions == ["Slack webhook response: ok"])
+        }
+
+        /// A status outside 2xx throws a ``BuildError`` with the status and no webhook URL. The response body is logged.
+        @Test func nonSuccessStatusThrowsWithTheStatus() async throws {
+            let restore = secretsSetUp()
+            defer { restore() }
+            let client = HTTPClientMock()
+            let log = LogMock()
+            client.respond("POST", URL(string: Self.webhook)!, status: 403, body: Data("invalid_token".utf8))
+
+            let error = await SwiftCITest.withMocks(httpClient: client, log: log) {
+                await thrownError {
+                    try await Slack(webhookURL: Secret(value: Self.webhook)).send(text: "hello")
+                }
+            }
+
+            #expect(error?.code == .failure)
+            #expect(error?.message.contains("status 403") == true)
+            #expect(error?.message.contains(Self.webhook) == false)
+            #expect(error?.message.contains("WEBHOOKTOKEN") == false)
+            #expect(log.loggedLines.contains("Slack: POST webhook -> 403"))
+            #expect(log.completions == ["Slack webhook response: invalid_token"])
+        }
+
+        /// A transport error is thrown as the client throws it, and the log says that no response arrived.
+        @Test func transportErrorIsThrownAndLoggedAsNoResponse() async throws {
+            let restore = secretsSetUp()
+            defer { restore() }
+            let client = HTTPClientMock()
+            let log = LogMock()
+            client.respond("POST", URL(string: Self.webhook)!, error: BuildError(message: "SWIFTCI_TEST_TRANSPORT"))
+
+            let error = await SwiftCITest.withMocks(httpClient: client, log: log) {
+                await thrownError {
+                    try await Slack(webhookURL: Secret(value: Self.webhook)).send(text: "hello")
+                }
+            }
+
+            #expect(error?.message == "SWIFTCI_TEST_TRANSPORT")
+            #expect(log.loggedLines.contains("Slack: POST webhook -> no response"))
+            #expect(log.completions.isEmpty)
+        }
+
+        /// A webhook secret that is not a URL is a usage error. The message does not show the value, and no request is made.
+        @Test func invalidWebhookURLIsAUsageErrorAndNoRequestIsMade() async throws {
+            let restore = secretsSetUp()
+            defer { restore() }
+            let client = HTTPClientMock()
+            let log = LogMock()
+
+            let error = await SwiftCITest.withMocks(httpClient: client, log: log) {
+                await thrownError {
+                    try await Slack(webhookURL: Secret(value: "https://[SWIFTCI_TEST_BAD_WEBHOOK")).send(text: "hello")
+                }
+            }
+
+            #expect(error?.code == .usage)
+            #expect(error?.message.contains("not a valid URL") == true)
+            #expect(error?.message.contains("SWIFTCI_TEST_BAD_WEBHOOK") == false)
+            #expect(client.requests.isEmpty)
+        }
     }
 }
