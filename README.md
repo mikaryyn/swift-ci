@@ -690,7 +690,7 @@ implemented.
 | App Store Connect | Upload builds (Build Upload API, `AppStoreConnect.uploadBuild`; iOS IPAs) | Prototype |
 | App Store Connect | Upload via fastlane `pilot` / `deliver` (fallback) | Planned |
 | macOS | Notarization via `notarytool`, stapling | Planned |
-| Notifications | Slack incoming webhooks, as Block Kit (`Slack.send`) or legacy attachment (`Slack.sendAttachment`) messages, with optional sender name and icon; the webhook URL is a `Secret` | Prototype |
+| Notifications | Slack incoming webhooks, as Block Kit (`Slack.send`) or legacy attachment (`Slack.sendAttachment`) messages, with optional sender name and icon; the webhook URL is a `Secret`. A message Slack does not accept fails the step; run it as an allowed failure to make it optional | Prototype |
 | Merge requests | `SwiftCIGitLab`: GitLab connection (`GitLab`, with the token sent as a secret header) and the merge request of the run from the CI variables (`GitLabMergeRequest.mergeRequest()`). The run report as one merge request comment per report ID (`postReportToMergeRequest`, `GitLab.updateComment`): created, updated, resolved or deleted, with a `log` mode that only shows what it would do | Prototype |
 | Git | Commit hash, tag | Prototype |
 | Misc | App icon text overlay (e.g. build number or environment badge) | Prototype |
@@ -1205,9 +1205,8 @@ The order of work follows from adopting SwiftCI in a real project. See the
   without the partition list.
 - Linux is not verified since the module split. The
   [Linux verification plan](docs/plans/linux-verification.md) tracks the work.
-  The core does not build on Linux yet, and the blockers are: `Slack` uses `URLSession` without
-  `FoundationNetworking`, and the Apple modules are not yet gated with
-  `#if os(macOS)`. `SwiftCIXcode` imports `AppKit` (icon overlay), and
+  The core does not build on Linux yet, and the blocker is that the Apple
+  modules are not yet gated with `#if os(macOS)`. `SwiftCIXcode` imports `AppKit` (icon overlay), and
   `SwiftCISigning` imports `Security`, `CryptoKit` and `CommonCrypto` (match). The
   `ProcessRunner` Linux branches are also unverified. Paths are Foundation `URL`s,
   so `System` is not imported and no `swift-system` package is needed.
