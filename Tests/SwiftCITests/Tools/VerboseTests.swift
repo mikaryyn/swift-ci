@@ -94,7 +94,8 @@ extension GlobalStateTests {
                         fullLog = try readFullLog()
                     })
                 }
-                fullLogs.append(fullLog)
+                // The arguments of the run are the only line that differs.
+                fullLogs.append(fullLog.components(separatedBy: "\n").filter { !$0.hasPrefix("➤ Arguments") }.joined(separator: "\n"))
             }
 
             #expect(fullLogs[0] == fullLogs[1])

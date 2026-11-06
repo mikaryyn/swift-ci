@@ -179,13 +179,14 @@ public struct AppStoreConnect {
             do {
                 response = try await client.send(request)
             } catch {
-                log.recorded("App Store Connect: \(method) \(path) -> no response")
+                log("App Store Connect: \(method) \(path) -> no response")
                 guard serverAttempts < Self.serverRetries else { throw error }
+                logRetry(method, path, after: "no response", retry: serverAttempts + 1, of: Self.serverRetries, seconds: 2 << serverAttempts)
                 try await self.sleep(.seconds(2 << serverAttempts))
                 serverAttempts += 1
                 continue
             }
-            log.recorded("App Store Connect: \(method) \(path) -> \(response.statusCode)")
+            log("App Store Connect: \(method) \(path) -> \(response.statusCode)")
             if response.statusCode == accepting {
                 return response
             }
@@ -198,18 +199,26 @@ public struct AppStoreConnect {
                         message: "App Store Connect rate limit reached for \(method) \(path), and it still applied after \(Self.rateLimitRetries) retries. App Store Connect limits the requests of each API key per hour, so run the step again later."
                     )
                 }
+                logRetry(method, path, after: "status 429", retry: rateLimitAttempts + 1, of: Self.rateLimitRetries, seconds: 1 << rateLimitAttempts)
                 try await self.sleep(.seconds(1 << rateLimitAttempts))
                 rateLimitAttempts += 1
             case 500, 502, 503, 504:
                 guard serverAttempts < Self.serverRetries else {
                     throw Self.statusError(method, path, response)
                 }
+                logRetry(method, path, after: "status \(response.statusCode)", retry: serverAttempts + 1, of: Self.serverRetries, seconds: 2 << serverAttempts)
                 try await self.sleep(.seconds(2 << serverAttempts))
                 serverAttempts += 1
             default:
                 throw Self.statusError(method, path, response)
             }
         }
+    }
+
+    /// Logs a retry wait: the request, the reason, which retry follows, and the delay in seconds. The line is written
+    /// before the wait, so the full log shows it while the run waits.
+    private func logRetry(_ method: String, _ path: String, after reason: String, retry: Int, of limit: Int, seconds: Int) {
+        log("App Store Connect: \(method) \(path) retry \(retry) of \(limit) in \(seconds) s after \(reason).")
     }
 
     /// The error of a response whose status is outside 2xx. It names the method and the path, and says what to check for

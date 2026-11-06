@@ -1,7 +1,9 @@
 import Foundation
 
 public protocol Log {
-    func callAsFunction(_ line: String)
+    /// Writes a line to the console only, after the secrets are masked. ``callAsFunction(_:)`` writes to the console
+    /// through it, and the step lines use it because they write their own full-log lines. Scripts do not call it.
+    func consoleOnly(_ line: String)
     func completion(_ line: String)
     func success(_ line: String)
     func warning(_ line: String)
@@ -26,6 +28,13 @@ public protocol Log {
 }
 
 public extension Log {
+    /// Logs `line` to the console, and writes it to the full log as plain text, without colour codes. Secrets are masked in
+    /// both. A line logged outside a command or before the full log is open is written to the console only.
+    func callAsFunction(_ line: String) {
+        consoleOnly(line)
+        FullLog.writeConsoleLine(line)
+    }
+
     func completion(_ line: String) {
         self("\(Symbols.completion) \(line)")
     }
@@ -44,37 +53,37 @@ public extension Log {
 
     func enteringStep(name: String, depth: Int) throws {
         if depth == 0 {
-            self("")
+            consoleOnly("")
         }
-        self("\(stepIndent(depth))Entering step [\(name.cyan())]")
+        consoleOnly("\(stepIndent(depth))Entering step [\(name.cyan())]")
         try FullLog.writeHeader("Entering step [\(name)]", depth: depth)
     }
 
     func finishedStep(name: String, duration: TimeInterval, depth: Int) throws {
         let formattedDuration = String(format: "%.1f", duration)
         let indent = stepIndent(depth)
-        self("\(indent)Finished step [\(name.cyan())] in \(formattedDuration) seconds")
+        consoleOnly("\(indent)Finished step [\(name.cyan())] in \(formattedDuration) seconds")
         try FullLog.write("\(indent)Finished step [\(name)] in \(formattedDuration) seconds\n")
     }
 
     func failedStep(name: String, depth: Int) throws {
         let indent = stepIndent(depth)
-        self("\(indent)Step [\(name.red().bold())] failed")
+        consoleOnly("\(indent)Step [\(name.red().bold())] failed")
         try FullLog.write("\(indent)Step [\(name)] failed\n")
     }
 
     func allowedFailedStep(name: String, depth: Int) throws {
         let indent = stepIndent(depth)
-        self("\(indent)Step [\(name.yellow().bold())] failed (allowed)")
+        consoleOnly("\(indent)Step [\(name.yellow().bold())] failed (allowed)")
         try FullLog.write("\(indent)Step [\(name)] failed (allowed)\n")
     }
 
     func skippedStep(name: String, reason: String, depth: Int) throws {
         if depth == 0 {
-            self("")
+            consoleOnly("")
         }
         let indent = stepIndent(depth)
-        self("\(indent)Skipped step [\(name.darkGray())]: \(reason)")
+        consoleOnly("\(indent)Skipped step [\(name.darkGray())]: \(reason)")
         try FullLog.writeHeader("Skipped step [\(name)]: \(reason)", depth: depth)
     }
 
@@ -105,7 +114,7 @@ internal struct LogImpl: Log {
         fflush(stdout)
     }
 
-    public func callAsFunction(_ line: String) {
+    public func consoleOnly(_ line: String) {
         LogImpl.printLine(SecretRegistry.redact(line))
     }
 

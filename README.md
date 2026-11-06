@@ -737,12 +737,14 @@ SwiftCI writes each tool's output to two places:
   test results, and drops noise. `--verbose` skips the filters, so every line
   reaches the console; secrets are still masked. Colours follow
   terminal detection and the `NO_COLOR` convention **(planned)**.
-- **Full log.** The complete output of every tool, unfiltered but with secrets
-  redacted. It has one file per command, with step headers. Integrations also
-  write their status lines there, as plain text, with the public `FullLog.write`;
-  the App Store Connect build upload records its requests, parts and result this
-  way. The log is saved as `logs/<command>.log` in the artifacts directory, so
-  that CI can archive it. A second run of the same command overwrites it. See
+- **Full log.** One file per command, with step headers. It has every console
+  line as plain text, without colour codes, the unfiltered output of every tool,
+  the exit code of each tool, the arguments of the run, each input read and the
+  failures, with secrets redacted. Integrations can write lines that are not on
+  the console with the public `FullLog.write`. The log is saved as
+  `logs/<command>.log` in the artifacts directory, so that CI can archive it. If
+  a command runs again in the same run, its log is `logs/<command>-2.log`, and
+  so on. A later run with the same artifacts directory overwrites the log. See
   [Running in CI and locally](#running-in-ci-and-locally).
 
 A `Tool` can also copy its unfiltered output to a file of its own with

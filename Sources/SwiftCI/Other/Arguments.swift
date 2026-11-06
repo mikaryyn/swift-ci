@@ -15,11 +15,14 @@ internal struct RunArguments {
     private(set) var options: [String: String] = [:]
     /// The reserved flags given, by name without the dashes.
     private(set) var flags: Set<String> = []
+    /// The arguments as they were given, without the executable name.
+    private(set) var given: [String] = []
 
     /// Splits `arguments` (without the executable name).
     ///
     /// - Throws: a ``BuildError`` with the usage code if an option is malformed or given twice.
     init(parsing arguments: [String]) throws(BuildError) {
+        given = arguments
         for argument in arguments {
             guard argument.hasPrefix("--") else {
                 commandNames.append(argument)
@@ -79,12 +82,15 @@ internal struct RunOptions {
     /// `true` if `--verbose` was given. Then every line of tool output goes to the console unfiltered, and the tools'
     /// filters are skipped. Secrets stay masked, and the full log is unchanged. See ``Tool``.
     let verbose: Bool
+    /// The arguments of the run as they were given, without the executable name. Each command's full log records them.
+    let commandLine: [String]
     /// The names of the options that an `input` call has read during the run.
     private(set) var readNames: Set<String> = []
 
     init(_ arguments: RunArguments) {
         values = arguments.options
         verbose = arguments.flags.contains("verbose")
+        commandLine = arguments.given
     }
 
     mutating func markRead(_ name: String) {

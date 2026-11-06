@@ -144,13 +144,15 @@ extension GlobalStateTests {
             client.respond("GET", Self.url("/v1/apps/1"), status: 429)
             client.respond("GET", Self.url("/v1/apps/1"), body: Data("{}".utf8))
             let sleeps = SleepRecorder()
+            let log = LogMock()
 
-            _ = try await SwiftCITest.withMocks(httpClient: client) {
+            _ = try await SwiftCITest.withMocks(httpClient: client, log: log) {
                 try await Self.client(sleeps: sleeps).send("GET", "/v1/apps/1")
             }
 
             #expect(client.requests.count == 2)
             #expect(sleeps.durations == [.seconds(1)])
+            #expect(log.loggedLines.contains("App Store Connect: GET /v1/apps/1 retry 1 of 5 in 1 s after status 429."))
         }
 
         /// Six 429 responses in a row fail after five retries, which wait 1, 2, 4, 8 and 16 seconds. The sixth attempt is

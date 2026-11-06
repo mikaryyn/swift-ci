@@ -93,7 +93,7 @@ extension GlobalStateTests {
             #expect(events == ["onFailure"])
             #expect(lines.filter { $0.hasPrefix("<Error> Failed to close the build log") }.count == 1)
             #expect(lines.filter { $0.hasPrefix("<Error>") }.count == 1)
-            #expect(lines.last == "Command [close] failed")
+            #expect(lines.suffix(2) == ["Command [close] failed", "Exit code 3"])
             #expect(FullLog.path == nil)
             #expect(FullLog.file == nil)
         }

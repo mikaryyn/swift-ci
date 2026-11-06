@@ -95,8 +95,8 @@ struct RedactingLog: Log {
         self.inner = inner
     }
 
-    func callAsFunction(_ line: String) {
-        inner(SecretRegistry.redact(line))
+    func consoleOnly(_ line: String) {
+        inner.consoleOnly(SecretRegistry.redact(line))
     }
 
     func completion(_ line: String) {

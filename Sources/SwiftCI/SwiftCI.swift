@@ -90,6 +90,10 @@ internal func registerDependencies() {
     let previousOptions = RunOptions.current
     defer { RunOptions.current = previousOptions }
 
+    let previousOpenCounts = FullLog.openCounts
+    FullLog.openCounts = [:]
+    defer { FullLog.openCounts = previousOpenCounts }
+
     commands = []
     RunContext.current = nil
     do {
@@ -113,7 +117,8 @@ internal func registerDependencies() {
 /// `--help` prints the usage and the command list, and `--list` prints the command list. Both return 0 without running
 /// any command, and `--help` wins if both are given. A missing or unknown command name logs the error followed by the
 /// list and returns the usage exit code. When commands ran, the options that no `input` call read are logged as a
-/// warning, whether the run succeeded or failed. The warning does not change the exit code.
+/// warning in the full log of the last command that ran, whether the run succeeded or failed. The warning does not change
+/// the exit code.
 internal func processCommands(arguments: RunArguments, programName: String) async throws(BuildError) -> Int32 {
     @Use var log: Log
 
@@ -147,14 +152,12 @@ internal func processCommands(arguments: RunArguments, programName: String) asyn
         }
     }
 
-    for name in names {
+    for (index, name) in names.enumerated() {
         guard let command = commandDict[name] else { continue }
-        if let exitCode = await run(command: command) {
-            logUnreadOptions()
+        if let exitCode = await run(command: command, isLast: index == names.count - 1) {
             return exitCode
         }
     }
-    logUnreadOptions()
     return 0
 }
 
@@ -212,11 +215,15 @@ private func logCommandList() {
 /// Runs one command and logs its failure. Returns `nil` if the command succeeded,
 /// otherwise the exit code of the failure.
 ///
-/// The order is: create the artifacts directory if needed, open the full log and write the CI summary line to it, run the
-/// body, run the `cleanup` handlers in reverse order, fail the command if the body and the cleanup handlers succeeded but
-/// the run report has failures, run the `onFailure` handlers in reverse order if the command has failed so far, set the
-/// outcome of the run report, print the summary of the report and write it to the artifacts directory (see
-/// ``publishRunReport(_:failure:)``), run the `onReport` handlers in registration order, then close the full log.
+/// The order is: create the artifacts directory if needed, open the full log and write the CI summary line and the
+/// arguments of the run to it, run the body, run the `cleanup` handlers in reverse order, fail the command if the body and
+/// the cleanup handlers succeeded but the run report has failures, run the `onFailure` handlers in reverse order if the
+/// command has failed so far, set the outcome of the run report, print the summary of the report and write it to the
+/// artifacts directory (see ``publishRunReport(_:failure:)``), run the `onReport` handlers in registration order, write
+/// the unread options if this is the last command or the command failed, write the failure and its exit code, then close
+/// the full log. The last lines are written before the close, so they are in the full log.
+///
+/// `isLast` tells whether the command is the last one that the run would run if it does not fail.
 ///
 /// A failure of the body decides the exit code. A failure of a handler decides it only if nothing failed before, and an
 /// allowed handler failure never does. The report check is one such failure: it fails the command with exit code 1 only
@@ -237,9 +244,7 @@ private func logCommandList() {
 ///
 /// The run context is created for the command and stays set while the handlers run, so steps
 /// work inside them. It is cleared when the command ends, also after a thrown error.
-internal func run(command: Command) async -> Int32? {
-    @Use var log: Log
-
+internal func run(command: Command, isLast: Bool) async -> Int32? {
     let context = RunContext(commandName: command.name)
     RunContext.current = context
     defer { RunContext.current = nil }
@@ -249,6 +254,9 @@ internal func run(command: Command) async -> Int32? {
         try Artifacts.prepareDirectory()
         try FullLog.open(name: command.name)
         try FullLog.write(CIDetection.summary(CI.environment))
+        if let arguments = RunOptions.current?.commandLine {
+            try FullLog.write("➤ Arguments \(arguments.joined(separator: " "))")
+        }
         try await command.run()
     } catch {
         failure = logFailure(error)
@@ -265,6 +273,14 @@ internal func run(command: Command) async -> Int32? {
     publishRunReport(context, failure: &failure)
     await runHandlers(.report, in: context, failure: &failure)
 
+    // Written before the close, so they are in the full log. The options are logged once, by the last command that runs.
+    if isLast || failure != nil {
+        logUnreadOptions()
+    }
+    if let failure {
+        logCommandFailed(command.name, failure)
+    }
+
     do {
         try FullLog.close()
     } catch {
@@ -272,14 +288,24 @@ internal func run(command: Command) async -> Int32? {
         let closeFailure = logFailure(error)
         if failure == nil {
             failure = closeFailure
-            // The full log is closed now, so the output of these handlers goes to the console only.
+            // The full log is closed now, so the lines below go to the console only.
+            if !isLast {
+                logUnreadOptions()
+            }
             await runHandlers(.onFailure, in: context, failure: &failure)
+            logCommandFailed(command.name, closeFailure)
         }
     }
 
-    guard let failure else { return nil }
-    log("Command [\(command.name.red().bold())] failed")
-    return failure.code.rawValue
+    return failure?.code.rawValue
+}
+
+/// Logs that the command failed, and its exit code. The lines go to the full log while it is open, and to the console.
+private func logCommandFailed(_ name: String, _ failure: CommandFailure) {
+    @Use var log: Log
+
+    log("Command [\(name.red().bold())] failed")
+    log("Exit code \(failure.code.rawValue)")
 }
 
 /// Logs the first internal error recorded since the last check, and sets the failure to it

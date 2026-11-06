@@ -7,7 +7,8 @@ import Glibc
 
 /// Starts a ``Tool``'s program and reports its output line by line.
 ///
-/// The runner does not log, filter or check the exit code. ``Tool`` does that. Tests replace the runner with
+/// The runner does not log output, filter it or check the exit code. ``Tool`` does that. The one line the runner writes is
+/// the resolved path of a program name, when it is found in `PATH`. Tests replace the runner with
 /// `register(ProcessRunner.self, …)`.
 public protocol ProcessRunner {
     /// Starts the program, writes the input, reads both streams and calls `onLine` for each line, in the order it was
@@ -68,6 +69,9 @@ struct ProcessRunnerImpl: ProcessRunner {
         let environment = try tool.effectiveEnvironment()
         let inputBytes = try tool.input?.revealedBytes()
         let program = try Self.programPath(for: tool, environment: environment)
+        if !tool.command.contains("/") {
+            try FullLog.write("➤ Executable \(program)")
+        }
         try Self.checkChildReaping(for: tool)
         let pipes = try Self.spawn(tool, program: program, environment: environment)
         let workerCount = pipes.stopReads.count

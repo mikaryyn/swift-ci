@@ -6,6 +6,10 @@ public struct FullLog {
     static var path: URL?
     static var file: FileHandle?
 
+    /// How many times each command name has opened its full log in the running run. The first log of a name is
+    /// `<name>.log`, and a second one in the same run is `<name>-2.log`, and so on. Reset by the runner for each run.
+    static var openCounts: [String: Int] = [:]
+
     /// `true` once a write to the log of the running command has failed. Reset by ``open(name:)``. Later writes to a broken
     /// log fail the same way, so their errors would only repeat the first one, which is logged where it happened.
     private(set) static var hasFailed = false
@@ -17,8 +21,10 @@ public struct FullLog {
     static var closeHandle: (FileHandle) throws -> Void = { try $0.close() }
 
     static func open(name: String) throws {
-        let path = try logPath(name: name)
-        log("Saving full log to file://\(path.filePath)")
+        let opening = (openCounts[name] ?? 0) + 1
+        openCounts[name] = opening
+        let path = try logPath(name: opening == 1 ? name : "\(name)-\(opening)")
+        log.consoleOnly("Saving full log to file://\(path.filePath)")
         try close()
 
         if FileManager.default.createFile(atPath: path.filePath, contents: nil, attributes: nil) {
@@ -53,7 +59,27 @@ public struct FullLog {
                 code: .internal
             )
         }
-        closedPath.map { log("Saved full log to file://\($0.filePath)") }
+        closedPath.map { log.consoleOnly("Saved full log to file://\($0.filePath)") }
+    }
+
+    /// Writes a console line into the full log as plain text: the colour codes that `ColorizeSwift` adds are removed, and the
+    /// line is masked as every full-log write is. Nothing is written when no log is open. Once a write has failed, later lines
+    /// are not written either, because the first error is already recorded. The first error of a running command is recorded
+    /// as its internal error, as a step marker is, so the command fails at its next checkpoint. Without a running command,
+    /// the error is only in ``hasFailed``.
+    static func writeConsoleLine(_ line: String) {
+        guard file != nil, !hasFailed else { return }
+        let text = plainText(line)
+        if let context = RunContext.current {
+            context.writeStatus { try write(text) }
+        } else {
+            try? write(text)
+        }
+    }
+
+    /// The text without the colour codes of `ColorizeSwift`, which are `ESC [`, digits and semicolons, then `m`.
+    static func plainText(_ line: String) -> String {
+        line.replacingOccurrences(of: "\u{1B}\\[[0-9;]*m", with: "", options: .regularExpression)
     }
 
     /// Writes `line` into the full log, as a line of its own. The line is masked for secrets, as every full-log write is.
@@ -85,7 +111,7 @@ public struct FullLog {
     }
 
     /// The path of the log file for `name`: `logs/<name>.log` in the artifacts directory. The `logs` directory is created.
-    /// An existing log of the same name is overwritten when the file is created.
+    /// An existing file of the same name is overwritten when the file is created.
     private static func logPath(name: String) throws -> URL {
         let logs = Artifacts.directory.appending(path: "logs")
         do {
