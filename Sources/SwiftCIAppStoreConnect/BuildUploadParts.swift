@@ -3,17 +3,23 @@ import CryptoKit
 import Foundation
 import SwiftCI
 
-/// Sends the parts of an IPA to the pre-signed URLs that App Store Connect returned, one part at a time in part-number
-/// order, and computes the MD5 of the file while it reads the parts.
+/// Sends the parts of an IPA to the pre-signed URLs that App Store Connect returned, several at a time, and computes the
+/// MD5 of the file once every part has been sent.
 ///
+/// At most `parallelUploads` parts are in flight. The parts are started in part-number order, and the next one starts when
+/// one finishes, so the parts can finish in any order. Each part opens its own file handle, so no seek position is shared.
 /// The parts must cover the file in order without gaps, so that the MD5 of the parts is the MD5 of the file. This is
-/// checked before any byte is sent. Each part is read from the file once; a retry sends the same bytes. A request carries
-/// only the headers of its operation and no `Authorization`, because the URL is pre-signed. The request goes through the
-/// registered ``HTTPClient`` directly, not through ``AppStoreConnect``, which would add the token.
+/// checked before any byte is sent. A request carries only the headers of its operation and no `Authorization`, because
+/// the URL is pre-signed. The request goes through the registered ``HTTPClient`` directly, not through ``AppStoreConnect``,
+/// which would add the token.
 struct BuildUploadParts {
-    init(ipa: URL, fileSize: Int, now: @escaping () -> Date, sleep: @escaping (Duration) async throws -> Void) {
+    init(
+        ipa: URL, fileSize: Int, parallelUploads: Int,
+        now: @escaping () -> Date, sleep: @escaping (Duration) async throws -> Void
+    ) {
         self.ipa = ipa
         self.fileSize = fileSize
+        self.parallelUploads = parallelUploads
         self.now = now
         self.sleep = sleep
     }
@@ -22,11 +28,15 @@ struct BuildUploadParts {
     @Use private var log: Log
     private let ipa: URL
     private let fileSize: Int
+    private let parallelUploads: Int
     private let now: () -> Date
     private let sleep: (Duration) async throws -> Void
 
     /// The waits before each retry of a part, in seconds. A part is retried at most once per entry.
     static let retryDelays = [2, 4, 8]
+
+    /// The size of the chunks in which the file is read for its MD5.
+    static let checksumChunkSize = 1 << 20
 
     /// A part to send: its operation, checked and in order.
     struct Part {
@@ -39,26 +49,45 @@ struct BuildUploadParts {
         let expiration: Date?
     }
 
-    /// Sends the parts of `operations`, which must be in part-number order, and returns the MD5 of the file as lowercase
-    /// hexadecimal. Throws a ``BuildError`` when the operations do not cover the file, when a part is refused, or when
-    /// the upload took too long.
+    /// A part that was sent: its number, its size, how often it was retried, and how long it took.
+    struct SentPart {
+        let number: Int
+        let size: Int
+        let retries: Int
+        let seconds: TimeInterval
+    }
+
+    /// Sends the parts of `operations`, and returns the MD5 of the file as lowercase hexadecimal. Throws a ``BuildError``
+    /// when the operations do not cover the file, when a part is refused, or when the upload took too long. The first part
+    /// that fails for good cancels the others, and its error is thrown.
     func send(_ operations: [UploadOperation]) async throws -> String {
         let parts = try checkedParts(operations)
-        let handle = try FileHandle(forReadingFrom: ipa)
-        defer { try? handle.close() }
+        log("Uploading \(parts.count) parts (\(Self.size(fileSize))) to \(Self.hostList(parts)), \(min(parallelUploads, parts.count)) at a time.")
 
-        var md5 = Insecure.MD5()
+        let started = now()
         var uploaded = 0
         var reportedTenths = 0
-        for part in parts {
-            try checkNotExpired(part)
-            let data = try read(part, from: handle)
-            try await put(part, data)
-            md5.update(data: data)
-            uploaded += data.count
-            reportProgress(uploaded: uploaded, reportedTenths: &reportedTenths)
+        try await withThrowingTaskGroup(of: SentPart.self) { group in
+            var pending = parts.makeIterator()
+            for _ in 0..<min(parallelUploads, parts.count) {
+                if let part = pending.next() {
+                    group.addTask { try await self.sendPart(part) }
+                }
+            }
+            for try await sent in group {
+                uploaded += sent.size
+                logSent(sent, of: parts.count)
+                reportProgress(uploaded: uploaded, elapsed: now().timeIntervalSince(started), reportedTenths: &reportedTenths)
+                if let part = pending.next() {
+                    group.addTask { try await self.sendPart(part) }
+                }
+            }
         }
-        return md5.finalize().map { String(format: "%02x", $0) }.joined()
+
+        let checksum = try md5OfFile()
+        let seconds = now().timeIntervalSince(started)
+        log("Uploaded \(Self.size(fileSize)) in \(Self.seconds(seconds)) s (\(Self.rate(fileSize, seconds: seconds))/s).")
+        return checksum
     }
 
     /// The parts in part-number order. Throws a ``BuildError`` when a part does not start where the one before it ends,
@@ -104,14 +133,39 @@ struct BuildUploadParts {
         return nil
     }
 
+    /// The hosts of the parts, each once and in order, as the start line names them. A part without a host is shown as
+    /// `an unknown host`.
+    private static func hostList(_ parts: [Part]) -> String {
+        var hosts: [String] = []
+        for part in parts {
+            let host = part.url.host ?? "an unknown host"
+            if !hosts.contains(host) {
+                hosts.append(host)
+            }
+        }
+        return hosts.joined(separator: ", ")
+    }
+
+    /// Sends one part: checks that it has not expired, reads its bytes, and sends them. Runs as one child task of the group.
+    private func sendPart(_ part: Part) async throws -> SentPart {
+        try checkNotExpired(part)
+        let data = try readPart(part)
+        let started = now()
+        let retries = try await put(part, data)
+        return SentPart(number: part.number, size: data.count, retries: retries, seconds: now().timeIntervalSince(started))
+    }
+
     /// Throws a ``BuildError`` when the expiration of the part has passed. A part is never sent after it.
     private func checkNotExpired(_ part: Part) throws {
         guard let expiration = part.expiration, now() > expiration else { return }
         throw BuildError(message: "The upload took too long: App Store Connect closed the upload of part \(part.number) before it was sent. Run the deploy again to start a new upload.")
     }
 
-    /// The bytes `part.offset..<part.offset + part.length` of the file.
-    private func read(_ part: Part, from handle: FileHandle) throws -> Data {
+    /// The bytes `part.offset..<part.offset + part.length` of the file. The handle belongs to this call, so parts can be read
+    /// at the same time.
+    private func readPart(_ part: Part) throws -> Data {
+        let handle = try FileHandle(forReadingFrom: ipa)
+        defer { try? handle.close() }
         try handle.seek(toOffset: UInt64(part.offset))
         let data = try handle.read(upToCount: part.length) ?? Data()
         guard data.count == part.length else {
@@ -120,17 +174,25 @@ struct BuildUploadParts {
         return data
     }
 
-    /// Sends `data` as the part, with the method, URL and headers of its operation. A 5xx status or no response is retried
-    /// after the waits in ``retryDelays``. Any other status fails at once. Errors name the part and the status, never the
-    /// URL, because a pre-signed URL carries credentials.
-    private func put(_ part: Part, _ data: Data) async throws {
+    /// Sends `data` as the part, with the method, URL and headers of its operation, and returns how many times it was retried.
+    /// A 5xx status or no response is retried after the waits in ``retryDelays``. Any other status fails at once. Errors name
+    /// the part and the status, never the URL, because a pre-signed URL carries credentials.
+    private func put(_ part: Part, _ data: Data) async throws -> Int {
         let request = HTTPRequest(method: part.method, url: part.url, headers: part.headers, body: data)
         var retries = 0
         while true {
-            let response: HTTPResponse? = try? await client.send(request)
+            try Task.checkCancellation()
+            let response: HTTPResponse?
+            do {
+                response = try await client.send(request)
+            } catch {
+                // A part cancelled by a failed part of the same upload is not retried.
+                try Task.checkCancellation()
+                response = nil
+            }
             if let response {
                 if (200..<300).contains(response.statusCode) {
-                    return
+                    return retries
                 }
                 guard (500..<600).contains(response.statusCode) else {
                     throw BuildError(message: "Uploading part \(part.number) of the IPA failed with status \(response.statusCode). Run the deploy again to start a new upload.")
@@ -147,19 +209,51 @@ struct BuildUploadParts {
         }
     }
 
+    /// Logs a part that was sent: `Part 3/13 (5.2 MB) uploaded in 4.1 s (1.3 MB/s)`, with `after 2 retries` when it was retried.
+    private func logSent(_ sent: SentPart, of total: Int) {
+        let retries = switch sent.retries {
+        case 0: ""
+        case 1: " after 1 retry"
+        default: " after \(sent.retries) retries"
+        }
+        log("Part \(sent.number)/\(total) (\(Self.size(sent.size))) uploaded in \(Self.seconds(sent.seconds)) s (\(Self.rate(sent.size, seconds: sent.seconds))/s)\(retries)")
+    }
+
     /// Logs the progress when it reaches a new tenth of the file, so at most ten lines are logged:
-    /// `Uploaded 40% (52.1 MB of 130.2 MB)`.
-    private func reportProgress(uploaded: Int, reportedTenths: inout Int) {
+    /// `Uploaded 40% (27.1 MB of 67.7 MB) in 35 s, 780 KB/s`. The elapsed time and the rate are those of the whole upload.
+    private func reportProgress(uploaded: Int, elapsed: TimeInterval, reportedTenths: inout Int) {
         guard fileSize > 0 else { return }
         let tenths = uploaded * 10 / fileSize
         guard tenths > reportedTenths else { return }
         reportedTenths = tenths
-        log("Uploaded \(tenths * 10)% (\(Self.size(uploaded)) of \(Self.size(fileSize)))")
+        log("Uploaded \(tenths * 10)% (\(Self.size(uploaded)) of \(Self.size(fileSize))) in \(Int(elapsed.rounded())) s, \(Self.rate(uploaded, seconds: elapsed))/s")
+    }
+
+    /// The MD5 of the file as lowercase hexadecimal. The file is read once more, in chunks, after every part was sent.
+    private func md5OfFile() throws -> String {
+        let handle = try FileHandle(forReadingFrom: ipa)
+        defer { try? handle.close() }
+        var md5 = Insecure.MD5()
+        while let chunk = try handle.read(upToCount: Self.checksumChunkSize), !chunk.isEmpty {
+            md5.update(data: chunk)
+        }
+        return md5.finalize().map { String(format: "%02x", $0) }.joined()
     }
 
     /// A byte count for a console line, such as `52.1 MB`.
     static func size(_ bytes: Int) -> String {
         ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)
+    }
+
+    /// A transfer rate for a console line, such as `780 KB`. It is `0 bytes` when no time has passed.
+    static func rate(_ bytes: Int, seconds: TimeInterval) -> String {
+        guard seconds > 0 else { return "0 bytes" }
+        return size(Int(Double(bytes) / seconds))
+    }
+
+    /// A duration for a console line, with one decimal, such as `4.1`.
+    static func seconds(_ seconds: TimeInterval) -> String {
+        String(format: "%.1f", seconds)
     }
 }
 #endif

@@ -26,6 +26,78 @@ extension GlobalStateTests {
             var date = BuildUploadTests.startOfClock
         }
 
+        /// The transport of the PUTs in a test. A part waits until the test releases it, so the test decides how many parts
+        /// are in flight at once and in which order they are answered. Requests that are not PUTs go to `mock`.
+        final class PartProbe: HTTPClient {
+            /// The mock that answers the requests that are not PUTs.
+            let mock: HTTPClientMock
+            /// The status of the response of each part, by URL. A part without an entry gets 200.
+            var statuses: [URL: Int] = [:]
+            /// Runs each time a part is answered, so that a test can move its clock.
+            var onAnswered: (() -> Void)?
+            /// The URLs of the PUTs in the order that they started.
+            private(set) var started: [URL] = []
+            /// The URLs of the PUTs that were answered, in the order that they were answered. A cancelled part is not here.
+            private(set) var answered: [URL] = []
+            /// The largest number of PUTs in flight at one time.
+            private(set) var maxInFlight = 0
+            /// The PUTs that wait for the test to release them.
+            private(set) var waiting: [URL] = []
+            private var inFlight = 0
+            private var released: Set<URL> = []
+
+            init(mock: HTTPClientMock) {
+                self.mock = mock
+            }
+
+            func send(_ request: HTTPRequest) async throws -> HTTPResponse {
+                guard request.method == "PUT" else { return try await mock.send(request) }
+                started.append(request.url)
+                inFlight += 1
+                maxInFlight = max(maxInFlight, inFlight)
+                defer { inFlight -= 1 }
+                waiting.append(request.url)
+                while !released.contains(request.url) {
+                    try Task.checkCancellation()
+                    await Task.yield()
+                }
+                answered.append(request.url)
+                onAnswered?()
+                return HTTPResponse(statusCode: statuses[request.url] ?? 200, headers: [:], body: Data())
+            }
+
+            /// Lets the PUT of `url` answer.
+            func release(_ url: URL) {
+                released.insert(url)
+                waiting.removeAll { $0 == url }
+            }
+
+            /// Lets every PUT that is waiting now answer.
+            func releaseWaiting() {
+                for url in waiting {
+                    release(url)
+                }
+            }
+
+            /// Waits until `count` PUTs are waiting. Fails when they do not come within a bounded number of yields.
+            func waitUntilWaiting(_ count: Int) async throws {
+                try await Self.yieldUntil({ self.waiting.count >= count }, "\(count) parts waiting")
+            }
+
+            /// Waits until `count` PUTs have been answered. Fails when they do not come within a bounded number of yields.
+            func waitUntilAnswered(_ count: Int) async throws {
+                try await Self.yieldUntil({ self.answered.count >= count }, "\(count) parts answered")
+            }
+
+            private static func yieldUntil(_ condition: () -> Bool, _ description: String) async throws {
+                for _ in 0..<10_000 {
+                    if condition() { return }
+                    await Task.yield()
+                }
+                throw BuildError(message: "The test expected \(description), and it did not happen.")
+            }
+        }
+
         /// The mocks, recorders and clock of one upload, and the upload itself.
         final class Harness {
             let http = HTTPClientMock()
@@ -33,14 +105,23 @@ extension GlobalStateTests {
             let sleeps = AppStoreConnectTests.SleepRecorder()
             let clock = TestClock()
             var processingTimeout: Duration = .seconds(30 * 60)
+            var parallelUploads = 6
 
-            /// Uploads the fixture IPA to `appID` with the registrations of this harness.
+            /// Uploads the fixture IPA to `appID` through the HTTP mock of this harness.
             func upload() async throws -> BuildUpload {
+                try await upload(over: http)
+            }
+
+            /// Uploads the fixture IPA to `appID` through `transport`, with the registrations of this harness.
+            func upload(over transport: any HTTPClient) async throws -> BuildUpload {
                 let ipa = try GlobalStateTests.IPAInfoTests.fixture("MyApp")
                 let client = BuildUploadTests.client(sleeps: sleeps, clock: clock)
                 let timeout = processingTimeout
-                return try await BuildUploadTests.withRegistrations(http, log) {
-                    try await client.uploadBuild(ipa: ipa, appID: BuildUploadTests.appID, processingTimeout: timeout)
+                let parallel = parallelUploads
+                return try await BuildUploadTests.withRegistrations(transport, log) {
+                    try await client.uploadBuild(
+                        ipa: ipa, appID: BuildUploadTests.appID, parallelUploads: parallel, processingTimeout: timeout
+                    )
                 }
             }
 
@@ -125,14 +206,14 @@ extension GlobalStateTests {
             return appStoreConnect
         }
 
-        /// Runs `body` with the HTTP mock and the log mock registered, and the real process runner, which reads the IPA.
+        /// Runs `body` with `transport` and the log mock registered, and the real process runner, which reads the IPA.
         static func withRegistrations<T>(
-            _ http: HTTPClientMock, _ log: LogMock, _ body: () async throws -> T
+            _ transport: any HTTPClient, _ log: LogMock, _ body: () async throws -> T
         ) async throws -> T {
             let restore = secretsSetUp()
             defer { restore() }
             registerDependencies()
-            register(HTTPClient.self, http)
+            register(HTTPClient.self, transport)
             register(Log.self, log)
             return try await body()
         }
@@ -219,6 +300,19 @@ extension GlobalStateTests {
             ]
         }
 
+        /// `count` operations that cover a file of `size` bytes in equal parts, the last one with the rest. Each part has its
+        /// own pre-signed URL on `upload.example.com`.
+        static func operations(count: Int, size: Int) -> [[String: Any]] {
+            let length = size / count
+            return (0..<count).map { index in
+                let number = index + 1
+                let offset = index * length
+                let partLength = index == count - 1 ? size - offset : length
+                let partURL = URL(string: "https://upload.example.com/part-\(number)?X-Amz-Signature=PART-\(number)-SIGNATURE")!
+                return operation(number, offset: offset, length: partLength, url: partURL, headers: ["x-test-part": "\(number)"])
+            }
+        }
+
         static func queueLookup(_ http: HTTPClientMock, status: Int = 200, bundleID: String = bundleID) throws {
             http.respond("GET", appURL, status: status, body: try appBody(bundleID: bundleID))
         }
@@ -254,8 +348,27 @@ extension GlobalStateTests {
             try AppStoreConnectTests.token(of: http.requests[0])
         }
 
+        /// The first request with `method` and `path`, decoded as a JSON:API request body.
+        static func requestBody(_ requests: [HTTPClientMock.RecordedRequest], _ method: String, _ path: String) throws -> RequestBody {
+            let request = try #require(requests.first { $0.method == method && $0.url.path == path })
+            return try JSONDecoder().decode(RequestBody.self, from: try #require(request.body))
+        }
+
+        /// Releases the parts of an upload in waves of `cap`, which is how a cap of `cap` parts in flight lets them finish.
+        /// Each wave waits until its parts are waiting, then releases them, so a cap that is exceeded releases more parts
+        /// at once and the next wave cannot start.
+        static func releaseInWaves(_ probe: PartProbe, total: Int, cap: Int) async throws {
+            var released = 0
+            while released < total {
+                let wave = min(cap, total - released)
+                try await probe.waitUntilWaiting(wave)
+                probe.releaseWaiting()
+                released += wave
+            }
+        }
+
         /// A successful upload reads the app, lists the uploads of the build, sends two parts, commits and reads the
-        /// upload until it is processing. It sends each part with exactly its own headers, the right bytes, and no
+        /// upload until it is processing. It sends each part with exactly its own headers and the right bytes, and no
         /// `Authorization`. The commit carries the MD5 of the file. No logged line shows the token or the pre-signed URLs.
         @Test func uploadSendsEveryPartAndCommitsTheChecksum() async throws {
             let harness = Harness()
@@ -277,13 +390,12 @@ extension GlobalStateTests {
             #expect(harness.sleeps.durations == [.seconds(10)])
 
             let requests = harness.http.requests
-            #expect(requests.map { "\($0.method) \($0.url.path)" } == [
+            // The parts may finish in either order, so they are compared as a set, by URL.
+            #expect(requests.filter { $0.method != "PUT" }.map { "\($0.method) \($0.url.path)" } == [
                 "GET /v1/apps/\(Self.appID)",
                 "GET /v1/apps/\(Self.appID)/buildUploads",
                 "POST /v1/buildUploads",
                 "POST /v1/buildUploadFiles",
-                "PUT /part-1",
-                "PUT /part-2",
                 "PATCH /v1/buildUploadFiles/\(Self.fileID)",
                 "GET /v1/buildUploads/\(Self.uploadID)",
                 "GET /v1/buildUploadFiles/\(Self.fileID)",
@@ -294,29 +406,29 @@ extension GlobalStateTests {
             let half = data.count / 2
             let puts = requests.filter { $0.method == "PUT" }
             #expect(puts.count == 2)
-            #expect(puts[0].url == Self.partOneURL)
-            #expect(puts[0].headers == ["x-test-part": "1"])
-            #expect(puts[0].body == data.subdata(in: 0..<half))
-            #expect(puts[1].url == Self.partTwoURL)
-            #expect(puts[1].headers == ["x-test-part": "2", "x-test-extra": "yes"])
-            #expect(puts[1].body == data.subdata(in: half..<data.count))
+            let part1 = try #require(puts.first { $0.url == Self.partOneURL })
+            #expect(part1.headers == ["x-test-part": "1"])
+            #expect(part1.body == data.subdata(in: 0..<half))
+            let part2 = try #require(puts.first { $0.url == Self.partTwoURL })
+            #expect(part2.headers == ["x-test-part": "2", "x-test-extra": "yes"])
+            #expect(part2.body == data.subdata(in: half..<data.count))
             #expect(puts.allSatisfy { $0.headers["Authorization"] == nil && $0.secretHeaders["Authorization"] == nil })
 
-            let create = try JSONDecoder().decode(RequestBody.self, from: try #require(requests[2].body))
+            let create = try Self.requestBody(requests, "POST", "/v1/buildUploads")
             #expect(create.data.type == "buildUploads")
             #expect(create.data.attributes?.cfBundleShortVersionString == "1.2.3")
             #expect(create.data.attributes?.cfBundleVersion == "42")
             #expect(create.data.attributes?.platform == "IOS")
             #expect(create.data.relationships?.app?.data.id == Self.appID)
 
-            let reserve = try JSONDecoder().decode(RequestBody.self, from: try #require(requests[3].body))
+            let reserve = try Self.requestBody(requests, "POST", "/v1/buildUploadFiles")
             #expect(reserve.data.attributes?.assetType == "ASSET")
             #expect(reserve.data.attributes?.fileName == "MyApp.ipa")
             #expect(reserve.data.attributes?.fileSize == data.count)
             #expect(reserve.data.attributes?.uti == "com.apple.ipa")
             #expect(reserve.data.relationships?.buildUpload?.data.id == Self.uploadID)
 
-            let commit = try JSONDecoder().decode(RequestBody.self, from: try #require(requests[6].body))
+            let commit = try Self.requestBody(requests, "PATCH", "/v1/buildUploadFiles/\(Self.fileID)")
             #expect(commit.data.type == "buildUploadFiles")
             #expect(commit.data.attributes?.uploaded == true)
             #expect(commit.data.attributes?.sourceFileChecksums?.file.algorithm == "MD5")
@@ -324,9 +436,9 @@ extension GlobalStateTests {
 
             let token = try Self.token(harness.http)
             let lines = harness.log.loggedLines.joined(separator: "\n")
-            let tenths = half * 10 / data.count
-            #expect(lines.contains("Uploaded \(tenths * 10)% ("))
             #expect(lines.contains("Uploaded 100% ("))
+            #expect(lines.contains("Part 1/2 ("))
+            #expect(lines.contains("Part 2/2 ("))
             #expect(lines.contains("Created build upload \(Self.uploadID) and file \(Self.fileID)."))
             #expect(lines.contains("App Store Connect: build upload AWAITING_UPLOAD, file AWAITING_UPLOAD"))
             #expect(lines.contains("App Store Connect: build upload PROCESSING, file UPLOAD_COMPLETE"))
@@ -455,7 +567,8 @@ extension GlobalStateTests {
             #expect(harness.sleeps.durations == [.seconds(1)])
         }
 
-        /// A part that gets 503 twice is sent again after 2 and 4 seconds, and the third attempt succeeds.
+        /// A part that gets 503 twice is sent again after 2 and 4 seconds, and the third attempt succeeds. The log says how
+        /// many retries the part needed.
         @Test func partThatFailsTwiceWithServerErrorIsRetried() async throws {
             let harness = Harness()
             let data = try Self.fixtureData()
@@ -468,29 +581,38 @@ extension GlobalStateTests {
             #expect(upload.state == .processing)
             #expect(harness.sleeps.durations == [.seconds(2), .seconds(4)])
             #expect(harness.http.requests.filter { $0.method == "PUT" }.count == 4)
+            #expect(harness.log.loggedLines.contains { $0.hasPrefix("Part 1/2 (") && $0.hasSuffix(" after 2 retries") })
         }
 
-        /// A part that gets 403 fails at once with its number and status. Nothing is retried, the file is not committed,
-        /// and neither the token nor the pre-signed URL is in the error or the log.
-        @Test func partRefusedWithForbiddenFailsAtOnceWithoutTheURL() async throws {
+        /// One part that gets 403 fails the step with that part's message, at once. The other part is still in flight, so it
+        /// is cancelled: it is not answered, nothing is retried, and the file is not committed. No `CancellationError`
+        /// escapes, and neither the token nor the pre-signed URL is in the error or the log.
+        @Test func partRefusedWithForbiddenCancelsTheOthersAndFailsWithItsMessage() async throws {
             let harness = Harness()
             let data = try Self.fixtureData()
             try Self.queueLookup(harness.http)
             try Self.queueList(harness.http)
-            try Self.queueUpload(harness.http, size: data.count, partStatuses: [[403]])
+            try Self.queueUpload(harness.http, size: data.count, partStatuses: [])
+            let probe = PartProbe(mock: harness.http)
+            probe.statuses[Self.partOneURL] = 403
+            let task = Task { try await harness.upload(over: probe) }
 
-            let error = await harness.failure()
+            try await probe.waitUntilWaiting(2)
+            probe.release(Self.partOneURL)
+            let error = await thrownError { _ = try await task.value }
 
             let message = try #require(error?.message)
             #expect(message.hasPrefix("Uploading part 1 of the IPA failed with status 403."))
-            #expect(!message.contains("PART-ONE-SIGNATURE"))
-            #expect(!message.contains("upload.example.com"))
+            #expect(probe.started.count == 2)
+            #expect(probe.answered == [Self.partOneURL])
             #expect(harness.sleeps.durations.isEmpty)
-            #expect(harness.http.requests.filter { $0.method == "PUT" }.count == 1)
             #expect(!harness.http.requests.contains { $0.method == "PATCH" })
             let token = try Self.token(harness.http)
             #expect(!message.contains(token))
+            #expect(!message.contains("PART-ONE-SIGNATURE"))
+            #expect(!message.contains("upload.example.com"))
             #expect(!harness.log.loggedLines.joined().contains(token))
+            #expect(!harness.log.loggedLines.joined().contains("X-Amz-Signature"))
         }
 
         /// The operation's expiry has passed before the first part is sent: the step fails, and no part is sent.
@@ -515,6 +637,110 @@ extension GlobalStateTests {
             http.respond("POST", url("/v1/buildUploadFiles"), status: 201, body: try operationsBody(
                 twoParts(size: size, expiration: "2000-01-01T00:00:00Z")
             ))
+        }
+
+        /// A `parallelUploads` below 1 fails before any request is sent, as a usage error.
+        @Test func parallelUploadsBelowOneFailsBeforeAnyRequest() async throws {
+            let harness = Harness()
+            harness.parallelUploads = 0
+
+            let error = await harness.failure()
+
+            #expect(error?.message == "parallelUploads must be at least 1, but it is 0. Pass how many parts to send at the same time, such as 6.")
+            #expect(error?.code == .usage)
+            #expect(harness.http.requests.isEmpty)
+        }
+
+        /// With `parallelUploads` of 2, five parts are sent, and never more than two at the same time.
+        @Test func partsInFlightNeverExceedParallelUploads() async throws {
+            let harness = Harness()
+            harness.parallelUploads = 2
+            let data = try Self.fixtureData()
+            try Self.queueLookup(harness.http)
+            try Self.queueList(harness.http)
+            try Self.queueUpload(harness.http, size: data.count, operations: Self.operations(count: 5, size: data.count), partStatuses: [])
+            let probe = PartProbe(mock: harness.http)
+            let task = Task { try await harness.upload(over: probe) }
+
+            try await Self.releaseInWaves(probe, total: 5, cap: 2)
+            _ = try await task.value
+
+            #expect(probe.maxInFlight == 2)
+            #expect(probe.started.count == 5)
+            #expect(Set(probe.started).count == 5)
+            #expect(probe.answered.count == 5)
+        }
+
+        /// With the default `parallelUploads` and 13 parts, the parts are sent six at a time: never more than six, and all 13.
+        @Test func defaultParallelUploadsKeepsAtMostSixPartsInFlight() async throws {
+            let harness = Harness()
+            let data = try Self.fixtureData()
+            try Self.queueLookup(harness.http)
+            try Self.queueList(harness.http)
+            try Self.queueUpload(harness.http, size: data.count, operations: Self.operations(count: 13, size: data.count), partStatuses: [])
+            let probe = PartProbe(mock: harness.http)
+            let task = Task { try await harness.upload(over: probe) }
+
+            try await Self.releaseInWaves(probe, total: 13, cap: 6)
+            _ = try await task.value
+
+            #expect(probe.maxInFlight <= 6)
+            #expect(probe.maxInFlight == 6)
+            #expect(Set(probe.started).count == 13)
+            #expect(probe.answered.count == 13)
+        }
+
+        /// Parts that finish out of order do not change the checksum: it is still the MD5 of the whole file.
+        @Test func checksumIsTheMD5OfTheFileWhenPartsFinishOutOfOrder() async throws {
+            let harness = Harness()
+            let data = try Self.fixtureData()
+            try Self.queueLookup(harness.http)
+            try Self.queueList(harness.http)
+            try Self.queueUpload(harness.http, size: data.count, partStatuses: [])
+            let probe = PartProbe(mock: harness.http)
+            let task = Task { try await harness.upload(over: probe) }
+
+            try await probe.waitUntilWaiting(2)
+            probe.release(Self.partTwoURL)
+            try await probe.waitUntilAnswered(1)
+            probe.release(Self.partOneURL)
+            _ = try await task.value
+
+            #expect(probe.answered == [Self.partTwoURL, Self.partOneURL])
+            let commit = try Self.requestBody(harness.http.requests, "PATCH", "/v1/buildUploadFiles/\(Self.fileID)")
+            #expect(commit.data.attributes?.sourceFileChecksums?.file.hash == Self.md5Hex(data))
+        }
+
+        /// The start line names the upload host without the query, each part is logged with its size and time, and the
+        /// summary is logged at the end. No line shows a pre-signed URL or the token.
+        @Test func logNamesTheHostAndEveryPartWithoutTheQuery() async throws {
+            let harness = Harness()
+            let data = try Self.fixtureData()
+            try Self.queueLookup(harness.http)
+            try Self.queueList(harness.http)
+            try Self.queueUpload(harness.http, size: data.count, partStatuses: [])
+            let probe = PartProbe(mock: harness.http)
+            probe.onAnswered = { harness.clock.date.addTimeInterval(2) }
+            let task = Task { try await harness.upload(over: probe) }
+
+            try await Self.releaseInWaves(probe, total: 2, cap: 6)
+            _ = try await task.value
+
+            let lines = harness.log.loggedLines
+            let size = BuildUploadParts.size(data.count)
+            #expect(lines.contains("Uploading 2 parts (\(size)) to upload.example.com, 2 at a time."))
+            #expect(lines.contains { $0.hasPrefix("Part 1/2 (\(BuildUploadParts.size(data.count / 2))) uploaded in ") })
+            #expect(lines.contains { $0.hasPrefix("Part 2/2 (\(BuildUploadParts.size(data.count - data.count / 2))) uploaded in ") })
+            #expect(lines.contains { $0.hasPrefix("Uploaded 100% (\(size) of \(size)) in ") })
+            #expect(lines.contains { $0.hasPrefix("Uploaded \(size) in ") && $0.hasSuffix("/s).") })
+
+            let token = try Self.token(harness.http)
+            let output = lines.joined(separator: "\n")
+            #expect(!output.contains(token))
+            #expect(!output.contains("X-Amz-Signature"))
+            #expect(!output.contains("PART-ONE-SIGNATURE"))
+            #expect(!output.contains("PART-TWO-SIGNATURE"))
+            #expect(!output.contains("upload.example.com/"))
         }
 
         /// App Store Connect fails the upload: every error of the build and of the file is in the error.

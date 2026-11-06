@@ -14,25 +14,38 @@ extension AppStoreConnect {
     /// bundle identifier of the IPA, and that the app has no build upload of the same version and build number that has
     /// not failed.
     ///
+    /// The parts of the file are sent at the same time, as many as `parallelUploads` allows. The parts are the ones that
+    /// App Store Connect splits the file into. At most this many parts are held in memory at once. `URLSession` opens at
+    /// most 6 connections to a host by default, so a higher value mostly makes the parts wait for a connection.
+    ///
     /// Opens a step named "Upload MyApp.ipa to App Store Connect" when called at the top level of a command. `step` renames it.
     ///
     /// - Parameters:
     ///   - ipa: The IPA file, an export of an iOS app.
     ///   - appID: The ID of the app in App Store Connect, such as `1234567890`.
+    ///   - parallelUploads: How many parts are sent at the same time. Must be at least 1; a smaller value throws a
+    ///     ``BuildError`` before any request is sent.
     ///   - processingTimeout: How long the step waits for App Store Connect to accept the file after the commit. The step
     ///     fails when this passes first.
     ///   - name: The name of the step, if it is not the default.
     /// - Returns: The build upload, in the state that App Store Connect reported when it accepted the file.
     @discardableResult
     public func uploadBuild(
-        ipa: URL, appID: String, processingTimeout: Duration = .seconds(30 * 60), step name: String? = nil
+        ipa: URL, appID: String, parallelUploads: Int = 6, processingTimeout: Duration = .seconds(30 * 60),
+        step name: String? = nil
     ) async throws -> BuildUpload {
-        try await step(default: "Upload \(ipa.lastPathComponent) to App Store Connect", name: name) {
-            try await uploadIPA(ipa, appID: appID, processingTimeout: processingTimeout)
+        guard parallelUploads >= 1 else {
+            throw BuildError(
+                message: "parallelUploads must be at least 1, but it is \(parallelUploads). Pass how many parts to send at the same time, such as 6.",
+                code: .usage
+            )
+        }
+        return try await step(default: "Upload \(ipa.lastPathComponent) to App Store Connect", name: name) {
+            try await uploadIPA(ipa, appID: appID, parallelUploads: parallelUploads, processingTimeout: processingTimeout)
         }
     }
 
-    private func uploadIPA(_ ipa: URL, appID: String, processingTimeout: Duration) async throws -> BuildUpload {
+    private func uploadIPA(_ ipa: URL, appID: String, parallelUploads: Int, processingTimeout: Duration) async throws -> BuildUpload {
         @Use var log: Log
         let info = try await IPAInfo.read(ipa)
         let fileSize = try Self.fileSize(of: ipa)
@@ -46,7 +59,7 @@ extension AppStoreConnect {
         let headerNames = (operations.first?.requestHeaders ?? []).map(\.name)
         log("Created build upload \(uploadID) and file \(file.id). App Store Connect returned \(operations.count) upload operations; the first sends the headers: \(headerNames.isEmpty ? "none" : headerNames.joined(separator: ", ")).")
 
-        let parts = BuildUploadParts(ipa: ipa, fileSize: fileSize, now: now, sleep: sleep)
+        let parts = BuildUploadParts(ipa: ipa, fileSize: fileSize, parallelUploads: parallelUploads, now: now, sleep: sleep)
         let md5 = try await parts.send(operations)
         try await commit(fileID: file.id, md5: md5)
         let state = try await waitForAcceptance(uploadID: uploadID, fileID: file.id, info: info, timeout: processingTimeout)

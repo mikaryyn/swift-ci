@@ -538,6 +538,7 @@ supports iOS IPAs only. Its step reads the version and build number from the IPA
 sends any bytes, it checks that the app has the IPA's bundle identifier and that the app has no
 build upload of the same version and build number that has not failed. It ends when App Store Connect has
 accepted the file, as `altool` does; processing continues in App Store Connect after the step.
+The parts of the file are sent in parallel, `parallelUploads` at a time (default 6).
 Precheck (fastlane's metadata check) is not implemented yet.
 
 ```swift
