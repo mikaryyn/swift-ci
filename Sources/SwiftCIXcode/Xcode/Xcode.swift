@@ -115,6 +115,7 @@ public struct Xcode {
     /// Removes an existing result bundle at `url`, and creates its parent directory.
     private func prepareResultBundle(at url: URL) throws {
         if FileManager.default.fileExists(atPath: url.filePath) {
+            log("Removing existing result bundle \(url.filePath)")
             try FileManager.default.removeItem(at: url)
         }
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
@@ -380,6 +381,7 @@ public struct Xcode {
         log("    To:   \(copyTo.filePath)")
         // An IPA of the same name is from an earlier run into the same directory. It is replaced, as the full log is.
         if FileManager.default.fileExists(atPath: copyTo.filePath) {
+            log("    Removing existing \(copyTo.filePath)")
             try FileManager.default.removeItem(at: copyTo)
         }
         try FileManager.default.copyItem(at: copyFrom, to: copyTo)
@@ -395,6 +397,7 @@ public struct Xcode {
         // A zip of the same name is from an earlier run into the same directory. It is removed also when this archive
         // has no dSYMs, so an old zip never sits next to a new IPA it does not belong to.
         if FileManager.default.fileExists(atPath: zipURL.filePath) {
+            log("Removing existing \(zipURL.filePath)")
             try FileManager.default.removeItem(at: zipURL)
         }
 

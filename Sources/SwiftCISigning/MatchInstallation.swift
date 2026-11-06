@@ -55,6 +55,8 @@ enum MatchInstallation {
         @Use var log: Log
 
         try await importCertificates(assets.certificates, keychain: keychain)
+        // The full log header of the partition list shows only `security -i`, so this line names the operation.
+        try FullLog.write("Setting the key partition list of keychain \(keychain.filePath) with security set-key-partition-list. The command is sent to security -i on standard input.")
         try await runTolerated(partitionTool, what: "setting the key partition list")
         let installed = try writeProfiles(assets, teamId: teamId, profilesDirectory: profilesDirectory)
         try await checkIdentities(assets.certificates, keychain: keychain)

@@ -73,11 +73,20 @@ enum MatchFastlaneInstall {
             environment: environment,
             console: { _ in [] }
         )
-        if let result = try? await tool.result(), result.exitCode == 0,
-           let match = (result.stdout + "\n" + result.stderr).firstMatch(of: #/fastlane (\d+\.\d+\.\d+)/#) {
-            return String(match.1)
+        let reason: String
+        do {
+            let result = try await tool.result()
+            if result.exitCode != 0 {
+                reason = "fastlane --version exited with code \(result.exitCode)"
+            } else if let match = (result.stdout + "\n" + result.stderr).firstMatch(of: #/fastlane (\d+\.\d+\.\d+)/#) {
+                return String(match.1)
+            } else {
+                reason = "its output names no version"
+            }
+        } catch {
+            reason = "fastlane --version could not start. Details: \(error)"
         }
-        log.warning("Couldn't read the fastlane version. The install continues. If fastlane can't run, the match call fails.")
+        log.warning("Couldn't read the fastlane version (\(reason)). The install continues. If fastlane can't run, the match call fails.")
         return nil
     }
 

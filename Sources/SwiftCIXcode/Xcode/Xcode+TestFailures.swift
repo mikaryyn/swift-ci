@@ -16,8 +16,8 @@ extension Xcode {
     /// counts as passed, and a disabled test counts as skipped, as in the JUnit report.
     ///
     /// If `xcresulttool` cannot read the bundle, because it is missing or unreadable, the report gets the failure
-    /// `Test results were not found in <path>.` instead, and the function does not throw. The reason is not logged.
-    /// Any other error is thrown.
+    /// `Test results were not found in <path>.` instead, and the function does not throw. The reason, the exit code or
+    /// the decoding error, is logged as a warning. Any other error is thrown.
     ///
     /// Opens a step named "Report test results" when called at the top level of a command. `step` renames it.
     public static func reportTestFailures(resultBundleURL: URL, step name: String? = nil) async throws {

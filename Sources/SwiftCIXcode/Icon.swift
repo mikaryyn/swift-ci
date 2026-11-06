@@ -30,6 +30,8 @@ public struct Icon {
         backgroundColor: Color = Color(red: 0, green: 0, blue: 0, alpha: 0.5),
         step name: String? = nil
     ) async throws {
+        @Use var log: Log
+
         try await step(default: "Add text to app icon", name: name) {
             for file in try findImageFiles(in: iconURL) {
                 let fileURL = iconURL.appending(path: file)
@@ -47,6 +49,7 @@ public struct Icon {
                     return true
                 }
                 try save(image: i, to: fileURL)
+                log("Added text to \(fileURL.filePath)")
             }
         }
     }

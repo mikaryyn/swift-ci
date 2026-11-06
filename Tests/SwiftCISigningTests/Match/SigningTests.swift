@@ -20,7 +20,7 @@ extension GlobalStateTests {
         static let app1UUID = GlobalStateTests.MatchInstallationTests.app1UUID
         static let app2UUID = GlobalStateTests.MatchInstallationTests.app2UUID
         static let keychainPassword = GlobalStateTests.MatchInstallationTests.keychainPassword
-        static let versionWarning = "Couldn't read the fastlane version. The install continues. If fastlane can't run, the match call fails."
+        static let versionWarning = "Couldn't read the fastlane version (its output names no version). The install continues. If fastlane can't run, the match call fails."
 
         // MARK: - Helpers
 
@@ -293,6 +293,48 @@ extension GlobalStateTests {
             #expect(installed.count == 2)
             #expect(log.warnings == [Self.versionWarning])
             #expect(log.loggedLines.contains("Implementation: fastlane (fastlane)"))
+        }
+
+        /// A `fastlane --version` that exits non-zero: the warning gives the exit code, and the install still runs.
+        @Test func versionExitCodeIsInTheWarning() async throws {
+            let restore = secretsSetUp()
+            defer { restore() }
+            let (log, runner) = registerToolMocks()
+            let workspace = try Self.keychainWorkspace()
+            let match = Self.fastlaneHandler(version: "", profiles: workspace.profiles, copied: Self.plainAdhocProfiles)
+            runner.handler = { tool in
+                if tool.arguments.last == "--version" {
+                    return response(stderr: "fastlane: broken", exitCode: 3)
+                }
+                return try match(tool)
+            }
+
+            let installed = try await Self.installAdhoc(.fastlane(), workspace: workspace, bundleIdentifiers: Self.adhocIdentifiers, repository: Self.repository, step: nil)
+
+            #expect(installed.count == 2)
+            #expect(log.warnings == ["Couldn't read the fastlane version (fastlane --version exited with code 3). The install continues. If fastlane can't run, the match call fails."])
+        }
+
+        /// A `fastlane --version` that cannot start: the warning gives the reason, and the install still runs.
+        @Test func versionStartErrorIsInTheWarning() async throws {
+            let restore = secretsSetUp()
+            defer { restore() }
+            let (log, runner) = registerToolMocks()
+            let workspace = try Self.keychainWorkspace()
+            let match = Self.fastlaneHandler(version: "", profiles: workspace.profiles, copied: Self.plainAdhocProfiles)
+            runner.handler = { tool in
+                if tool.arguments.last == "--version" {
+                    throw BuildError(message: "SWIFTCI_TEST_START_FAILURE")
+                }
+                return try match(tool)
+            }
+
+            let installed = try await Self.installAdhoc(.fastlane(), workspace: workspace, bundleIdentifiers: Self.adhocIdentifiers, repository: Self.repository, step: nil)
+
+            #expect(installed.count == 2)
+            #expect(log.warnings.count == 1)
+            #expect(log.warnings.first?.hasPrefix("Couldn't read the fastlane version (fastlane --version could not start. Details: ") == true)
+            #expect(log.warnings.first?.contains("SWIFTCI_TEST_START_FAILURE") == true)
         }
 
         /// A profile that fastlane did not write is an error that names the identifier, the expected name and the folder.

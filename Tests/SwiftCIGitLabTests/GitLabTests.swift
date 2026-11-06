@@ -184,5 +184,59 @@ extension GlobalStateTests {
             #expect(items == [Item(id: 1)])
             #expect(client.requests.count == 1)
         }
+
+        /// Each request is logged with its method, its path and its status. The query and the token are not logged.
+        @Test func requestIsLoggedWithMethodPathAndStatus() async throws {
+            let client = HTTPClientMock()
+            let log = LogMock()
+            client.respond("GET", Self.url("/projects/group%2Fproject/merge_requests?state=opened"), body: Data("[]".utf8))
+            client.respond("POST", Self.url("/projects/group%2Fproject/merge_requests/1/notes"), status: 201, body: Data("{}".utf8))
+
+            try await SwiftCITest.withMocks(httpClient: client, log: log) {
+                let gitLab = GitLab(apiURL: Self.apiURL, token: Secret(value: Self.token))
+                _ = try await gitLab.send("GET", "/projects/group%2Fproject/merge_requests", query: [URLQueryItem(name: "state", value: "opened")])
+                _ = try await gitLab.send("POST", "/projects/group%2Fproject/merge_requests/1/notes", body: Data("{}".utf8))
+            }
+
+            #expect(log.loggedLines == [
+                "GitLab: GET /projects/group%2Fproject/merge_requests -> 200",
+                "GitLab: POST /projects/group%2Fproject/merge_requests/1/notes -> 201",
+            ])
+            #expect(!log.loggedLines.contains { $0.contains(Self.token) || $0.contains("state=opened") })
+        }
+
+        /// A failed status is logged with its status, and the error still names it.
+        @Test func failedStatusIsLoggedAndThrown() async throws {
+            let client = HTTPClientMock()
+            let log = LogMock()
+            client.respond("GET", Self.url("/user"), status: 401, body: Data(#"{"message":"401 Unauthorized"}"#.utf8))
+
+            let error = await SwiftCITest.withMocks(httpClient: client, log: log) {
+                await thrownError {
+                    let gitLab = GitLab(apiURL: Self.apiURL, token: Secret(value: Self.token))
+                    _ = try await gitLab.send("GET", "/user")
+                }
+            }
+
+            #expect(error?.message.contains("status 401") == true)
+            #expect(log.loggedLines == ["GitLab: GET /user -> 401"])
+        }
+
+        /// A request with no response is logged as `no response`, and the transport error is thrown.
+        @Test func requestWithNoResponseIsLogged() async throws {
+            let client = HTTPClientMock()
+            let log = LogMock()
+            client.respond("GET", Self.url("/user"), error: BuildError(message: "SWIFTCI_TEST_TRANSPORT"))
+
+            let error = await SwiftCITest.withMocks(httpClient: client, log: log) {
+                await thrownError {
+                    let gitLab = GitLab(apiURL: Self.apiURL, token: Secret(value: Self.token))
+                    _ = try await gitLab.send("GET", "/user")
+                }
+            }
+
+            #expect(error?.message == "SWIFTCI_TEST_TRANSPORT")
+            #expect(log.loggedLines == ["GitLab: GET /user -> no response"])
+        }
     }
 }

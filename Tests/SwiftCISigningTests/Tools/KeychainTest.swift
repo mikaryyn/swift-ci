@@ -87,5 +87,26 @@ extension GlobalStateTests {
             #expect(enteredSteps(in: log.loggedLines) == ["Entering step [Open login]"])
             #expect(log.loggedLines.allSatisfy { !$0.contains("pw-VALUE-2") })
         }
+
+        /// The full log header of `security -i` shows only `-i`, so the full log names the unlock before it. The line has
+        /// no password.
+        @Test func unlockExplanationIsInTheFullLogWithoutThePassword() async throws {
+            let restore = secretsSetUp()
+            defer { restore() }
+            let runner = ProcessRunnerMock()
+            var fullLog = ""
+
+            let result = await SwiftCITest.run(["unlock"]) {
+                register(ProcessRunner.self, runner)
+                command(Command("unlock") {
+                    try await Keychain.unlock(name: "name", password: Secret(value: "pw-VALUE-4"))
+                    fullLog = try String(contentsOfFile: FullLog.path?.filePath ?? "", encoding: .utf8)
+                })
+            }
+
+            #expect(result.exitCode == 0)
+            #expect(fullLog.contains("Unlocking keychain name.keychain with security unlock-keychain. The command is sent to security -i on standard input."))
+            #expect(!fullLog.contains("pw-VALUE-4"))
+        }
     }
 }
