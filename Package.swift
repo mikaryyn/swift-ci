@@ -13,6 +13,7 @@ let package = Package(
         .library(name: "SwiftCISigning", targets: ["SwiftCISigning"]),
         .library(name: "SwiftCISlack", targets: ["SwiftCISlack"]),
         .library(name: "SwiftCIGitLab", targets: ["SwiftCIGitLab"]),
+        .library(name: "SwiftCIAppStoreConnect", targets: ["SwiftCIAppStoreConnect"]),
         .library(name: "SwiftCITesting", targets: ["SwiftCITesting"]),
     ],
     dependencies: [],
@@ -39,6 +40,11 @@ let package = Package(
         ),
         .target(
             name: "SwiftCIGitLab",
+            dependencies: ["SwiftCI"],
+            swiftSettings: moduleSettings,
+        ),
+        .target(
+            name: "SwiftCIAppStoreConnect",
             dependencies: ["SwiftCI"],
             swiftSettings: moduleSettings,
         ),
@@ -81,6 +87,12 @@ let package = Package(
         .testTarget(
             name: "SwiftCIGitLabTests",
             dependencies: ["SwiftCIGitLab", "SwiftCITesting", "SwiftCITestSupport"],
+            swiftSettings: moduleSettings,
+        ),
+        .testTarget(
+            name: "SwiftCIAppStoreConnectTests",
+            dependencies: ["SwiftCIAppStoreConnect", "SwiftCITesting", "SwiftCITestSupport"],
+            resources: [.copy("Fixtures")],
             swiftSettings: moduleSettings,
         ),
         // Tests of the public API as an extension author sees it: `import SwiftCI` and `import SwiftCITesting` only.
