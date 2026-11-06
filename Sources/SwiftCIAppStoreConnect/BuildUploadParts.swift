@@ -66,7 +66,7 @@ struct BuildUploadParts {
 
         let started = now()
         var uploaded = 0
-        var reportedTenths = 0
+        var finished = 0
         try await withThrowingTaskGroup(of: SentPart.self) { group in
             var pending = parts.makeIterator()
             for _ in 0..<min(parallelUploads, parts.count) {
@@ -76,8 +76,8 @@ struct BuildUploadParts {
             }
             for try await sent in group {
                 uploaded += sent.size
-                logSent(sent, of: parts.count)
-                reportProgress(uploaded: uploaded, elapsed: now().timeIntervalSince(started), reportedTenths: &reportedTenths)
+                finished += 1
+                logSent(sent, of: parts.count, finished: finished, uploaded: uploaded)
                 if let part = pending.next() {
                     group.addTask { try await self.sendPart(part) }
                 }
@@ -209,24 +209,16 @@ struct BuildUploadParts {
         }
     }
 
-    /// Logs a part that was sent: `Part 3/13 (5.2 MB) uploaded in 4.1 s (1.3 MB/s)`, with `after 2 retries` when it was retried.
-    private func logSent(_ sent: SentPart, of total: Int) {
+    /// Logs a part that was sent, with the running totals of the upload: `Part 3/13 (5.2 MB) uploaded in 4.1 s (1.3 MB/s).
+    /// 4 of 13 parts done, 20.9 MB of 67.7 MB.` The counts include this part. With `after 2 retries` when it was retried,
+    /// the suffix comes before the period. Parts finish in any order, so `finished` counts them rather than using the number.
+    private func logSent(_ sent: SentPart, of total: Int, finished: Int, uploaded: Int) {
         let retries = switch sent.retries {
         case 0: ""
         case 1: " after 1 retry"
         default: " after \(sent.retries) retries"
         }
-        log("Part \(sent.number)/\(total) (\(Self.size(sent.size))) uploaded in \(Self.seconds(sent.seconds)) s (\(Self.rate(sent.size, seconds: sent.seconds))/s)\(retries)")
-    }
-
-    /// Logs the progress when it reaches a new tenth of the file, so at most ten lines are logged:
-    /// `Uploaded 40% (27.1 MB of 67.7 MB) in 35 s, 780 KB/s`. The elapsed time and the rate are those of the whole upload.
-    private func reportProgress(uploaded: Int, elapsed: TimeInterval, reportedTenths: inout Int) {
-        guard fileSize > 0 else { return }
-        let tenths = uploaded * 10 / fileSize
-        guard tenths > reportedTenths else { return }
-        reportedTenths = tenths
-        log("Uploaded \(tenths * 10)% (\(Self.size(uploaded)) of \(Self.size(fileSize))) in \(Int(elapsed.rounded())) s, \(Self.rate(uploaded, seconds: elapsed))/s")
+        log("Part \(sent.number)/\(total) (\(Self.size(sent.size))) uploaded in \(Self.seconds(sent.seconds)) s (\(Self.rate(sent.size, seconds: sent.seconds))/s)\(retries). \(finished) of \(total) parts done, \(Self.size(uploaded)) of \(Self.size(fileSize)).")
     }
 
     /// The MD5 of the file as lowercase hexadecimal. The file is read once more, in chunks, after every part was sent.

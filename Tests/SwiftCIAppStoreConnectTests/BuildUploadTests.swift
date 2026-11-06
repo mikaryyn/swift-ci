@@ -436,9 +436,9 @@ extension GlobalStateTests {
 
             let token = try Self.token(harness.http)
             let lines = harness.log.loggedLines.joined(separator: "\n")
-            #expect(lines.contains("Uploaded 100% ("))
             #expect(lines.contains("Part 1/2 ("))
             #expect(lines.contains("Part 2/2 ("))
+            #expect(harness.log.loggedLines.contains { $0.hasSuffix(". 2 of 2 parts done, \(BuildUploadParts.size(data.count)) of \(BuildUploadParts.size(data.count)).") })
             #expect(lines.contains("Created build upload \(Self.uploadID) and file \(Self.fileID)."))
             #expect(lines.contains("App Store Connect: build upload AWAITING_UPLOAD, file AWAITING_UPLOAD"))
             #expect(lines.contains("App Store Connect: build upload PROCESSING, file UPLOAD_COMPLETE"))
@@ -581,7 +581,7 @@ extension GlobalStateTests {
             #expect(upload.state == .processing)
             #expect(harness.sleeps.durations == [.seconds(2), .seconds(4)])
             #expect(harness.http.requests.filter { $0.method == "PUT" }.count == 4)
-            #expect(harness.log.loggedLines.contains { $0.hasPrefix("Part 1/2 (") && $0.hasSuffix(" after 2 retries") })
+            #expect(harness.log.loggedLines.contains { $0.hasPrefix("Part 1/2 (") && $0.contains(" after 2 retries. ") })
         }
 
         /// One part that gets 403 fails the step with that part's message, at once. The other part is still in flight, so it
@@ -731,8 +731,14 @@ extension GlobalStateTests {
             #expect(lines.contains("Uploading 2 parts (\(size)) to upload.example.com, 2 at a time."))
             #expect(lines.contains { $0.hasPrefix("Part 1/2 (\(BuildUploadParts.size(data.count / 2))) uploaded in ") })
             #expect(lines.contains { $0.hasPrefix("Part 2/2 (\(BuildUploadParts.size(data.count - data.count / 2))) uploaded in ") })
-            #expect(lines.contains { $0.hasPrefix("Uploaded 100% (\(size) of \(size)) in ") })
             #expect(lines.contains { $0.hasPrefix("Uploaded \(size) in ") && $0.hasSuffix("/s).") })
+            #expect(!lines.contains { $0.hasPrefix("Uploaded ") && $0.contains("%") })
+
+            // The parts finish in either order, so the running totals are checked as a set: the first to finish has its own size,
+            // and the last one has both parts.
+            let firstSizes = [BuildUploadParts.size(data.count / 2), BuildUploadParts.size(data.count - data.count / 2)]
+            #expect(lines.contains { line in firstSizes.contains { line.contains("). 1 of 2 parts done, \($0) of \(size).") } })
+            #expect(lines.contains { $0.hasSuffix(". 2 of 2 parts done, \(size) of \(size).") })
 
             let token = try Self.token(harness.http)
             let output = lines.joined(separator: "\n")
