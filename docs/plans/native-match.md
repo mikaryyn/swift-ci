@@ -54,8 +54,12 @@ fastlane.
   certificate in a throwaway keychain, the profiles were written, the
   `find-identity -v` check failed as expected for the self-signed
   certificate, and the search list and default keychain were restored.
-- [ ] Parity run of `.native` and `.fastlane` on the adopter's CI Mac
-  (adopter side, `docs/plans/swiftci-native-match.md` in the iOS repository).
+- [x] (2026-11-06) Parity run of `.native` and `.fastlane` on the adopter's
+  CI Mac, at SwiftCI 8a7c9a0: for `adhoc` and `appstore`, both left the same
+  `find-identity` output and the same 25 profile names and UUIDs. The adopter
+  then made `.native` its default and validated its internal and App Store
+  deploys on Jenkins (`docs/plans/swiftci-native-match.md` in the iOS
+  repository).
 
 ## Goal
 
