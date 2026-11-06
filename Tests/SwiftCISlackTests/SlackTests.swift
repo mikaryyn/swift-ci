@@ -244,7 +244,7 @@ extension GlobalStateTests {
             #expect(log.completions == ["Slack webhook response: invalid_token"])
         }
 
-        /// A transport error is thrown as the client throws it, and the log says that no response arrived.
+        /// A transport error throws a message without the webhook URL, and the log says that no response arrived.
         @Test func transportErrorIsThrownAndLoggedAsNoResponse() async throws {
             let restore = secretsSetUp()
             defer { restore() }
@@ -258,7 +258,8 @@ extension GlobalStateTests {
                 }
             }
 
-            #expect(error?.message == "SWIFTCI_TEST_TRANSPORT")
+            #expect(error?.message.hasPrefix("The Slack webhook could not be reached.") == true)
+            #expect(error?.message.contains(Self.webhook) == false)
             #expect(log.loggedLines.contains("Slack: POST webhook -> no response"))
             #expect(log.completions.isEmpty)
         }

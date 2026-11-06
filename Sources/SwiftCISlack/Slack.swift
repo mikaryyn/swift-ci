@@ -152,7 +152,7 @@ public struct Slack {
     }
 
     /// Posts `message` to the webhook. The status is logged as `Slack: POST webhook -> status`, or as `no response` when no
-    /// response arrives, and the response body is logged. A transport error is thrown as the client throws it. A status
+    /// response arrives, and the response body is logged. A transport error throws a ``BuildError`` without the URL, because the URL is the secret. A status
     /// outside 2xx throws a ``BuildError`` with the status.
     private func sendMessage(_ message: [String: Any]) async throws {
         // The webhook URL is revealed only here, to build the request.
@@ -176,7 +176,10 @@ public struct Slack {
             response = try await client.send(request)
         } catch {
             log("Slack: POST webhook -> no response")
-            throw error
+            // The client's error names the URL, which is the webhook secret, so it is replaced.
+            throw BuildError(
+                message: "The Slack webhook could not be reached. Check the network connection of the machine, then run the step again."
+            )
         }
         log("Slack: POST webhook -> \(response.statusCode)")
         log.completion("Slack webhook response: \(String(data: response.body, encoding: .utf8) ?? "unknown")")
