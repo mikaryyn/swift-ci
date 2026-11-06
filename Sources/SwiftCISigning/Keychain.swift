@@ -29,7 +29,8 @@ public enum Keychain {
     }
 
     /// Runs `security unlock-keychain` for the keychain at `path`. The password goes to `security -i` on standard
-    /// input, so it is not an argument and not in the full log. A non-zero exit throws.
+    /// input, so it is not an argument and not in the full log. The full log gets a line that names the operation, since
+    /// its header shows only `security -i`. A non-zero exit throws.
     static func unlockKeychain(path: String, password: Secret) async throws {
         let tool = try SecurityInteractive.tool(for: [
             SecurityArgument(kind: "command", value: "unlock-keychain"),
@@ -37,6 +38,7 @@ public enum Keychain {
             SecurityArgument(kind: "keychain password", value: try password.revealedValue()),
             SecurityArgument(kind: "keychain path", value: path),
         ])
+        try FullLog.write("Unlocking keychain \(path) with security unlock-keychain. The command is sent to security -i on standard input.")
         try await tool.run()
     }
 }

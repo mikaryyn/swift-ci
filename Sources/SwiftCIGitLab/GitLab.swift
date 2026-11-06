@@ -4,8 +4,8 @@ import SwiftCI
 /// A connection to the API of a GitLab server. Requests send the token in the `PRIVATE-TOKEN` header as a secret header,
 /// so the token is never written to the log or to an error message.
 ///
-/// The connection itself opens no step and logs nothing. A method that does work for a script says in its doc comment
-/// whether it opens a step.
+/// The connection itself opens no step. It logs one line per request, with the method, the path and the status, and never
+/// the token or the query. A method that does work for a script says in its doc comment whether it opens a step.
 public struct GitLab {
     /// Creates a connection to a GitLab server.
     ///
@@ -18,11 +18,13 @@ public struct GitLab {
     }
 
     @Use private var client: HTTPClient
+    @Use private var log: Log
     private let apiURL: URL
     private let token: Secret
 
-    /// Sends a request to `path` under the API base and returns the response. A status outside 2xx throws a
-    /// ``BuildError`` with the method, the path, the status and GitLab's message. The token is not in the error.
+    /// Sends a request to `path` under the API base and returns the response. Each request is logged with its status, or
+    /// as `no response` when no response arrives. A status outside 2xx throws a ``BuildError`` with the method, the path,
+    /// the status and GitLab's message. The token is not in the error.
     ///
     /// - Parameters:
     ///   - method: The HTTP method, such as `GET` or `POST`.
@@ -42,7 +44,14 @@ public struct GitLab {
             secretHeaders: ["PRIVATE-TOKEN": token],
             body: body
         )
-        let response = try await client.send(request)
+        let response: HTTPResponse
+        do {
+            response = try await client.send(request)
+        } catch {
+            log("GitLab: \(method) \(path) -> no response")
+            throw error
+        }
+        log("GitLab: \(method) \(path) -> \(response.statusCode)")
         guard (200..<300).contains(response.statusCode) else {
             throw Self.statusError(method, path, response)
         }

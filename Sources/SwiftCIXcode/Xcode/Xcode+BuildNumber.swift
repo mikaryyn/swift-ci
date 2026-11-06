@@ -16,6 +16,8 @@ extension Xcode {
     }
 
     private static func writeBuildNumber(_ buildNumber: String, to url: URL) throws {
+        @Use var log: Log
+
         let data: Data
         do {
             data = try Data(contentsOf: url)
@@ -34,5 +36,6 @@ extension Xcode {
         } catch {
             throw BuildError(message: "Failed to write file '\(url.filePath)'. Details: \(error)")
         }
+        log("Set CFBundleVersion in \(url.filePath)")
     }
 }

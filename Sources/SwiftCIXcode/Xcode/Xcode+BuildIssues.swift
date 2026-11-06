@@ -16,7 +16,8 @@ extension Xcode {
     ///
     /// If `xcresulttool` cannot read the bundle, because it is missing or unreadable, the report gets the failure
     /// `Build results were not found in <path>.` and the function does not throw, as
-    /// ``reportTestFailures(resultBundleURL:step:)`` does. The reason is not logged. Any other error is thrown.
+    /// ``reportTestFailures(resultBundleURL:step:)`` does. The reason, the exit code or the decoding error, is logged as a
+    /// warning. Any other error is thrown.
     ///
     /// Opens a step named "Report build issues" when called at the top level of a command. `step` renames it.
     public static func reportBuildIssues(
@@ -51,8 +52,11 @@ extension Xcode {
     /// `xcrun xcresulttool get build-results --path <bundle> --format json` (Xcode 16 and later).
     /// A query, so it does not open a step.
     ///
-    /// - Throws: ``BuildError`` that names the bundle if `xcresulttool` fails or its output cannot be read.
+    /// - Throws: ``BuildError`` that names the bundle if `xcresulttool` fails or its output cannot be read. The reason is
+    ///   also logged as a warning.
     private static func buildResults(resultBundleURL: URL) async throws -> BuildResults {
+        @Use var log: Log
+
         let path = resultBundleURL.filePath
         let tool = Tool(
             command: xcrunPath,
@@ -62,18 +66,18 @@ extension Xcode {
         let result = try await tool.result()
         guard result.exitCode == 0 else {
             let details = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
-            throw BuildError(
-                message: "Failed to read the build results of the result bundle at '\(path)'. "
-                    + "xcresulttool exited with code \(result.exitCode)."
-                    + (details.isEmpty ? "" : " Details: \(details)")
-            )
+            let message = "Failed to read the build results of the result bundle at '\(path)'. "
+                + "xcresulttool exited with code \(result.exitCode)."
+                + (details.isEmpty ? "" : " Details: \(details)")
+            log.warning(message)
+            throw BuildError(message: message)
         }
         do {
             return try JSONDecoder().decode(BuildResults.self, from: Data(result.stdout.utf8))
         } catch {
-            throw BuildError(
-                message: "Failed to decode the build results of the result bundle at '\(path)'. Details: \(error)"
-            )
+            let message = "Failed to decode the build results of the result bundle at '\(path)'. Details: \(error)"
+            log.warning(message)
+            throw BuildError(message: message)
         }
     }
 

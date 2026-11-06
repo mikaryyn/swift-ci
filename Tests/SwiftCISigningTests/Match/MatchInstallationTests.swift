@@ -273,6 +273,30 @@ extension GlobalStateTests {
             #expect(log.warnings == ["security exited with code 1 while setting the key partition list. The install continues."])
         }
 
+        /// The partition list is a `security -i` call whose header shows only `-i`, so the full log names the operation before
+        /// it. The line names the keychain and holds no password.
+        @Test func partitionListExplanationIsInTheFullLog() async throws {
+            let restore = secretsSetUp()
+            defer { restore() }
+            let runner = ProcessRunnerMock()
+            let assets = try fixtureInstallAssets()
+            runner.handler = installHandler(identities: identityOutput(assets))
+            let workspace = try InstallWorkspace()
+            var fullLog = ""
+
+            let result = await SwiftCITest.run(["install"]) {
+                register(ProcessRunner.self, runner)
+                command(Command("install") {
+                    _ = try await install(assets, workspace: workspace)
+                    fullLog = try String(contentsOfFile: FullLog.path?.filePath ?? "", encoding: .utf8)
+                })
+            }
+
+            #expect(result.exitCode == 0)
+            #expect(fullLog.contains("Setting the key partition list of keychain \(workspace.keychain.filePath) with security set-key-partition-list. The command is sent to security -i on standard input."))
+            #expect(!fullLog.contains(GlobalStateTests.MatchInstallationTests.keychainPassword))
+        }
+
         @Test func profilesAreWrittenAsUUIDFilesWithTheDecryptedBytes() async throws {
             let restore = secretsSetUp()
             defer { restore() }

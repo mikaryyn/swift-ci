@@ -224,7 +224,7 @@ extension GlobalStateTests {
         }
 
         /// A bundle that `xcresulttool` cannot open, because it is missing, adds one failure with its path and does not
-        /// throw. The details of `xcresulttool` are not logged.
+        /// throw. The exit code and the details of `xcresulttool` are logged as a warning.
         @Test func missingBundleAddsOneFailureAndDoesNotThrow() async throws {
             let runner = ProcessRunnerMock()
             runner.responses = [response(stderr: "error: unable to open the bundle", exitCode: 1)]
@@ -237,20 +237,25 @@ extension GlobalStateTests {
             #expect(report?.findings == [
                 ReportFinding(severity: .failure, text: "Build results were not found in /work/Missing.xcresult.")
             ])
-            #expect(!lines.contains { $0.contains("unable to open the bundle") })
+            #expect(lines.contains(
+                "<Warning> Failed to read the build results of the result bundle at '/work/Missing.xcresult'. xcresulttool exited with code 1. Details: error: unable to open the bundle"
+            ))
         }
 
-        /// A bundle whose output is not JSON adds the same failure and does not throw.
+        /// A bundle whose output is not JSON adds the same failure and does not throw. The decoding error is logged as a
+        /// warning.
         @Test func unreadableOutputAddsOneFailureAndDoesNotThrow() async throws {
             let runner = ProcessRunnerMock()
             runner.responses = [response(stdout: "not json")]
 
             let (result, report) = await Self.run(runner)
 
+            let lines = result.log.map(stripANSI)
             #expect(result.exitCode == 1)
             #expect(report?.findings == [
                 ReportFinding(severity: .failure, text: "Build results were not found in /work/Sample.xcresult.")
             ])
+            #expect(lines.contains { $0.hasPrefix("<Warning> Failed to decode the build results of the result bundle at '/work/Sample.xcresult'. Details: ") })
         }
 
         /// The step opens "Report build issues" at the top level of a command, and `step:` renames it.

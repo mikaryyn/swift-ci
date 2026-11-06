@@ -33,6 +33,8 @@ extension Xcode {
     ///
     /// - Throws: ``BuildError`` that names the bundle, as ``testReport(resultBundleURL:)`` does.
     static func testResults(resultBundleURL: URL) async throws -> TestResults {
+        @Use var log: Log
+
         let path = resultBundleURL.filePath
         let tool = Tool(
             command: xcrunPath,
@@ -42,19 +44,19 @@ extension Xcode {
         let result = try await tool.result()
         guard result.exitCode == 0 else {
             let details = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
-            throw BuildError(
-                message: "Failed to read the test results of the result bundle at '\(path)'. "
-                    + "xcresulttool exited with code \(result.exitCode)."
-                    + (details.isEmpty ? "" : " Details: \(details)")
-            )
+            let message = "Failed to read the test results of the result bundle at '\(path)'. "
+                + "xcresulttool exited with code \(result.exitCode)."
+                + (details.isEmpty ? "" : " Details: \(details)")
+            log.warning(message)
+            throw BuildError(message: message)
         }
         let results: TestResultsJSON
         do {
             results = try JSONDecoder().decode(TestResultsJSON.self, from: Data(result.stdout.utf8))
         } catch {
-            throw BuildError(
-                message: "Failed to decode the test results of the result bundle at '\(path)'. Details: \(error)"
-            )
+            let message = "Failed to decode the test results of the result bundle at '\(path)'. Details: \(error)"
+            log.warning(message)
+            throw BuildError(message: message)
         }
         return makeResults(from: results.testNodes)
     }
