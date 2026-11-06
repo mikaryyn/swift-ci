@@ -52,7 +52,7 @@ public final class LogMock: Log {
         public let lines: [String]
     }
 
-    public func callAsFunction(_ line: String) {
+    public func consoleOnly(_ line: String) {
         loggedLines.append(line)
     }
 
@@ -112,12 +112,12 @@ public final class LogMock: Log {
     }
 }
 
-/// Uses the default formatting of ``Log`` and hands each formatted console line to `record`. Only `callAsFunction` is
+/// Uses the default formatting of ``Log`` and hands each formatted console line to `record`. Only `consoleOnly` is
 /// written here. The other requirements come from the defaults, so the formatting is the same as in SwiftCI.
 private struct LineFormatter: Log {
     let record: (String) -> Void
 
-    func callAsFunction(_ line: String) {
+    func consoleOnly(_ line: String) {
         record(line)
     }
 }

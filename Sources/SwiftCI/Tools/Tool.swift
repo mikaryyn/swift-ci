@@ -160,6 +160,7 @@ public struct Tool {
 
     /// Checks the secrets, writes the header, runs the process through the runner, and sends each line to the full log
     /// and the console. A secret is checked before anything else, so a missing value stops the call before the runner.
+    /// The exit code goes to the full log after the process ends. A failure of the runner goes there too, before it is thrown.
     private func execute() async throws -> ToolResult {
         @Use var runner: ProcessRunner
         @Use var log: Log
@@ -170,14 +171,18 @@ public struct Tool {
         let result: ToolResult
         do {
             result = try await runner.run(self) { line in
-                try FullLog.write(line.stream == .stderr ? "[stderr] \(line.text)" : line.text)
+                // NUL separates the entries of `git -z` output, so each entry gets a line of its own in the full log.
+                let text = line.text.replacingOccurrences(of: "\0", with: "\n")
+                try FullLog.write(line.stream == .stderr ? "[stderr] \(text)" : text)
                 try copy?.write(line.text)
-                consoleTexts(for: line.text).forEach(log.callAsFunction)
+                consoleTexts(for: line.text).forEach(log.consoleOnly)
             }
         } catch {
             try? copy?.close()
+            try? FullLog.write("➤ Error: \(errorMessage(error))")
             throw error
         }
+        try FullLog.write("➤ Exit code \(result.exitCode)")
         try copy?.close()
         return result
     }
@@ -190,6 +195,11 @@ public struct Tool {
             try FullLog.write(arguments.map { "  ➤ \($0)" }.joined(separator: "\n"))
         }
         try FullLog.write("➤ Working directory \(workingDirectory?.path ?? "(current directory)")")
+        if let timeout {
+            let parts = timeout.components
+            let seconds = Double(parts.seconds) + Double(parts.attoseconds) / 1e18
+            try FullLog.write("➤ Timeout \(String(format: "%g", seconds)) s")
+        }
         let names = environment.keys.sorted()
         if !names.isEmpty {
             try FullLog.write("➤ Environment variables \(names.joined(separator: ", "))")

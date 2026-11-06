@@ -17,7 +17,7 @@ internal func publishRunReport(_ context: RunContext, failure: inout CommandFail
     @Use var log: Log
 
     for line in summaryLines(report, colored: true) {
-        log(line)
+        log.consoleOnly(line)
     }
     if !FullLog.hasFailed {
         for line in summaryLines(report, colored: false) {

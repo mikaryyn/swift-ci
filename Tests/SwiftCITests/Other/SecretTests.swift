@@ -24,7 +24,7 @@ func withRealEnvironmentVariable<T>(_ name: String, _ value: String, _ body: () 
 final class RecordingLog: Log {
     var calls: [String] = []
 
-    func callAsFunction(_ line: String) { calls.append("line:\(line)") }
+    func consoleOnly(_ line: String) { calls.append("consoleOnly:\(line)") }
     func completion(_ line: String) { calls.append("completion:\(line)") }
     func success(_ line: String) { calls.append("success:\(line)") }
     func warning(_ line: String) { calls.append("warning:\(line)") }
@@ -305,7 +305,7 @@ extension GlobalStateTests {
 
             let mask = SecretRegistry.mask
             #expect(recording.calls == [
-                "line:line \(mask)",
+                "consoleOnly:line \(mask)",
                 "completion:completion \(mask)",
                 "success:success \(mask)",
                 "warning:warning \(mask)",

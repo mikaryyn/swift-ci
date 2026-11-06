@@ -105,6 +105,7 @@ internal func readInput<T>(_ name: String, default defaultValue: T?, convert: (S
     let fromEnvironment = EnvironmentSource.value(environmentName).flatMap { $0.isEmpty ? nil : $0 }
     guard let raw = fromOption ?? fromEnvironment else {
         if let defaultValue {
+            try FullLog.write("➤ Input \(name)=\(defaultValue)")
             return defaultValue
         }
         throw BuildError(
@@ -112,6 +113,8 @@ internal func readInput<T>(_ name: String, default defaultValue: T?, convert: (S
             code: .usage
         )
     }
+    // Written before the conversion, so that a value that is not valid is in the full log too.
+    try FullLog.write("➤ Input \(name)=\(raw)")
     guard let converted = convert(raw) else {
         let message = fromOption != nil
             ? "Invalid value for --\(name): the value is not a valid \(inputTypeName). Pass a valid \(inputTypeName) as \(option), or set \(environmentName) to one."
