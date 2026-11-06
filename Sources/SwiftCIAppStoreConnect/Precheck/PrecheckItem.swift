@@ -33,13 +33,13 @@ struct PrecheckItem: Equatable {
             }
         }
 
-        /// The name of the field as fastlane prints it, without the locale. The privacy policy text keeps fastlane's
-        /// leading space.
+        /// The name of the field as fastlane prints it, without the locale. `U+F8FF` is the Apple logo of fastlane's text,
+        /// shown by Apple's fonts; other fonts may show it as a blank or a box.
         var label: String {
             switch self {
             case .appName: return "app name"
             case .appSubtitle: return "app name subtitle"
-            case .privacyPolicyText: return " tv privacy policy"
+            case .privacyPolicyText: return "\u{F8FF} tv privacy policy"
             case .privacyPolicyURL: return "privacy URL"
             case .copyright: return "copyright"
             case .keywords: return "keywords"

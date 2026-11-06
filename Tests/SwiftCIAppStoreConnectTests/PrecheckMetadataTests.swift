@@ -103,7 +103,7 @@ extension GlobalStateTests {
             #expect(items.map(\.friendlyName) == [
                 "app name: (en-US)",
                 "app name subtitle: (en-US)",
-                " tv privacy policy: (en-US)",
+                "\u{F8FF} tv privacy policy: (en-US)",
                 "privacy URL: (en-US)",
                 "copyright",
                 "keywords: (en-US)",

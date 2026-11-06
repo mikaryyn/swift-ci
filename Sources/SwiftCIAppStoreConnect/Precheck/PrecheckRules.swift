@@ -33,14 +33,14 @@ enum PrecheckRules {
     /// The rules for the current year of the machine's calendar.
     static let all = rules(currentYear: Calendar.current.component(.year, from: Date()))
 
-    /// The rules in fastlane's order.
+    /// The rules in fastlane's order. `U+F8FF` in a name or description is the Apple logo of fastlane's text.
     ///
     /// - Parameter currentYear: The year that a copyright year may not be after.
     static func rules(currentYear: Int) -> [PrecheckRule] {
         [
             wordRule(
-                name: "No negative  sentiment",
-                description: "mentioning  in a way that could be considered negative",
+                name: "No negative \u{F8FF} sentiment",
+                description: "mentioning \u{F8FF} in a way that could be considered negative",
                 phrases: [
                     "ios bug", "macos bug", "safari bug", "webkit bug", "uikit bug", "apple store bug",
                     "slow iphone", "slow ipad", "old iphone",
@@ -52,7 +52,7 @@ enum PrecheckRules {
                 phrases: ["hipster ipsum", "bacon ipsum", "lorem ipsum", "placeholder", "text here"]
             ),
             wordRule(
-                name: "No mentioning  competitors",
+                name: "No mentioning \u{F8FF} competitors",
                 description: "mentioning other platforms, like Android or Blackberry",
                 phrases: [
                     "android", "google", "compuserve", "windows phone", "windows 10 mobile", "sailfish os",

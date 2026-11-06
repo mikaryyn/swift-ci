@@ -37,9 +37,9 @@ extension GlobalStateTests {
             let rules = PrecheckRules.rules(currentYear: 2026)
 
             #expect(rules.map { "\($0.name) -> \($0.description)" } == [
-                "No negative  sentiment -> mentioning  in a way that could be considered negative",
+                "No negative \u{F8FF} sentiment -> mentioning \u{F8FF} in a way that could be considered negative",
                 "No placeholder text -> using placeholder text (e.g.:\"lorem ipsum\", \"text here\", etc...)",
-                "No mentioning  competitors -> mentioning other platforms, like Android or Blackberry",
+                "No mentioning \u{F8FF} competitors -> mentioning other platforms, like Android or Blackberry",
                 "No future functionality promises -> mentioning features or content that is not currently available in your app",
                 "No words indicating test content -> using text indicating this release is a test",
                 "No curse words -> including words that might be considered objectionable",
@@ -56,7 +56,7 @@ extension GlobalStateTests {
 
         @Test func friendlyNamesFollowFastlane() {
             #expect(Self.text(.description, "x").friendlyName == "description: (en-US)")
-            #expect(PrecheckItem(field: .privacyPolicyText, locale: "en-US", value: nil).friendlyName == " tv privacy policy: (en-US)")
+            #expect(PrecheckItem(field: .privacyPolicyText, locale: "en-US", value: nil).friendlyName == "\u{F8FF} tv privacy policy: (en-US)")
             #expect(PrecheckItem(field: .releaseNotes, locale: "fi", value: nil).friendlyName == "what's new: (fi)")
             #expect(PrecheckItem(field: .marketingURL, locale: "fi", value: nil).friendlyName == "marketing URL: (fi)")
             #expect(PrecheckItem(field: .copyright, locale: nil, value: "© 2026").friendlyName == "copyright")
@@ -92,7 +92,7 @@ extension GlobalStateTests {
         }
 
         @Test func negativeSentimentFindsFastlaneWords() async throws {
-            let rule = try Self.rule("No negative  sentiment")
+            let rule = try Self.rule("No negative \u{F8FF} sentiment")
 
             #expect(await rule.failure(for: Self.text(.description, "Slow iPad on launch")) == "found: slow ipad")
             #expect(await rule.failure(for: Self.text(.description, "This iOS bug is fixed")) == "found: ios bug")
@@ -106,7 +106,7 @@ extension GlobalStateTests {
         }
 
         @Test func competitorRuleAllowsGoogleAnalyticsAndDrive() async throws {
-            let rule = try Self.rule("No mentioning  competitors")
+            let rule = try Self.rule("No mentioning \u{F8FF} competitors")
 
             #expect(await rule.failure(for: Self.text(.description, "Google Analytics only")) == nil)
             #expect(await rule.failure(for: Self.text(.description, "Google Drive and Google Analytics")) == nil)
