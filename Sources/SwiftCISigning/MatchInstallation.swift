@@ -191,18 +191,26 @@ extension MatchInstallation {
     }
 
     /// Runs a tool whose failure the install tolerates. A non-zero exit code is logged as a warning that names the tool
-    /// and the code, and the caller continues. Other failures, such as a program that cannot be started, still throw.
+    /// and the code, then the last lines of stderr, because the console filter of the tool may hide them. The caller
+    /// continues. Other failures, such as a program that cannot be started, still throw.
     static func runTolerated(_ tool: Tool, what: String) async throws {
         @Use var log: Log
 
         let result = try await tool.result()
         if result.exitCode != 0 {
-            log.warning("\(tool.displayName) exited with code \(result.exitCode) while \(what). The install continues.")
+            var message = "\(tool.displayName) exited with code \(result.exitCode) while \(what). The install continues."
+            let stderr = result.stderr.trimmingCharacters(in: .newlines)
+            if !stderr.isEmpty {
+                message += "\n" + stderr.components(separatedBy: "\n").suffix(10).joined(separator: "\n")
+            }
+            log.warning(message)
         }
     }
 
     /// The `set-key-partition-list` call of the install, as a `security -i` tool. The password is revealed here and sent
-    /// on standard input only. Tests build the tool and check it without running it.
+    /// on standard input only. The console hides all of its output: on success `security` prints a dump of the key
+    /// attributes, whose format varies, and a failure's reason reaches the console through the warning of
+    /// ``runTolerated(_:what:)``. The full log keeps the output. Tests build the tool and check it without running it.
     static func partitionListTool(keychainURL: URL, password: Secret) throws -> Tool {
         try SecurityInteractive.tool(for: [
             SecurityArgument(kind: "command", value: "set-key-partition-list"),
@@ -212,6 +220,6 @@ extension MatchInstallation {
             SecurityArgument(kind: "option", value: "-k"),
             SecurityArgument(kind: "keychain password", value: try password.revealedValue()),
             SecurityArgument(kind: "keychain path", value: keychainURL.filePath),
-        ])
+        ], filters: [{ _ in nil }])
     }
 }

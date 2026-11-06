@@ -80,6 +80,14 @@ extension GlobalStateTests {
         static let keychainPassword = "kc-VALUE-secret"
         static let app1UUID = "11111111-1111-4111-8111-111111111111"
         static let app2UUID = "22222222-2222-4222-8222-222222222222"
+        /// The dump that `security set-key-partition-list` prints on success. Its format varies, so this is one sample.
+        static let partitionDumpLines = [
+            "keychain: \"/tmp/x.keychain-db\"",
+            "version: 512",
+            "class: 0x00000010",
+            "attributes:",
+            "    0x00000000 <uint32>=0x00000010",
+        ]
 
         @Test func importsTheCertificateThenItsKeyWithTheFixedArguments() async throws {
             let restore = secretsSetUp()
@@ -271,6 +279,71 @@ extension GlobalStateTests {
 
             #expect(installed.count == 2)
             #expect(log.warnings == ["security exited with code 1 while setting the key partition list. The install continues."])
+        }
+
+        /// The wrong-password output of `security -i` is hidden on the console, so its stderr lines are in the warning.
+        @Test func wrongPasswordReasonIsInTheWarningAndTheInstallContinues() async throws {
+            let restore = secretsSetUp()
+            defer { restore() }
+            let (log, runner) = registerToolMocks()
+            let assets = try fixtureInstallAssets()
+            let stderr = "security: SecKeychainUnlock: The user name or passphrase you entered is not correct.\nset-key-partition-list: returned 1"
+            runner.handler = installHandler(
+                identities: identityOutput(assets),
+                partition: .init(
+                    lines: stderr.components(separatedBy: "\n").map(stderrLine),
+                    result: ToolResult(stdout: "", stderr: stderr, exitCode: 1)
+                )
+            )
+            let workspace = try InstallWorkspace()
+
+            let installed = try await install(assets, workspace: workspace)
+
+            #expect(installed.count == 2)
+            #expect(log.warnings == ["security exited with code 1 while setting the key partition list. The install continues.\n\(stderr)"])
+        }
+
+        /// The console hides every line of the partition list tool, whatever the format of the dump.
+        @Test func partitionListToolHidesItsDumpOnTheConsole() throws {
+            let restore = secretsSetUp()
+            defer { restore() }
+            let tool = try MatchInstallation.partitionListTool(
+                keychainURL: URL(filePath: "/tmp/x.keychain-db"),
+                password: Secret(value: Self.keychainPassword)
+            )
+
+            #expect(Self.partitionDumpLines.allSatisfy { consoleLine($0, by: tool) == nil })
+        }
+
+        /// On success the dump is hidden on the console and kept in the full log, and the password is not in the log.
+        @Test func successfulPartitionListDumpIsOnlyInTheFullLog() async throws {
+            let restore = secretsSetUp()
+            defer { restore() }
+            let runner = ProcessRunnerMock()
+            let assets = try fixtureInstallAssets()
+            let dump = Self.partitionDumpLines
+            runner.handler = installHandler(
+                identities: identityOutput(assets),
+                partition: .init(
+                    lines: dump.map(stdoutLine),
+                    result: ToolResult(stdout: dump.joined(separator: "\n"), stderr: "", exitCode: 0)
+                )
+            )
+            let workspace = try InstallWorkspace()
+            var fullLog = ""
+
+            let result = await SwiftCITest.run(["install"], runner: runner) {
+                command(Command("install") {
+                    _ = try await install(assets, workspace: workspace)
+                    fullLog = try String(contentsOfFile: FullLog.path?.filePath ?? "", encoding: .utf8)
+                })
+            }
+
+            #expect(result.exitCode == 0)
+            #expect(!result.plainLog.contains { $0.contains("keychain: ") || $0.contains("<uint32>") })
+            #expect(fullLog.components(separatedBy: "\n").contains(dump[0]))
+            #expect(fullLog.components(separatedBy: "\n").contains(dump[4]))
+            #expect(!fullLog.contains(Self.keychainPassword))
         }
 
         /// The partition list is a `security -i` call whose header shows only `-i`, so the full log names the operation before
@@ -504,6 +577,11 @@ private func install(_ assets: MatchAssets, workspace: InstallWorkspace) async t
         ),
         profilesDirectory: workspace.profiles
     )
+}
+
+/// The line the console shows for `line` from `tool`: what its filters keep, or `nil` if they hide it.
+private func consoleLine(_ line: String, by tool: Tool) -> String? {
+    tool.filters.reduce(Optional(line)) { text, filter in text.flatMap(filter) }
 }
 
 /// The POSIX mode of the file at `path`, or `nil` if it cannot be read.

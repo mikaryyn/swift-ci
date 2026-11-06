@@ -84,9 +84,10 @@ enum SecurityInteractive {
     }
 
     /// The `security -i` tool for one command. The line is sent on standard input as a secret, so it never appears in
-    /// the arguments or in the full log. `-v` is not used, because it would print the arguments.
-    static func tool(for arguments: [SecurityArgument]) throws -> Tool {
+    /// the arguments or in the full log. `-v` is not used, because it would print the arguments. `filters` are the console
+    /// filters of the tool, as in ``Tool``. The default shows every line.
+    static func tool(for arguments: [SecurityArgument], filters: [Filter] = []) throws -> Tool {
         let line = try commandLine(arguments)
-        return Tool(command: "/usr/bin/security", arguments: ["-i"], input: .secret(Secret(value: line)))
+        return Tool(command: "/usr/bin/security", arguments: ["-i"], input: .secret(Secret(value: line)), filters: filters)
     }
 }
