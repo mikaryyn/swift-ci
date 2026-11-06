@@ -1,0 +1,20 @@
+{
+  "data": [
+    {
+      "type": "appStoreVersionLocalizations",
+      "id": "version-loc-en",
+      "attributes": {
+        "locale": "en-US",
+        "keywords": "tasks,todo,planner",
+        "description": "MyApp helps you plan your day.",
+        "whatsNew": "Bug fixes and performance improvements.",
+        "supportUrl": "https://example.com/support",
+        "marketingUrl": "https://example.com"
+      }
+    }
+  ],
+  "links": {
+    "self": "https://api.appstoreconnect.apple.com/v1/appStoreVersions/version-2/appStoreVersionLocalizations?limit=200",
+    "next": "https://api.appstoreconnect.apple.com/v1/appStoreVersions/version-2/appStoreVersionLocalizations?cursor=page-2"
+  }
+}

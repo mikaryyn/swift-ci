@@ -33,7 +33,7 @@ extension GlobalStateTests {
 
         // MARK: Catalogue
 
-        @Test func rulesAreTheSevenNonURLRulesInFastlaneOrderWithFastlaneNames() {
+        @Test func rulesAreTheEightRulesInFastlaneOrderWithFastlaneNames() {
             let rules = PrecheckRules.rules(currentYear: 2026)
 
             #expect(rules.map { "\($0.name) -> \($0.description)" } == [
@@ -44,6 +44,7 @@ extension GlobalStateTests {
                 "No words indicating test content -> using text indicating this release is a test",
                 "No curse words -> including words that might be considered objectionable",
                 "No incorrect or missing copyright date -> using a copyright year in the future, or missing a copyright year",
+                "No broken urls -> unreachable URLs in app metadata",
             ])
             #expect(PrecheckRules.all.map(\.name) == rules.map(\.name))
         }

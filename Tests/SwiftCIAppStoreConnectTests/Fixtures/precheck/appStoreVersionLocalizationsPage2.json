@@ -1,0 +1,19 @@
+{
+  "data": [
+    {
+      "type": "appStoreVersionLocalizations",
+      "id": "version-loc-fi",
+      "attributes": {
+        "locale": "fi",
+        "keywords": "tehtävät,suunnittelu",
+        "description": "MyApp auttaa suunnittelemaan päivän.",
+        "whatsNew": null,
+        "supportUrl": "https://example.com/tuki",
+        "marketingUrl": null
+      }
+    }
+  ],
+  "links": {
+    "self": "https://api.appstoreconnect.apple.com/v1/appStoreVersions/version-2/appStoreVersionLocalizations?cursor=page-2"
+  }
+}

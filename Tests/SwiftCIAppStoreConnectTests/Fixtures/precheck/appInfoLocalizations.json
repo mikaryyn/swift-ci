@@ -1,0 +1,18 @@
+{
+  "data": [
+    {
+      "type": "appInfoLocalizations",
+      "id": "info-loc-en",
+      "attributes": {
+        "locale": "en-US",
+        "name": "MyApp",
+        "subtitle": "Track your tasks",
+        "privacyPolicyText": "We do not collect personal data.",
+        "privacyPolicyUrl": "https://example.com/privacy"
+      }
+    }
+  ],
+  "links": {
+    "self": "https://api.appstoreconnect.apple.com/v1/appInfos/info-1/appInfoLocalizations?limit=200"
+  }
+}

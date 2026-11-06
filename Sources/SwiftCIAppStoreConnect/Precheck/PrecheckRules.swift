@@ -25,6 +25,7 @@
 #if os(macOS)
 import CryptoKit
 import Foundation
+import SwiftCI
 
 /// The rules of the App Store metadata check, ported from fastlane precheck with their names, descriptions and word lists.
 /// Every rule is a warning.
@@ -86,11 +87,21 @@ enum PrecheckRules {
                 fields: [.copyright],
                 check: { copyrightFailure($0, currentYear: currentYear) }
             ),
+            PrecheckRule(
+                name: "No broken urls",
+                description: "unreachable URLs in app metadata",
+                kind: .url,
+                fields: urlFields,
+                check: { await unreachableURLFailure($0) }
+            ),
         ]
     }
 
     /// The fields whose values are text.
     private static let textFields = Set(PrecheckItem.Field.allCases.filter { $0.kind == .text })
+
+    /// The fields whose values are URLs.
+    private static let urlFields = Set(PrecheckItem.Field.allCases.filter { $0.kind == .url })
 
     /// A text rule that fails on the phrases of any text field.
     private static func wordRule(
@@ -143,6 +154,34 @@ enum PrecheckRules {
             return "missing copyright year"
         }
         return year > currentYear ? "copyright year is in the future: \(year)" : nil
+    }
+
+    /// The failure text of a URL value. The URL must answer a `HEAD` request with status 200. The request has no headers,
+    /// so it carries no credentials, and it has no fragment. Redirects are followed by the HTTP client.
+    ///
+    /// - Parameter text: The URL value. It is trimmed, and the fragment is removed from the request but not from the text
+    ///   of the failure.
+    /// - Returns: `empty url`, `unreachable: <url>` when the URL cannot be requested or no response arrives,
+    ///   `HTTP <status>: <url>` for another status, or nil when the URL answers with 200.
+    static func unreachableURLFailure(_ text: String) async -> String? {
+        @Use var client: HTTPClient
+        let url = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !url.isEmpty else { return "empty url" }
+        guard
+            var components = URLComponents(string: url),
+            components.scheme != nil,
+            components.host != nil
+        else {
+            return "unreachable: \(url)"
+        }
+        components.fragment = nil
+        guard let requestURL = components.url else { return "unreachable: \(url)" }
+        do {
+            let response = try await client.send(HTTPRequest(method: "HEAD", url: requestURL))
+            return response.statusCode == 200 ? nil : "HTTP \(response.statusCode): \(url)"
+        } catch {
+            return "unreachable: \(url)"
+        }
     }
 
     /// The whitespace-separated words of `text`, split on ASCII whitespace only, as Ruby splits them.
