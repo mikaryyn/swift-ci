@@ -266,13 +266,15 @@ let package = Package(
 Module names follow the [module layout](#module-layout).
 
 The `ci` wrapper script lives at the repository root. It changes to its own
-directory, so the working directory is always the project root:
+directory, so the working directory is always the project root. `--quiet`
+hides SwiftPM's build progress lines, so the console starts with the CI
+output; build errors are still shown:
 
 ```sh
 #!/bin/sh
 set -e
 cd "$(dirname "$0")"
-exec swift run --package-path CI -c release ci "$@"
+exec swift run --quiet --package-path CI -c release ci "$@"
 ```
 
 ### Concepts
