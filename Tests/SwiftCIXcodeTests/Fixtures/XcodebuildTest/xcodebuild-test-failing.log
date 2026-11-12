@@ -1,0 +1,669 @@
+Command line invocation:
+    /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/usr/bin/xcodebuild test -scheme SampleApp -destination "platform=iOS Simulator,name=iPhone 17,OS=latest" -resultBundlePath /tmp/sci-sample/out/Sample.xcresult -enableCodeCoverage YES
+
+Resolve Package Graph
+2026-10-30 11:35:05.918 xcodebuild[38280:1973565] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+
+
+Resolved source packages:
+  SampleApp: /tmp/sci-sample
+
+Writing result bundle at path:
+	/tmp/sci-sample/out/Sample.xcresult
+
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (4 targets)
+    Target 'SampleKit-product' in project 'SampleApp'
+        ➜ Explicit dependency on target 'SampleKit' in project 'SampleApp'
+    Target 'SampleSwiftTestingTests-product' in project 'SampleApp'
+        ➜ Explicit dependency on target 'SampleKit' in project 'SampleApp'
+    Target 'SampleXCTests-product' in project 'SampleApp'
+        ➜ Explicit dependency on target 'SampleKit' in project 'SampleApp'
+    Target 'SampleKit' in project 'SampleApp' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: 50c21d15e9c6282e31df39ecd05ca4fa
+Build description path: /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/XCBuildData/50c21d15e9c6282e31df39ecd05ca4fa.xcbuilddata
+CreateBuildDirectory /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules
+    cd /tmp/sci-sample/.swiftpm/xcode
+    builtin-create-build-directory /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules
+
+CreateBuildDirectory /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex
+    cd /tmp/sci-sample/.swiftpm/xcode
+    builtin-create-build-directory /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex
+
+CreateBuildDirectory /Users/ci/Library/Developer/Xcode/DerivedData/CompilationCache.noindex
+    cd /tmp/sci-sample/.swiftpm/xcode
+    builtin-create-build-directory /Users/ci/Library/Developer/Xcode/DerivedData/CompilationCache.noindex
+
+CreateBuildDirectory /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex
+    cd /tmp/sci-sample/.swiftpm/xcode
+    builtin-create-build-directory /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex
+
+ClangStatCache /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk /Users/ci/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator27.2-24B113-ef86a58fa743e3d10bbc776962ff0687.sdkstatcache
+    cd /tmp/sci-sample/.swiftpm/xcode
+    /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk -o /Users/ci/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator27.2-24B113-ef86a58fa743e3d10bbc776962ff0687.sdkstatcache
+Base directory status changed. Regenerating...
+
+CreateBuildDirectory /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products
+    cd /tmp/sci-sample/.swiftpm/xcode
+    builtin-create-build-directory /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products
+
+CreateBuildDirectory /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+    cd /tmp/sci-sample/.swiftpm/xcode
+    builtin-create-build-directory /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+
+CreateBuildDirectory /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/ExplicitPrecompiledModules
+    cd /tmp/sci-sample/.swiftpm/xcode
+    builtin-create-build-directory /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/ExplicitPrecompiledModules
+
+CreateBuildDirectory /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/PrecompiledHeaders
+    cd /tmp/sci-sample/.swiftpm/xcode
+    builtin-create-build-directory /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/PrecompiledHeaders
+
+CreateBuildDirectory /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator
+    cd /tmp/sci-sample/.swiftpm/xcode
+    builtin-create-build-directory /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator
+
+CreateBuildDirectory /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator
+    cd /tmp/sci-sample/.swiftpm/xcode
+    builtin-create-build-directory /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator
+
+CreateBuildDirectory /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/PackageFrameworks
+    cd /tmp/sci-sample/.swiftpm/xcode
+    builtin-create-build-directory /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/PackageFrameworks
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/SampleXCTests.DependencyMetadataFileList (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/SampleXCTests.DependencyMetadataFileList
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/empty-SampleSwiftTestingTests.plist (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/empty-SampleSwiftTestingTests.plist
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/SampleXCTests.DependencyStaticMetadataFileList (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/SampleXCTests.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/empty-SampleXCTests.plist (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/empty-SampleXCTests.plist
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/SampleSwiftTestingTests.DependencyStaticMetadataFileList (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/SampleSwiftTestingTests.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.SwiftConstValuesFileList (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests_const_extract_protocols.json (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests_const_extract_protocols.json
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests-OutputFileMap.json (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests-OutputFileMap.json
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.SwiftFileList (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.SwiftFileList
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.LinkFileList (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.LinkFileList
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/SampleSwiftTestingTests.DependencyMetadataFileList (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/SampleSwiftTestingTests.DependencyMetadataFileList
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests_const_extract_protocols.json (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests_const_extract_protocols.json
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.SwiftConstValuesFileList (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.SwiftFileList (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.SwiftFileList
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/SampleKit.modulemap (in target 'SampleKit' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/SampleKit.modulemap
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/SampleKit.DependencyMetadataFileList (in target 'SampleKit' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/SampleKit.DependencyMetadataFileList
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/SampleKit.DependencyStaticMetadataFileList (in target 'SampleKit' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/SampleKit.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests-OutputFileMap.json (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests-OutputFileMap.json
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.LinkFileList (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.LinkFileList
+
+MkDir /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    /bin/mkdir -p /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest
+
+MkDir /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    /bin/mkdir -p /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.SwiftConstValuesFileList (in target 'SampleKit' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit_const_extract_protocols.json (in target 'SampleKit' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit_const_extract_protocols.json
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.LinkFileList (in target 'SampleKit' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.LinkFileList
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.SwiftFileList (in target 'SampleKit' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.SwiftFileList
+
+WriteAuxiliaryFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit-OutputFileMap.json (in target 'SampleKit' from project 'SampleApp')
+    cd /tmp/sci-sample
+    write-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit-OutputFileMap.json
+
+Copy /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/GeneratedModuleMaps-iphonesimulator/SampleKit.modulemap /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/SampleKit.modulemap (in target 'SampleKit' from project 'SampleApp')
+    cd /tmp/sci-sample
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/SampleKit.modulemap /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/GeneratedModuleMaps-iphonesimulator
+
+SwiftDriver SampleKit normal arm64 com.apple.xcode.tools.swift.compiler (in target 'SampleKit' from project 'SampleApp')
+    cd /tmp/sci-sample/.swiftpm/xcode
+    builtin-SwiftDriver -- /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -parse-as-library -module-name SampleKit -Onone @/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.SwiftFileList -DSWIFT_PACKAGE -DDEBUG -DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE -DXcode -plugin-path /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk -target arm64-apple-ios17.0-simulator -g -module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/ci/Library/Developer/Xcode/DerivedData/SampleApp-exytdpuemcjufzgvcqburztvikrk/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 6 -I /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator -Isystem /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator -F /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -F /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk/Developer/Library/Frameworks -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/ci/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator27.2-24B113-ef86a58fa743e3d10bbc776962ff0687.sdkstatcache -output-file-map /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit-OutputFileMap.json -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules -emit-dependencies -emit-module -emit-module-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.swiftmodule -serialize-diagnostics -dependency-scan-serialize-diagnostics-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit-dependency-scan.dia -validate-clang-modules-once -clang-build-session-file /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -fmodules-prune-interval\=86400 -Xcc -fmodules-prune-after\=345600 -package-name sci_sample -emit-const-values -const-gather-protocols-list /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit_const_extract_protocols.json -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/DerivedSources-normal/arm64 -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/DerivedSources/arm64 -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/DerivedSources -Xcc -DSWIFT_PACKAGE -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit-Swift.h -working-directory /tmp/sci-sample/.swiftpm/xcode -experimental-emit-module-separately -disable-cmo
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/SwiftShims-2ZQK1TG97X9ZP3896K31PF96J.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/_SwiftConcurrencyShims-9XMDHA4P1OA9I2DI6Y5ZT8QMA.pcm
+
+SwiftCompile normal arm64 Compiling\ SampleKit.swift /private/tmp/sci-sample/Sources/SampleKit/SampleKit.swift (in target 'SampleKit' from project 'SampleApp')
+
+SwiftCompile normal arm64 /private/tmp/sci-sample/Sources/SampleKit/SampleKit.swift (in target 'SampleKit' from project 'SampleApp')
+    cd /tmp/sci-sample/.swiftpm/xcode
+    builtin-SwiftPerFileCompile SampleKit.swift
+
+/private/tmp/sci-sample/Sources/SampleKit/SampleKit.swift:10:9: warning: initialization of immutable value 'unused' was never used; consider replacing with assignment to '_' or removing it [#NoUsage]
+ 8 | 
+ 9 | public func warningSample() -> Int {
+10 |     let unused = 1
+   |         `- warning: initialization of immutable value 'unused' was never used; consider replacing with assignment to '_' or removing it [#NoUsage]
+11 |     return 2
+12 | }
+
+[#NoUsage]: <https://docs.swift.org/compiler/documentation/diagnostics/no-usage>
+SwiftEmitModule normal arm64 Emitting\ module\ for\ SampleKit (in target 'SampleKit' from project 'SampleApp')
+
+SwiftCompile normal arm64 (in target 'SampleKit' from project 'SampleApp')
+    cd /tmp/sci-sample/.swiftpm/xcode
+    
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for SampleKit (in target 'SampleKit' from project 'SampleApp')
+
+SwiftDriver\ Compilation\ Requirements SampleKit normal arm64 com.apple.xcode.tools.swift.compiler (in target 'SampleKit' from project 'SampleApp')
+    cd /tmp/sci-sample/.swiftpm/xcode
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -parse-as-library -module-name SampleKit -Onone @/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.SwiftFileList -DSWIFT_PACKAGE -DDEBUG -DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE -DXcode -plugin-path /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk -target arm64-apple-ios17.0-simulator -g -module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/ci/Library/Developer/Xcode/DerivedData/SampleApp-exytdpuemcjufzgvcqburztvikrk/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 6 -I /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator -Isystem /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator -F /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -F /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk/Developer/Library/Frameworks -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/ci/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator27.2-24B113-ef86a58fa743e3d10bbc776962ff0687.sdkstatcache -output-file-map /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit-OutputFileMap.json -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules -emit-dependencies -emit-module -emit-module-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.swiftmodule -serialize-diagnostics -dependency-scan-serialize-diagnostics-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit-dependency-scan.dia -validate-clang-modules-once -clang-build-session-file /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -fmodules-prune-interval\=86400 -Xcc -fmodules-prune-after\=345600 -package-name sci_sample -emit-const-values -const-gather-protocols-list /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit_const_extract_protocols.json -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/DerivedSources-normal/arm64 -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/DerivedSources/arm64 -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/DerivedSources -Xcc -DSWIFT_PACKAGE -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit-Swift.h -working-directory /tmp/sci-sample/.swiftpm/xcode -experimental-emit-module-separately -disable-cmo
+
+SwiftMergeGeneratedHeaders /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/GeneratedModuleMaps-iphonesimulator/SampleKit-Swift.h /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit-Swift.h (in target 'SampleKit' from project 'SampleApp')
+    cd /tmp/sci-sample
+    builtin-swiftHeaderTool -arch arm64 /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit-Swift.h -o /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/GeneratedModuleMaps-iphonesimulator/SampleKit-Swift.h
+
+Copy /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleKit.swiftmodule/arm64-apple-ios-simulator.abi.json /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.abi.json (in target 'SampleKit' from project 'SampleApp')
+    cd /tmp/sci-sample
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.abi.json /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleKit.swiftmodule/arm64-apple-ios-simulator.abi.json
+
+Copy /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleKit.swiftmodule/arm64-apple-ios-simulator.swiftdoc /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.swiftdoc (in target 'SampleKit' from project 'SampleApp')
+    cd /tmp/sci-sample
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.swiftdoc /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleKit.swiftmodule/arm64-apple-ios-simulator.swiftdoc
+
+Copy /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleKit.swiftmodule/arm64-apple-ios-simulator.swiftmodule /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.swiftmodule (in target 'SampleKit' from project 'SampleApp')
+    cd /tmp/sci-sample
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.swiftmodule /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleKit.swiftmodule/arm64-apple-ios-simulator.swiftmodule
+
+Copy /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleKit.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.swiftsourceinfo (in target 'SampleKit' from project 'SampleApp')
+    cd /tmp/sci-sample
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.swiftsourceinfo /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleKit.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo
+
+SwiftDriver SampleXCTests normal arm64 com.apple.xcode.tools.swift.compiler (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample/.swiftpm/xcode
+    builtin-SwiftDriver -- /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -parse-as-library -module-name SampleXCTests -Onone @/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.SwiftFileList -DSWIFT_PACKAGE -DDEBUG -DXcode -plugin-path /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk -target arm64-apple-ios17.0-simulator -g -module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/ci/Library/Developer/Xcode/DerivedData/SampleApp-exytdpuemcjufzgvcqburztvikrk/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 6 -I /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator -Isystem /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator -F /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -F /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk/Developer/Library/Frameworks -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/ci/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator27.2-24B113-ef86a58fa743e3d10bbc776962ff0687.sdkstatcache -output-file-map /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests-OutputFileMap.json -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules -emit-dependencies -emit-module -emit-module-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.swiftmodule -serialize-diagnostics -dependency-scan-serialize-diagnostics-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests-dependency-scan.dia -validate-clang-modules-once -clang-build-session-file /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -fmodules-prune-interval\=86400 -Xcc -fmodules-prune-after\=345600 -package-name sci_sample -emit-const-values -const-gather-protocols-list /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests_const_extract_protocols.json -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/DerivedSources-normal/arm64 -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/DerivedSources/arm64 -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/DerivedSources -Xcc -DSWIFT_PACKAGE -Xcc -DDEBUG\=1 -working-directory /tmp/sci-sample/.swiftpm/xcode -experimental-emit-module-separately -disable-cmo
+
+SwiftDriver SampleSwiftTestingTests normal arm64 com.apple.xcode.tools.swift.compiler (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample/.swiftpm/xcode
+    builtin-SwiftDriver -- /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -parse-as-library -module-name SampleSwiftTestingTests -Onone @/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.SwiftFileList -DSWIFT_PACKAGE -DDEBUG -DXcode -plugin-path /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk -target arm64-apple-ios17.0-simulator -g -module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/ci/Library/Developer/Xcode/DerivedData/SampleApp-exytdpuemcjufzgvcqburztvikrk/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 6 -I /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator -Isystem /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator -F /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -F /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk/Developer/Library/Frameworks -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/ci/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator27.2-24B113-ef86a58fa743e3d10bbc776962ff0687.sdkstatcache -output-file-map /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests-OutputFileMap.json -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules -emit-dependencies -emit-module -emit-module-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.swiftmodule -serialize-diagnostics -dependency-scan-serialize-diagnostics-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests-dependency-scan.dia -validate-clang-modules-once -clang-build-session-file /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -fmodules-prune-interval\=86400 -Xcc -fmodules-prune-after\=345600 -package-name sci_sample -emit-const-values -const-gather-protocols-list /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests_const_extract_protocols.json -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/DerivedSources-normal/arm64 -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/DerivedSources/arm64 -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/DerivedSources -Xcc -DSWIFT_PACKAGE -Xcc -DDEBUG\=1 -working-directory /tmp/sci-sample/.swiftpm/xcode -experimental-emit-module-separately -disable-cmo
+
+SwiftDriverJobDiscovery normal arm64 Compiling SampleKit.swift (in target 'SampleKit' from project 'SampleApp')
+
+SwiftDriver\ Compilation SampleKit normal arm64 com.apple.xcode.tools.swift.compiler (in target 'SampleKit' from project 'SampleApp')
+    cd /tmp/sci-sample/.swiftpm/xcode
+    builtin-Swift-Compilation -- /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -parse-as-library -module-name SampleKit -Onone @/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.SwiftFileList -DSWIFT_PACKAGE -DDEBUG -DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE -DXcode -plugin-path /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk -target arm64-apple-ios17.0-simulator -g -module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/ci/Library/Developer/Xcode/DerivedData/SampleApp-exytdpuemcjufzgvcqburztvikrk/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 6 -I /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator -Isystem /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator -F /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -F /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk/Developer/Library/Frameworks -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/ci/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator27.2-24B113-ef86a58fa743e3d10bbc776962ff0687.sdkstatcache -output-file-map /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit-OutputFileMap.json -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules -emit-dependencies -emit-module -emit-module-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.swiftmodule -serialize-diagnostics -dependency-scan-serialize-diagnostics-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit-dependency-scan.dia -validate-clang-modules-once -clang-build-session-file /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -fmodules-prune-interval\=86400 -Xcc -fmodules-prune-after\=345600 -package-name sci_sample -emit-const-values -const-gather-protocols-list /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit_const_extract_protocols.json -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/DerivedSources-normal/arm64 -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/DerivedSources/arm64 -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/DerivedSources -Xcc -DSWIFT_PACKAGE -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit-Swift.h -working-directory /tmp/sci-sample/.swiftpm/xcode -experimental-emit-module-separately -disable-cmo
+
+Ld /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleKit.o normal (in target 'SampleKit' from project 'SampleApp')
+    cd /tmp/sci-sample
+    /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios17.0-simulator -r -isysroot /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk -O0 -Xlinker -no_warn_duplicate_libraries -F/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator -F/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator -iframework /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -iframework /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk/Developer/Library/Frameworks -filelist /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.LinkFileList -nostdlib -Xlinker -object_path_lto -Xlinker /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit_lto.o -Xlinker -no_deduplicate -Xlinker -objc_abi_version -Xlinker 2 -Xlinker -debug_variant -Xlinker -dependency_info -Xlinker /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit_dependency_info.dat -fobjc-link-runtime -L/Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphonesimulator -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.swiftmodule -o /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleKit.o
+
+ExtractAppIntentsMetadata (in target 'SampleKit' from project 'SampleApp')
+    cd /tmp/sci-sample
+    /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name SampleKit --sdk-root /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk --xcode-version 27B48 --platform-family iOS --deployment-target 17.0 --bundle-identifier sci-sample.SampleKit --output /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleKit.appintents --target-triple arm64-apple-ios17.0-simulator --binary-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleKit.o --dependency-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit_dependency_info.dat --stringsdata-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.SwiftFileList --metadata-file-list /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/SampleKit.DependencyMetadataFileList --static-metadata-file-list /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/SampleKit.DependencyStaticMetadataFileList --swift-const-vals-list /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleKit-t.build/Objects-normal/arm64/SampleKit.SwiftConstValuesFileList --force --compile-time-extraction --deployment-aware-processing --no-app-shortcuts-localization
+2026-10-30 11:35:11.359 appintentsmetadataprocessor[38328:1973854] Starting App Intents metadata extraction
+2026-10-30 11:35:11.431 appintentsmetadataprocessor[38328:1973854] Extracted no relevant App Intents symbols, skipping writing output
+
+ProcessInfoPlistFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest/Info.plist /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/empty-SampleXCTests.plist (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    builtin-infoPlistUtility /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/empty-SampleXCTests.plist -producttype com.apple.product-type.bundle.unit-test -expandbuildsettings -format binary -platform iphonesimulator -o /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest/Info.plist
+
+ProcessInfoPlistFile /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest/Info.plist /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/empty-SampleSwiftTestingTests.plist (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    builtin-infoPlistUtility /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/empty-SampleSwiftTestingTests.plist -producttype com.apple.product-type.bundle.unit-test -expandbuildsettings -format binary -platform iphonesimulator -o /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest/Info.plist
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/ptrcheck-EIOW6Q0UBJJVAAPIZQM0H3OL5.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/_Builtin_float-AQFK11KOTTVKLV80OJY7ETHHO.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/_AvailabilityInternal-76FUN5Y590II8WDS7HKJ4D6BS.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/_Builtin_stdarg-3XBFFNLMG5K40DIVVUNPCL2SY.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/_Builtin_stdbool-CEYOVXTP98S1UVDTPPHXRH041.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/_Builtin_stddef-DK68II4XWVQ6DNN7LNRYO2Q9P.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/_DarwinFoundation1-6FLI44FRKGU0FBC5DL7UK2XIR.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/_DarwinFoundation2-L0X76QOGW21OPGVAZ8MUQJ47.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/_Builtin_limits-7JWDLKGD2OBFX1W6NFRVL0U5B.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/_Builtin_stdint-D788VXE8Q79ULNY6N9ATH64CM.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/sys_types-5M7F0CSHLW9GRU5ESMIFAJ8G4.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/_DarwinFoundation3-5UAPTESCPVR36NFGI6IEH8YRB.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/_Builtin_inttypes-F0SJ6NHW4L7UHT10C8WCIPS7C.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/Darwin-1XWMNZ0CCAIQ6O5SF8HSY9GJ1.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/ObjectiveC-91O1AGK0QQ2YPU5AJ625CJDS7.pcm
+
+SwiftExplicitDependencyCompileModuleFromInterface arm64 /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules/Testing-1TO2GXQIAFKII.swiftmodule
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ SampleSwiftTestingTests (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+
+SwiftCompile normal arm64 (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample/.swiftpm/xcode
+    
+
+SwiftCompile normal arm64 Compiling\ SampleSwiftTestingTests.swift /tmp/sci-sample/Tests/SampleSwiftTestingTests/SampleSwiftTestingTests.swift (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+
+SwiftCompile normal arm64 /tmp/sci-sample/Tests/SampleSwiftTestingTests/SampleSwiftTestingTests.swift (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample/.swiftpm/xcode
+    builtin-SwiftPerFileCompile SampleSwiftTestingTests.swift
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for SampleSwiftTestingTests (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+
+SwiftDriver\ Compilation\ Requirements SampleSwiftTestingTests normal arm64 com.apple.xcode.tools.swift.compiler (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample/.swiftpm/xcode
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -parse-as-library -module-name SampleSwiftTestingTests -Onone @/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.SwiftFileList -DSWIFT_PACKAGE -DDEBUG -DXcode -plugin-path /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk -target arm64-apple-ios17.0-simulator -g -module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/ci/Library/Developer/Xcode/DerivedData/SampleApp-exytdpuemcjufzgvcqburztvikrk/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 6 -I /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator -Isystem /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator -F /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -F /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk/Developer/Library/Frameworks -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/ci/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator27.2-24B113-ef86a58fa743e3d10bbc776962ff0687.sdkstatcache -output-file-map /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests-OutputFileMap.json -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules -emit-dependencies -emit-module -emit-module-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.swiftmodule -serialize-diagnostics -dependency-scan-serialize-diagnostics-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests-dependency-scan.dia -validate-clang-modules-once -clang-build-session-file /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -fmodules-prune-interval\=86400 -Xcc -fmodules-prune-after\=345600 -package-name sci_sample -emit-const-values -const-gather-protocols-list /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests_const_extract_protocols.json -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/DerivedSources-normal/arm64 -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/DerivedSources/arm64 -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/DerivedSources -Xcc -DSWIFT_PACKAGE -Xcc -DDEBUG\=1 -working-directory /tmp/sci-sample/.swiftpm/xcode -experimental-emit-module-separately -disable-cmo
+
+Copy /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.swiftmodule/arm64-apple-ios-simulator.abi.json /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.abi.json (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.abi.json /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.swiftmodule/arm64-apple-ios-simulator.abi.json
+
+Copy /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.swiftmodule/arm64-apple-ios-simulator.swiftmodule /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.swiftmodule (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.swiftmodule /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.swiftmodule/arm64-apple-ios-simulator.swiftmodule
+
+Copy /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.swiftmodule/arm64-apple-ios-simulator.swiftdoc /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.swiftdoc (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.swiftdoc /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.swiftmodule/arm64-apple-ios-simulator.swiftdoc
+
+Copy /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.swiftsourceinfo (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.swiftsourceinfo /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo
+
+SwiftDriverJobDiscovery normal arm64 Compiling SampleSwiftTestingTests.swift (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+
+SwiftDriver\ Compilation SampleSwiftTestingTests normal arm64 com.apple.xcode.tools.swift.compiler (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample/.swiftpm/xcode
+    builtin-Swift-Compilation -- /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -parse-as-library -module-name SampleSwiftTestingTests -Onone @/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.SwiftFileList -DSWIFT_PACKAGE -DDEBUG -DXcode -plugin-path /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk -target arm64-apple-ios17.0-simulator -g -module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/ci/Library/Developer/Xcode/DerivedData/SampleApp-exytdpuemcjufzgvcqburztvikrk/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 6 -I /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator -Isystem /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator -F /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -F /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk/Developer/Library/Frameworks -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/ci/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator27.2-24B113-ef86a58fa743e3d10bbc776962ff0687.sdkstatcache -output-file-map /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests-OutputFileMap.json -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules -emit-dependencies -emit-module -emit-module-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.swiftmodule -serialize-diagnostics -dependency-scan-serialize-diagnostics-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests-dependency-scan.dia -validate-clang-modules-once -clang-build-session-file /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -fmodules-prune-interval\=86400 -Xcc -fmodules-prune-after\=345600 -package-name sci_sample -emit-const-values -const-gather-protocols-list /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests_const_extract_protocols.json -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/DerivedSources-normal/arm64 -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/DerivedSources/arm64 -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/DerivedSources -Xcc -DSWIFT_PACKAGE -Xcc -DDEBUG\=1 -working-directory /tmp/sci-sample/.swiftpm/xcode -experimental-emit-module-separately -disable-cmo
+
+Ld /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest/SampleSwiftTestingTests normal (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -Xlinker -reproducible -target arm64-apple-ios17.0-simulator -Xlinker -bundle -sdk /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk -Xlinker -no_warn_duplicate_libraries -L/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator -L/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator -L/Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator -F/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/PackageFrameworks -F/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator -Fsystem /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -Fsystem /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk/Developer/Library/Frameworks @/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.LinkFileList -Xlinker -rpath -Xlinker /usr/lib/swift -Xlinker -rpath -Xlinker @loader_path -Xlinker -rpath -Xlinker /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/PackageFrameworks -Xlinker -rpath -Xlinker @loader_path/../.. -Xlinker -rpath -Xlinker @loader_path/Frameworks -Xlinker -rpath -Xlinker @loader_path/../Frameworks -Xlinker -dead_strip -Xlinker -object_path_lto -Xlinker /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests_lto.o -Xclang-linker -rdynamic -Xlinker -no_deduplicate -Xlinker -objc_abi_version -Xlinker 2 -Xlinker -debug_variant -Xlinker -dependency_info -Xlinker /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests_dependency_info.dat -link-objc-runtime -profile-generate -L/Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphonesimulator -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.swiftmodule -Xlinker -needed_framework -Xlinker XCTest -framework XCTest -Xlinker -needed-lXCTestSwiftSupport -lXCTestSwiftSupport -Xlinker -no_adhoc_codesign -o /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest/SampleSwiftTestingTests -no-stdlib-rpath
+
+CopySwiftLibs /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    builtin-swiftStdLibTool --copy --verbose --sign - --scan-executable /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest/SampleSwiftTestingTests --scan-folder /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest/Frameworks --scan-folder /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest/PlugIns --scan-folder /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest/SystemExtensions --scan-folder /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest/Extensions --platform iphonesimulator --toolchain /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest/Frameworks --strip-bitcode --scan-executable /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib/libXCTestSwiftSupport.dylib --strip-bitcode-tool /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os
+
+ExtractAppIntentsMetadata (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name SampleSwiftTestingTests --sdk-root /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk --xcode-version 27B48 --platform-family iOS --deployment-target 17.0 --bundle-identifier sci-sample.SampleSwiftTestingTests --output /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest --target-triple arm64-apple-ios17.0-simulator --binary-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest/SampleSwiftTestingTests --dependency-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests_dependency_info.dat --stringsdata-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.SwiftFileList --metadata-file-list /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/SampleSwiftTestingTests.DependencyMetadataFileList --static-metadata-file-list /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/SampleSwiftTestingTests.DependencyStaticMetadataFileList --swift-const-vals-list /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/Objects-normal/arm64/SampleSwiftTestingTests.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --no-app-shortcuts-localization
+2026-10-30 11:35:15.834 appintentsmetadataprocessor[38404:1974192] Starting App Intents metadata extraction
+2026-10-30 11:35:15.835 appintentsmetadataprocessor[38404:1974192] warning: Metadata extraction skipped, no AppIntents.framework dependency found
+
+AppIntentsSSUTraining (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsnltrainingprocessor --infoplist-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest/Info.plist --temp-dir-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/ssu --bundle-id sci-sample.SampleSwiftTestingTests --product-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest --extracted-metadata-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest/Metadata.appintents --metadata-file-list /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleSwiftTestingTests-p.build/SampleSwiftTestingTests.DependencyMetadataFileList --source-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest/Info.plist --archive-ssu-assets
+2026-10-30 11:35:15.884 appintentsnltrainingprocessor[38405:1974195] Parsing options for appintentsnltrainingprocessor
+2026-10-30 11:35:15.885 appintentsnltrainingprocessor[38405:1974195] Starting AppIntents SSU YAML Generation
+2026-10-30 11:35:15.886 appintentsnltrainingprocessor[38405:1974195] No AppShortcuts found - Skipping.
+
+CodeSign /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --timestamp\=none --generate-entitlement-der --strip-disallowed-xattrs /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest
+
+RegisterExecutionPolicyException /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    builtin-RegisterExecutionPolicyException /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest
+
+Touch /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest (in target 'SampleSwiftTestingTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    /usr/bin/touch -c /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleSwiftTestingTests.xctest
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/string_h-58QI0TV4DCCSJ7RQ1WO676E8X.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/MachO-3OXSVKRTG6KBLI5P5OYPO2D6V.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/os_object-DWNK6SF5IMXKTEMDPKOODBOT0.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/_Builtin_stdatomic-5AK09YCDGYWRAD86ZGQ6DDLV2.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/ptrauth-BTCGTR1WSGJVR57C39QYYT81Y.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/DeveloperToolsSupport-DT01VZT3SOG3VSGFOTLM3RVHL.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/_Builtin_intrinsics-9XZ809NRNZ5K3SSIF9NT7BV11.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/_Builtin_tgmath-FN1563876UEO1IGLRMQJA5QZ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/os_workgroup-BQTB961LQBZ7A7D73W0H9PVKO.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/Dispatch-4QJFL4YKEIFR6RHJ6MHY3BUSI.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/simd-14RX1RQE896XCU4GX46EU9T0L.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/XPC-EJWCDH7KL1KG2JQWCSGZQ49S3.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/CoreFoundation-CSIUYGNFQ30E3F8G6JU0APM9D.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/os-42HQDK48YW21Z028FQNLBP2IY.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/CoreGraphics-96EXMGSOGWJ3H735823JHPBN3.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/CFNetwork-13DO19QDNHV8C91QGEPBCZZ1P.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/Security-6ZSMVDEI1JC1PCIVHLTQ0SW5H.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/Foundation-1NNGJEJT4ZBRDDNMF24ZOIPXL.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/ImageIO-F2RPZB2CFN7Q2HRSBEFKSGBGO.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/CoreText-D0FTWBN0IFA9F3NXOBOO6TZ3R.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/Spatial-5HQ8KYA99EF1VJ2HM9DWZ4YHS.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/UniformTypeIdentifiers-37867KTKWHPPXANL8HVUWF1A.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/_LocationEssentials-9ZB9MRKDO0CHIKIJY6NF5W3Y.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/OSLog-587G73CZPDM5DGKRIJU5YQU53.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/IOSurface-93FVHLU2HJZBT0P4SW2Y73U9B.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/CoreTransferable-7D2TKQOWFGJZFY9WJG9F3KM0X.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/DataDetection-EENEXDJTXG62P2R03GTFXU5FL.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/UIUtilities-DT3PIGKQN5WN3P0RVRNEKFHND.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/Accessibility-9KSJPK2IGDC1C4ZJFDKEXLVWG.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/FileProvider-DOIFU3KLPVGOQTFF2BF41FZ4K.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/UserNotifications-E9NM1P12E08G1KKUSG6NTHRO7.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/Symbols-7GJ19SQVGHZQF0HZGLOIWD6OC.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/OpenGLES-CI7WU9CNKM73I9NKPCEIDCUZD.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/CoreLocation-BG1ORYVC1V6KF08OREDILY20C.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/Metal-E4JU4R3P5I01NHG4P87HCRB5W.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/CoreMotion-5SQRK3CDU4CXJ2PWV1S7LZ063.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/CoreVideo-ETHXMUIX9RPZ5HOR46CDTT8Z8.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/CoreImage-25998UIB361DY4Z955VBGMGLQ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/QuartzCore-6KQY6EBWM00XZK2RV03HVW7BG.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/SwiftUICore-863Z24O02IN3MFNE794C1QGM4.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules/UIKit-3O5X763R11QHYU3PDNRHG3BPQ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules/XCUIAutomation-2O9BKPFJSA28XSVSMYRSMMLE6.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules/XCTest-BKGSKCGT1ZPX6CICBGWNWO9A4.pcm
+
+SwiftExplicitDependencyCompileModuleFromInterface arm64 /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules/XCUIAutomation-7LYMTS02CYV5.swiftmodule
+
+SwiftExplicitDependencyCompileModuleFromInterface arm64 /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules/XCTest-3NCWNGTDH1IRX.swiftmodule
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ SampleXCTests (in target 'SampleXCTests-product' from project 'SampleApp')
+
+SwiftCompile normal arm64 (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample/.swiftpm/xcode
+    
+
+SwiftCompile normal arm64 Compiling\ SampleXCTests.swift /tmp/sci-sample/Tests/SampleXCTests/SampleXCTests.swift (in target 'SampleXCTests-product' from project 'SampleApp')
+
+SwiftCompile normal arm64 /tmp/sci-sample/Tests/SampleXCTests/SampleXCTests.swift (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample/.swiftpm/xcode
+    builtin-SwiftPerFileCompile SampleXCTests.swift
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for SampleXCTests (in target 'SampleXCTests-product' from project 'SampleApp')
+
+SwiftDriver\ Compilation\ Requirements SampleXCTests normal arm64 com.apple.xcode.tools.swift.compiler (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample/.swiftpm/xcode
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -parse-as-library -module-name SampleXCTests -Onone @/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.SwiftFileList -DSWIFT_PACKAGE -DDEBUG -DXcode -plugin-path /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk -target arm64-apple-ios17.0-simulator -g -module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/ci/Library/Developer/Xcode/DerivedData/SampleApp-exytdpuemcjufzgvcqburztvikrk/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 6 -I /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator -Isystem /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator -F /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -F /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk/Developer/Library/Frameworks -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/ci/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator27.2-24B113-ef86a58fa743e3d10bbc776962ff0687.sdkstatcache -output-file-map /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests-OutputFileMap.json -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules -emit-dependencies -emit-module -emit-module-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.swiftmodule -serialize-diagnostics -dependency-scan-serialize-diagnostics-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests-dependency-scan.dia -validate-clang-modules-once -clang-build-session-file /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -fmodules-prune-interval\=86400 -Xcc -fmodules-prune-after\=345600 -package-name sci_sample -emit-const-values -const-gather-protocols-list /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests_const_extract_protocols.json -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/DerivedSources-normal/arm64 -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/DerivedSources/arm64 -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/DerivedSources -Xcc -DSWIFT_PACKAGE -Xcc -DDEBUG\=1 -working-directory /tmp/sci-sample/.swiftpm/xcode -experimental-emit-module-separately -disable-cmo
+
+Copy /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.swiftmodule/arm64-apple-ios-simulator.swiftdoc /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.swiftdoc (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.swiftdoc /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.swiftmodule/arm64-apple-ios-simulator.swiftdoc
+
+Copy /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.swiftmodule/arm64-apple-ios-simulator.abi.json /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.abi.json (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.abi.json /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.swiftmodule/arm64-apple-ios-simulator.abi.json
+
+Copy /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.swiftmodule/arm64-apple-ios-simulator.swiftmodule /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.swiftmodule (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.swiftmodule /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.swiftmodule/arm64-apple-ios-simulator.swiftmodule
+
+Copy /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.swiftsourceinfo (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.swiftsourceinfo /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo
+
+SwiftDriverJobDiscovery normal arm64 Compiling SampleXCTests.swift (in target 'SampleXCTests-product' from project 'SampleApp')
+
+SwiftDriver\ Compilation SampleXCTests normal arm64 com.apple.xcode.tools.swift.compiler (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample/.swiftpm/xcode
+    builtin-Swift-Compilation -- /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -parse-as-library -module-name SampleXCTests -Onone @/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.SwiftFileList -DSWIFT_PACKAGE -DDEBUG -DXcode -plugin-path /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk -target arm64-apple-ios17.0-simulator -g -module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/ci/Library/Developer/Xcode/DerivedData/SampleApp-exytdpuemcjufzgvcqburztvikrk/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 6 -I /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator -Isystem /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator -F /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -F /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk/Developer/Library/Frameworks -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/ci/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator27.2-24B113-ef86a58fa743e3d10bbc776962ff0687.sdkstatcache -output-file-map /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests-OutputFileMap.json -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules -emit-dependencies -emit-module -emit-module-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.swiftmodule -serialize-diagnostics -dependency-scan-serialize-diagnostics-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests-dependency-scan.dia -validate-clang-modules-once -clang-build-session-file /Users/ci/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -fmodules-prune-interval\=86400 -Xcc -fmodules-prune-after\=345600 -package-name sci_sample -emit-const-values -const-gather-protocols-list /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests_const_extract_protocols.json -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/DerivedSources-normal/arm64 -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/DerivedSources/arm64 -Xcc -I/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/DerivedSources -Xcc -DSWIFT_PACKAGE -Xcc -DDEBUG\=1 -working-directory /tmp/sci-sample/.swiftpm/xcode -experimental-emit-module-separately -disable-cmo
+
+Ld /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest/SampleXCTests normal (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -Xlinker -reproducible -target arm64-apple-ios17.0-simulator -Xlinker -bundle -sdk /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk -Xlinker -no_warn_duplicate_libraries -L/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator -L/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator -L/Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator -F/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/PackageFrameworks -F/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator -Fsystem /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -Fsystem /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk/Developer/Library/Frameworks @/Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.LinkFileList -Xlinker -rpath -Xlinker /usr/lib/swift -Xlinker -rpath -Xlinker @loader_path -Xlinker -rpath -Xlinker /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/PackageFrameworks -Xlinker -rpath -Xlinker @loader_path/../.. -Xlinker -rpath -Xlinker @loader_path/Frameworks -Xlinker -rpath -Xlinker @loader_path/../Frameworks -Xlinker -dead_strip -Xlinker -object_path_lto -Xlinker /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests_lto.o -Xclang-linker -rdynamic -Xlinker -no_deduplicate -Xlinker -objc_abi_version -Xlinker 2 -Xlinker -debug_variant -Xlinker -dependency_info -Xlinker /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests_dependency_info.dat -link-objc-runtime -profile-generate -L/Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphonesimulator -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.swiftmodule -Xlinker -needed_framework -Xlinker XCTest -framework XCTest -Xlinker -needed-lXCTestSwiftSupport -lXCTestSwiftSupport -Xlinker -no_adhoc_codesign -o /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest/SampleXCTests -no-stdlib-rpath
+
+CopySwiftLibs /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    builtin-swiftStdLibTool --copy --verbose --sign - --scan-executable /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest/SampleXCTests --scan-folder /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest/Frameworks --scan-folder /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest/PlugIns --scan-folder /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest/SystemExtensions --scan-folder /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest/Extensions --platform iphonesimulator --toolchain /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest/Frameworks --strip-bitcode --scan-executable /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib/libXCTestSwiftSupport.dylib --strip-bitcode-tool /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os
+
+ExtractAppIntentsMetadata (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name SampleXCTests --sdk-root /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.2.sdk --xcode-version 27B48 --platform-family iOS --deployment-target 17.0 --bundle-identifier sci-sample.SampleXCTests --output /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest --target-triple arm64-apple-ios17.0-simulator --binary-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest/SampleXCTests --dependency-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests_dependency_info.dat --stringsdata-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.SwiftFileList --metadata-file-list /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/SampleXCTests.DependencyMetadataFileList --static-metadata-file-list /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/SampleXCTests.DependencyStaticMetadataFileList --swift-const-vals-list /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/Objects-normal/arm64/SampleXCTests.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --no-app-shortcuts-localization
+2026-10-30 11:35:21.919 appintentsmetadataprocessor[38502:1974550] Starting App Intents metadata extraction
+2026-10-30 11:35:21.920 appintentsmetadataprocessor[38502:1974550] warning: Metadata extraction skipped, no AppIntents.framework dependency found
+
+AppIntentsSSUTraining (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    /Applications/Xcode-27.2.0-Release.Candidate.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsnltrainingprocessor --infoplist-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest/Info.plist --temp-dir-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/ssu --bundle-id sci-sample.SampleXCTests --product-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest --extracted-metadata-path /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest/Metadata.appintents --metadata-file-list /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SampleApp.build/Debug-iphonesimulator/SampleXCTests-p.build/SampleXCTests.DependencyMetadataFileList --source-file /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest/Info.plist --archive-ssu-assets
+2026-10-30 11:35:21.948 appintentsnltrainingprocessor[38503:1974555] Parsing options for appintentsnltrainingprocessor
+2026-10-30 11:35:21.948 appintentsnltrainingprocessor[38503:1974555] Starting AppIntents SSU YAML Generation
+2026-10-30 11:35:21.948 appintentsnltrainingprocessor[38503:1974555] No AppShortcuts found - Skipping.
+
+CodeSign /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --timestamp\=none --generate-entitlement-der --strip-disallowed-xattrs /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest
+
+RegisterExecutionPolicyException /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    builtin-RegisterExecutionPolicyException /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest
+
+Touch /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest (in target 'SampleXCTests-product' from project 'SampleApp')
+    cd /tmp/sci-sample
+    /usr/bin/touch -c /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Products/Debug-iphonesimulator/SampleXCTests.xctest
+
+PruneExplicitPrecompiledModules /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/ExplicitPrecompiledModules
+
+PruneExplicitPrecompiledModules /Users/ci/Library/Developer/Xcode/DerivedData/sci-sample-exytdpuemcjufzgvcqburztvikrk/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+
+PruneExplicitPrecompiledModules /Users/ci/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules
+
+Resolve Package Graph
+
+Test Suite 'All tests' started at 2026-10-30 11:36:03.483.
+Test Suite 'SampleXCTests.xctest' started at 2026-10-30 11:36:03.485.
+Test Suite 'SampleXCTests' started at 2026-10-30 11:36:03.485.
+Test Case '-[SampleXCTests.SampleXCTests testFailsOnMismatch]' started.
+/tmp/sci-sample/Tests/SampleXCTests/SampleXCTests.swift:10: error: -[SampleXCTests.SampleXCTests testFailsOnMismatch] : XCTAssertEqual failed: ("2") is not equal to ("3") - addition is wrong
+Test Case '-[SampleXCTests.SampleXCTests testFailsOnMismatch]' failed (1.079 seconds).
+Test Case '-[SampleXCTests.SampleXCTests testFailsTwice]' started.
+/tmp/sci-sample/Tests/SampleXCTests/SampleXCTests.swift:18: error: -[SampleXCTests.SampleXCTests testFailsTwice] : XCTAssertEqual failed: ("Hello, A") is not equal to ("Hello, B") - first message
+/tmp/sci-sample/Tests/SampleXCTests/SampleXCTests.swift:19: error: -[SampleXCTests.SampleXCTests testFailsTwice] : XCTAssertTrue failed - second message
+Test Case '-[SampleXCTests.SampleXCTests testFailsTwice]' failed (0.003 seconds).
+Test Case '-[SampleXCTests.SampleXCTests testPasses]' started.
+Test Case '-[SampleXCTests.SampleXCTests testPasses]' passed (0.001 seconds).
+Test Case '-[SampleXCTests.SampleXCTests testSkipped]' started.
+/tmp/sci-sample/Tests/SampleXCTests/SampleXCTests.swift:14: -[SampleXCTests.SampleXCTests testSkipped] : Test skipped - skipped on purpose
+Test Case '-[SampleXCTests.SampleXCTests testSkipped]' skipped (0.012 seconds).
+Test Suite 'SampleXCTests' failed at 2026-10-30 11:36:04.582.
+	 Executed 4 tests, with 1 test skipped and 3 failures (0 unexpected) in 1.095 (1.097) seconds
+Test Suite 'SampleXCTests.xctest' failed at 2026-10-30 11:36:04.582.
+	 Executed 4 tests, with 1 test skipped and 3 failures (0 unexpected) in 1.095 (1.098) seconds
+Test Suite 'All tests' failed at 2026-10-30 11:36:04.583.
+	 Executed 4 tests, with 1 test skipped and 3 failures (0 unexpected) in 1.095 (1.100) seconds
+Resolve Package Graph
+
+Test Suite 'All tests' started at 2026-10-30 11:36:06.026.
+Test Suite 'All tests' passed at 2026-10-30 11:36:06.027.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64-apple-ios17.0-simulator
+◇ Suite SampleSwiftTestingTests started.
+​➜ Test disabled() skipped: "disabled on purpose"
+​◇ Test throwsError() started.
+◇ Test parameterized(value:) started.
+◇ Test passes() started.
+◇ Test failsOnMismatch() started.
+◇ Test case passing 1 argument value → 2 to parameterized(value:) started.
+◇ Test case passing 1 argument value → 1 to parameterized(value:) started.
+​◇ Test case passing 1 argument value → 3 to parameterized(value:) started.
+​✔ Test passes() passed after 0.001 seconds.
+✘ Test parameterized(value:) recorded an issue with 1 argument value → 2 at SampleSwiftTestingTests.swift:22:9: Expectation failed: value != 2
+↳ argument 2 is rejected
+↳ value != 2 → false
+↳   value → 2
+​✘ Test throwsError() recorded an issue at SampleSwiftTestingTests.swift:25:6: Caught error: SampleError()
+✘ Test parameterized(value:) with 3 test cases failed after 0.008 seconds with 1 issue.
+✘ Test failsOnMismatch() recorded an issue at SampleSwiftTestingTests.swift:12:9: Expectation failed: sum(1, 1) == 3
+↳ addition is wrong
+↳ sum(1, 1) == 3 → false
+↳   sum(1, 1) → 2
+✘ Test throwsError() failed after 0.009 seconds with 1 issue.
+✘ Test failsOnMismatch() failed after 0.009 seconds with 1 issue.
+✘ Suite SampleSwiftTestingTests failed after 0.009 seconds with 3 issues.
+✘ Test run with 5 tests in 1 suite failed after 0.012 seconds with 3 issues.
+Resolve Package Graph
+
+Resolve Package Graph
+
+Resolve Package Graph
+
+Resolve Package Graph
+
+Resolve Package Graph
+
+Resolve Package Graph
+
+Resolve Package Graph
+
+Resolve Package Graph
+
+Resolve Package Graph
+
+Resolve Package Graph
+
+Resolve Package Graph
+
+2026-10-30 11:38:35.966 xcodebuild[38280:1973565] [MT] IDETestOperationsObserverDebug: 193.938 elapsed -- Testing started completed.
+2026-10-30 11:38:35.966 xcodebuild[38280:1973565] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-30 11:38:35.966 xcodebuild[38280:1973565] [MT] IDETestOperationsObserverDebug: 193.938 sec, +193.938 sec -- end
+Resolve Package Graph
+
+
+Test session results, code coverage, and logs:
+	/tmp/sci-sample/out/Sample.xcresult
+
+Failing tests:
+	SampleXCTests.testFailsOnMismatch()
+	SampleXCTests.testFailsTwice()
+	SampleXCTests.testFailsTwice()
+	SampleSwiftTestingTests.throwsError()
+	-[SampleSwiftTestingTests parameterized(value:)]
+	SampleSwiftTestingTests.failsOnMismatch()
+
+** TEST FAILED **
+
+Resolve Package Graph
+
+Testing started

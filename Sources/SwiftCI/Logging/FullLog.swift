@@ -1,0 +1,123 @@
+import Foundation
+
+/// The full log of the running command: every console line and all tool output, unfiltered, in `logs/<command>.log` in
+/// the artifacts directory. The console shows a filtered view of it. Every write masks the secrets.
+public enum FullLog {
+    @Use private static var log: Log
+
+    static var path: URL?
+    static var file: FileHandle?
+
+    /// How many times each command name has opened its full log in the running run. The first log of a name is
+    /// `<name>.log`, and a second one in the same run is `<name>-2.log`, and so on. Reset by the runner for each run.
+    static var openCounts: [String: Int] = [:]
+
+    /// `true` once a write to the log of the running command has failed. Reset by ``open(name:)``. Later writes to a broken
+    /// log fail the same way, so their errors would only repeat the first one, which is logged where it happened.
+    private(set) static var hasFailed = false
+
+    /// Creates the `logs` directory in the artifacts directory. Replaced in tests to simulate a failure.
+    static var makeDirectory: (URL) throws -> Void = { try FileManager.default.createDirectory(at: $0, withIntermediateDirectories: true) }
+
+    /// Closes the log file. Replaced in tests to simulate a failure, because Foundation does not fail on a double close.
+    static var closeHandle: (FileHandle) throws -> Void = { try $0.close() }
+
+    static func open(name: String) throws {
+        let opening = (openCounts[name] ?? 0) + 1
+        openCounts[name] = opening
+        let path = try logPath(name: opening == 1 ? name : "\(name)-\(opening)")
+        log.consoleOnly("Saving full log to file://\(path.filePath)")
+        try close()
+
+        if FileManager.default.createFile(atPath: path.filePath, contents: nil, attributes: nil) {
+            file = FileHandle(forWritingAtPath: path.filePath)
+        }
+        if file == nil {
+            throw BuildError(
+                message: "Failed to create build log file '\(path.filePath)'. Check that the directory is writable and that the command name is a valid file name.",
+                code: .internal
+            )
+        }
+        FullLog.path = path
+        hasFailed = false
+    }
+
+    /// Closes the log file and clears the path and the file, also if closing fails.
+    /// Logs the saved location on success. A failure to close is thrown, so the run can fail.
+    static func close() throws {
+        let closedPath = path
+        let handle = file
+        path = nil
+        file = nil
+
+        do {
+            if let handle {
+                try closeHandle(handle)
+            }
+        } catch {
+            let location = closedPath.map { " '\($0.filePath)'" } ?? ""
+            throw BuildError(
+                message: "Failed to close the build log\(location). Check that the disk is not full. Details: \(error)",
+                code: .internal
+            )
+        }
+        closedPath.map { log.consoleOnly("Saved full log to file://\($0.filePath)") }
+    }
+
+    /// Writes a console line into the full log as plain text: the colour codes of the console styles are removed, and the
+    /// line is masked as every full-log write is. Nothing is written when no log is open. Once a write has failed, later lines
+    /// are not written either, because the first error is already recorded. The first error of a running command is recorded
+    /// as its internal error, as a step marker is, so the command fails at its next checkpoint. Without a running command,
+    /// the error is only in ``hasFailed``.
+    static func writeConsoleLine(_ line: String) {
+        guard file != nil, !hasFailed else { return }
+        let text = line.withoutTerminalCodes
+        if let context = RunContext.current {
+            context.writeStatus { try write(text) }
+        } else {
+            try? write(text)
+        }
+    }
+
+    /// Writes `line` into the full log, as a line of its own. The line is masked for secrets, as every full-log write is.
+    /// Extensions use it to record lines that are not tool output, such as the status of an API call. Nothing is written
+    /// when no full log is open.
+    ///
+    /// - Parameter line: The text of the line, without the line break.
+    /// - Throws: A ``BuildError`` when the write fails.
+    public static func write(_ line: String) throws {
+        guard let file else { return }
+        do {
+            try file.write(contentsOf: Data((SecretRegistry.redact(line) + "\n").utf8))
+        } catch {
+            hasFailed = true
+            throw BuildError(
+                message: "Failed to write into the build log. Check that the disk is not full. Details: \(error)",
+                code: .internal
+            )
+        }
+    }
+
+    /// Writes a header for a step. Top-level steps use "=" dividers, nested steps use "-" dividers.
+    /// Both are indented by two spaces per depth level.
+    static func writeHeader(_ line: String, depth: Int = 0) throws {
+        let indent = stepIndent(depth)
+        let divider = String(repeating: depth == 0 ? "=" : "-", count: line.count)
+        try write("\(indent)\(divider)\n\(indent)\(line)\n\(indent)\(divider)")
+    }
+
+    /// The path of the log file for `name`: `logs/<name>.log` in the artifacts directory. The `logs` directory is created.
+    /// An existing file of the same name is overwritten when the file is created.
+    private static func logPath(name: String) throws -> URL {
+        let logs = Artifacts.directory.appending(path: "logs")
+        do {
+            try makeDirectory(logs)
+        } catch {
+            throw BuildError(
+                message: "Failed to create the build log directory '\(logs.filePath)'. Check that the artifacts directory is writable. Details: \(error)",
+                code: .internal
+            )
+        }
+        return logs.appending(path: "\(name).log")
+    }
+}

@@ -1,0 +1,32 @@
+{
+  "actionTitle" : "Testing workspace SampleApp with scheme SampleApp",
+  "analyzerWarningCount" : 0,
+  "analyzerWarnings" : [
+
+  ],
+  "destination" : {
+    "architecture" : "arm64",
+    "deviceId" : "00000000-0000-4000-8000-000000000001",
+    "deviceName" : "iPhone 17",
+    "modelName" : "iPhone 17",
+    "osBuildNumber" : "24B8117",
+    "osVersion" : "27.2",
+    "platform" : "iOS Simulator"
+  },
+  "endTime" : 1793771628.045,
+  "errorCount" : 0,
+  "errors" : [
+
+  ],
+  "startTime" : 1793771535.452,
+  "status" : "succeeded",
+  "warningCount" : 1,
+  "warnings" : [
+    {
+      "className" : "DVTTextDocumentLocation",
+      "issueType" : "NoUsage",
+      "message" : "Initialization of immutable value 'unused' was never used; consider replacing with assignment to '_' or removing it",
+      "sourceURL" : "file:///Users/ci/git/swift-ci/Tests/SwiftCIXcodeTests/Fixtures/XcodebuildTest/sample/Sources/SampleKit/SampleKit.swift#EndingColumnNumber=8&EndingLineNumber=9&StartingColumnNumber=8&StartingLineNumber=9&Timestamp=815464335.546695"
+    }
+  ]
+}

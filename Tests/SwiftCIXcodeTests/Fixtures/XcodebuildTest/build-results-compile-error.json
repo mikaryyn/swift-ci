@@ -1,0 +1,36 @@
+{
+  "actionTitle" : "Testing workspace SampleApp with scheme SampleApp",
+  "analyzerWarningCount" : 0,
+  "analyzerWarnings" : [
+
+  ],
+  "destination" : {
+    "architecture" : "arm64",
+    "deviceId" : "00000000-0000-4000-8000-000000000001",
+    "deviceName" : "iPhone 17",
+    "modelName" : "iPhone 17",
+    "osBuildNumber" : "24B8117",
+    "osVersion" : "27.2",
+    "platform" : "iOS Simulator"
+  },
+  "endTime" : 1793771640.817,
+  "errorCount" : 2,
+  "errors" : [
+    {
+      "issueType" : "Uncategorized",
+      "message" : "Testing cancelled because the build failed."
+    },
+    {
+      "className" : "DVTTextDocumentLocation",
+      "issueType" : "Swift Compiler Error",
+      "message" : "Cannot convert return expression of type 'String' to return type 'Int'",
+      "sourceURL" : "file:///private/tmp/sci-sample-compile-error/Sources/SampleKit/Broken.swift#EndingColumnNumber=4&EndingLineNumber=1&StartingColumnNumber=4&StartingLineNumber=1&Timestamp=815464437.946885"
+    }
+  ],
+  "startTime" : 1793771637.867,
+  "status" : "failed",
+  "warningCount" : 0,
+  "warnings" : [
+
+  ]
+}

@@ -1,0 +1,130 @@
+import Foundation
+import SwiftCI
+
+/// A log for tests. It records each line the console would show, and the arguments of each ``Log`` method.
+///
+/// The console lines are formatted by the default implementations of ``Log``, so they match the real console: a
+/// warning reads `<Warning> …` with its colour codes, and a step reads `Entering step [...]`. Use ``SwiftCITestResult/plainLog``
+/// to compare the text without the colour codes.
+///
+/// Pass it as `log:` to ``SwiftCITest/run(_:environment:artifactsDirectory:ciAdapters:runner:httpClient:log:script:)`` or
+/// ``SwiftCITest/withMocks(_:runner:httpClient:log:artifactsDirectory:ciAdapters:_:)``.
+/// The lines it receives are already masked for secrets, as the real console is.
+public final class LogMock: Log {
+    /// Every console line, in order, with its colour codes. Each line is what the console would show.
+    public private(set) var loggedLines: [String] = []
+
+    /// The messages passed to ``completion(_:)``, without the symbol.
+    public private(set) var completions: [String] = []
+    /// The messages passed to ``success(_:)``, without the symbol.
+    public private(set) var successes: [String] = []
+    /// The messages passed to ``warning(_:)``.
+    public private(set) var warnings: [String] = []
+    /// The messages passed to ``error(_:)``.
+    public private(set) var errors: [String] = []
+    /// The step events, in order: each step that starts, finishes, fails, fails with the failure allowed, or is
+    /// skipped.
+    public private(set) var steps: [StepEvent] = []
+    /// The arguments of each ``lines(title:lines:)`` call, in order.
+    public private(set) var titledLines: [TitledLines] = []
+
+    /// Creates an empty log.
+    public init() {}
+
+    public func consoleOnly(_ line: String) {
+        loggedLines.append(line)
+    }
+
+    public func completion(_ line: String) {
+        completions.append(line)
+        formatter.completion(line)
+    }
+
+    public func success(_ line: String) {
+        successes.append(line)
+        formatter.success(line)
+    }
+
+    public func warning(_ line: String) {
+        warnings.append(line)
+        formatter.warning(line)
+    }
+
+    public func error(_ line: String) {
+        errors.append(line)
+        formatter.error(line)
+    }
+
+    public func enteringStep(name: String, depth: Int) throws {
+        steps.append(.entered(name: name, depth: depth))
+        try formatter.enteringStep(name: name, depth: depth)
+    }
+
+    public func finishedStep(name: String, duration: TimeInterval, depth: Int) throws {
+        steps.append(.finished(name: name, duration: duration, depth: depth))
+        try formatter.finishedStep(name: name, duration: duration, depth: depth)
+    }
+
+    public func failedStep(name: String, depth: Int) throws {
+        steps.append(.failed(name: name, depth: depth))
+        try formatter.failedStep(name: name, depth: depth)
+    }
+
+    public func allowedFailedStep(name: String, depth: Int) throws {
+        steps.append(.allowedFailed(name: name, depth: depth))
+        try formatter.allowedFailedStep(name: name, depth: depth)
+    }
+
+    public func skippedStep(name: String, reason: String, depth: Int) throws {
+        steps.append(.skipped(name: name, reason: reason, depth: depth))
+        try formatter.skippedStep(name: name, reason: reason, depth: depth)
+    }
+
+    public func lines(title: String, lines: [String]) {
+        titledLines.append(TitledLines(title: title, lines: lines))
+        formatter.lines(title: title, lines: lines)
+    }
+
+    /// Formats with the default `Log` implementations, and passes each console line back to this log.
+    private var formatter: LineFormatter {
+        LineFormatter { [self] line in loggedLines.append(line) }
+    }
+
+    /// A step event that ``LogMock`` recorded.
+    public enum StepEvent: Equatable, Sendable {
+        /// The step started. `depth` is 0 for a top-level step, 1 for a step inside a step, and so on.
+        case entered(name: String, depth: Int)
+        /// The step finished, with its duration in seconds.
+        case finished(name: String, duration: Double, depth: Int)
+        /// The step failed.
+        case failed(name: String, depth: Int)
+        /// The step failed, and the command continues.
+        case allowedFailed(name: String, depth: Int)
+        /// The step was skipped, for `reason`. Its body did not run.
+        case skipped(name: String, reason: String, depth: Int)
+    }
+
+    /// The arguments of a ``lines(title:lines:)`` call.
+    public struct TitledLines: Equatable, Sendable {
+        /// The title, shown as a completion line.
+        public let title: String
+        /// The lines below the title.
+        public let lines: [String]
+
+        /// Creates the value, for example to compare it with a recorded one.
+        public init(title: String, lines: [String]) {
+            self.title = title
+            self.lines = lines
+        }
+    }
+}
+
+/// Uses the default formatting of ``Log`` and hands each formatted console line to `record`. Only `consoleOnly` is
+/// written here. The other requirements come from the defaults, so the formatting is the same as in SwiftCI.
+private struct LineFormatter: Log {
+    let record: (String) -> Void
+
+    func consoleOnly(_ line: String) {
+        record(line)
+    }
+}

@@ -1,0 +1,27 @@
+{
+  "data": [
+    {
+      "type": "appStoreVersions",
+      "id": "version-2",
+      "attributes": {
+        "platform": "IOS",
+        "versionString": "1.1",
+        "createdDate": "2026-10-20T08:30:00.123Z",
+        "copyright": "© 2026 Example Team"
+      }
+    },
+    {
+      "type": "appStoreVersions",
+      "id": "version-1",
+      "attributes": {
+        "platform": "IOS",
+        "versionString": "1.0",
+        "createdDate": "2025-03-01T09:00:00Z",
+        "copyright": "© 2025 Example Team"
+      }
+    }
+  ],
+  "links": {
+    "self": "https://api.appstoreconnect.apple.com/v1/apps/1/appStoreVersions?limit=200"
+  }
+}
